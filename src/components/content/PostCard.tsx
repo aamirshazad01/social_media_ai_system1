@@ -111,7 +111,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
             <button
                 onClick={() => setActivePlatform(platform)}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-t-lg transition-colors duration-200 border-b-2 ${
-                    activePlatform === platform ? 'border-indigo-500 text-white' : 'border-transparent text-gray-400 hover:text-white'
+                    activePlatform === platform ? 'border-charcoal text-charcoal-dark' : 'border-transparent text-slate hover:text-charcoal-dark'
                 }`}
             >
                 <Icon className="w-5 h-5" />
@@ -129,40 +129,40 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
 
     return (
         <>
-            <div className="bg-gray-800 rounded-lg shadow-lg flex flex-col overflow-hidden border border-gray-700">
-                <div className="p-4 bg-gray-800">
+            <div className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden border border-slate/30">
+                <div className="p-4 bg-light-gray">
                     <div className="flex justify-between items-start">
-                        <p className="font-bold text-lg text-white pr-2 break-words flex-1">
+                        <p className="font-bold text-lg text-charcoal-dark pr-2 break-words flex-1">
                             {post.topic}
                         </p>
                         <StatusChip status={post.status} />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-slate mt-1">
                         {`Created: ${new Date(post.createdAt).toLocaleString()}`}
                     </p>
                 </div>
                 <div className="flex-grow p-4 space-y-4">
-                    <div className="flex border-b border-gray-700">
+                    <div className="flex border-b border-slate/30">
                         {post.platforms.map(p => <PlatformTab key={p} platform={p} />)}
                     </div>
-                    <div className="bg-gray-700/50 p-3 rounded-lg">
+                    <div className="bg-slate/10 p-3 rounded-lg">
                         <textarea
                             readOnly={!isEditing}
                             value={editedContent[activePlatform] || ''}
                             onChange={(e) => handleContentChange(activePlatform, e.target.value)}
-                            className={`w-full h-28 bg-transparent text-gray-200 resize-none focus:outline-none text-sm ${isEditing ? 'focus:ring-2 focus:ring-indigo-500 rounded' : ''}`}
+                            className={`w-full h-28 bg-transparent text-charcoal resize-none focus:outline-none text-sm ${isEditing ? 'focus:ring-2 focus:ring-charcoal rounded' : ''}`}
                         />
                     </div>
                     {isEditing ? (
                         <>
                             {/* EDITING VIEW FOR MEDIA */}
                             {post.content.imageSuggestion && (
-                                <div className="p-3 bg-gray-700/50 rounded-lg space-y-3">
-                                    <label className="text-sm font-semibold text-gray-300">Image Prompt</label>
+                                <div className="p-3 bg-slate/10 rounded-lg space-y-3">
+                                    <label className="text-sm font-semibold text-charcoal">Image Prompt</label>
                                     <textarea
                                         value={editedContent.imageSuggestion || ''}
                                         onChange={(e) => handleSuggestionChange('imageSuggestion', e.target.value)}
-                                        className="w-full h-24 bg-gray-900/50 p-2 rounded-md text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full h-24 bg-white p-2 rounded-md text-sm text-charcoal resize-none focus:outline-none focus:ring-2 focus:ring-charcoal border border-slate/30"
                                     />
                                     <div className="grid grid-cols-2 gap-2">
                                         <ActionButton onClick={() => handleImproveSuggestion('image')} disabled={isImproving.image} icon={isImproving.image ? Loader2 : Sparkles} label={isImproving.image ? 'Improving...' : 'Improve'} className="w-full bg-amber-500 hover:bg-amber-600 text-black" />
@@ -172,12 +172,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                                 </div>
                             )}
                             {post.content.videoSuggestion && (
-                                <div className="p-3 bg-gray-700/50 rounded-lg space-y-3">
-                                    <label className="text-sm font-semibold text-gray-300">Video Prompt</label>
+                                <div className="p-3 bg-slate/10 rounded-lg space-y-3">
+                                    <label className="text-sm font-semibold text-charcoal">Video Prompt</label>
                                     <textarea
                                         value={editedContent.videoSuggestion || ''}
                                         onChange={(e) => handleSuggestionChange('videoSuggestion', e.target.value)}
-                                        className="w-full h-24 bg-gray-900/50 p-2 rounded-md text-sm text-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full h-24 bg-white p-2 rounded-md text-sm text-charcoal resize-none focus:outline-none focus:ring-2 focus:ring-charcoal border border-slate/30"
                                     />
                                     <div className="grid grid-cols-2 gap-2">
                                         <ActionButton onClick={() => handleImproveSuggestion('video')} disabled={isImproving.video} icon={isImproving.video ? Loader2 : Sparkles} label={isImproving.video ? 'Improving...' : 'Improve'} className="w-full bg-amber-500 hover:bg-amber-600 text-black" />
@@ -198,8 +198,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                         <>
                             {/* VIEWING VIEW FOR MEDIA */}
                             {post.content.imageSuggestion && (
-                                <div className="p-3 bg-gray-700/50 rounded-lg space-y-2">
-                                    <p className="text-xs text-gray-400 italic">"{post.content.imageSuggestion}"</p>
+                                <div className="p-3 bg-slate/10 rounded-lg space-y-2">
+                                    <p className="text-xs text-slate italic">"{post.content.imageSuggestion}"</p>
                                     {post.generatedImage ? (
                                         <img src={post.generatedImage} alt="Generated" className="rounded-md w-full" />
                                     ) : (
@@ -214,8 +214,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                                 </div>
                             )}
                             {post.content.videoSuggestion && (
-                                <div className="p-3 bg-gray-700/50 rounded-lg space-y-2">
-                                    <p className="text-xs text-gray-400 italic">"{post.content.videoSuggestion}"</p>
+                                <div className="p-3 bg-slate/10 rounded-lg space-y-2">
+                                    <p className="text-xs text-slate italic">"{post.content.videoSuggestion}"</p>
                                     {post.generatedVideoUrl ? (
                                         <div className="relative">
                                             <video src={post.generatedVideoUrl} controls className="rounded-md w-full" />
@@ -244,12 +244,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                         </>
                     )}
                 </div>
-                <div className="p-3 bg-gray-900/50 flex flex-wrap gap-2 justify-between items-center">
+                <div className="p-3 bg-light-gray flex flex-wrap gap-2 justify-between items-center">
                     {isEditing ? (
                          <div className="flex items-center justify-between w-full">
                             <div className="flex gap-2">
                                 <ActionButton onClick={handleSave} icon={Save} label="Save" className="bg-green-600 hover:bg-green-700 text-white" />
-                                <ActionButton onClick={handleCancel} icon={X} label="Cancel" className="bg-gray-600 hover:bg-gray-500 text-white" />
+                                <ActionButton onClick={handleCancel} icon={X} label="Cancel" className="bg-slate hover:bg-slate/80 text-white" />
                                 <ActionButton onClick={() => setIsPreviewOpen(true)} icon={Eye} label="Preview" className="bg-blue-600 hover:bg-blue-700 text-white" />
                             </div>
                             <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white" />
@@ -257,12 +257,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                     ) : (
                          <div className="flex items-center justify-between w-full">
                             <div className="flex gap-2 flex-wrap">
-                                <ActionButton onClick={() => setIsEditing(true)} icon={Edit} label="Edit" className="bg-gray-600 hover:bg-gray-500 text-white" />
+                                <ActionButton onClick={() => setIsEditing(true)} icon={Edit} label="Edit" className="bg-slate hover:bg-slate/80 text-white" />
                                 <ActionButton onClick={() => setIsPreviewOpen(true)} icon={Eye} label="Preview" className="bg-blue-600 hover:bg-blue-700 text-white" />
                                 {post.status === 'draft' && <ActionButton onClick={() => handleStatusChange('needs approval')} icon={Send} label="Request Approval" className="bg-yellow-500 hover:bg-yellow-600 text-black" />}
                                 {post.status === 'needs approval' && <ActionButton onClick={() => handleStatusChange('approved')} icon={CheckCircle} label="Approve" className="bg-cyan-500 hover:bg-cyan-600 text-white" />}
                                 {post.status === 'approved' && (
-                                    <ActionButton onClick={() => handleStatusChange('ready to publish')} icon={ArrowRightCircle} label="Finalize & Move" className="bg-indigo-600 hover:bg-indigo-700 text-white" />
+                                    <ActionButton onClick={() => handleStatusChange('ready to publish')} icon={ArrowRightCircle} label="Finalize & Move" className="bg-charcoal hover:bg-charcoal-dark text-white" />
                                 )}
                             </div>
                             <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white" />

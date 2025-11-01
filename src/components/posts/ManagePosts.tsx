@@ -39,7 +39,7 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
         <button
             onClick={() => setViewMode(mode)}
             className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                viewMode === mode ? 'bg-indigo-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
+                viewMode === mode ? 'bg-charcoal text-white' : 'bg-white hover:bg-slate/10 border border-slate/30'
             }`}
         >
             <Icon className="w-4 h-4 mr-2" />
@@ -51,16 +51,16 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
         if (nonFinalizedPosts.length === 0) {
              return (
                 <div className="text-center py-20">
-                    <h2 className="text-3xl font-semibold text-gray-400">Your content queue is empty!</h2>
-                    <p className="text-gray-500 mt-2">Go to "Create Content" to generate a new post, or check "Published" for finalized items.</p>
+                    <h2 className="text-3xl font-semibold text-slate">Your content queue is empty!</h2>
+                    <p className="text-slate mt-2">Go to "Create Content" to generate a new post, or check "Published" for finalized items.</p>
                 </div>
             );
         }
         if (filteredPosts.length === 0) {
             return (
                 <div className="text-center py-20">
-                    <h2 className="text-2xl font-semibold text-gray-400">No Posts Match Your Filters</h2>
-                    <p className="text-gray-500 mt-2">Try adjusting your search or selected filters.</p>
+                    <h2 className="text-2xl font-semibold text-slate">No Posts Match Your Filters</h2>
+                    <p className="text-slate mt-2">Try adjusting your search or selected filters.</p>
                 </div>
             );
         }
@@ -85,8 +85,8 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                <h2 className="text-3xl font-bold text-white">Manage & Finalize Posts</h2>
-                <div className="flex items-center space-x-2 bg-gray-800 p-1 rounded-lg">
+                <h2 className="text-3xl font-bold text-charcoal-dark">Manage & Finalize Posts</h2>
+                <div className="flex items-center space-x-2 bg-light-gray p-1 rounded-lg">
                     <ViewToggleButton mode="grid" icon={LayoutGrid} label="Grid" />
                     <ViewToggleButton mode="calendar" icon={Calendar} label="Calendar" />
                 </div>

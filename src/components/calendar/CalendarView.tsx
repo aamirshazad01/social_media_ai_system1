@@ -37,34 +37,34 @@ const CalendarView: React.FC<CalendarViewProps> = ({ posts }) => {
     );
 
     return (
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <div className="bg-white p-6 rounded-lg shadow-lg border border-slate/30">
             <div className="flex justify-between items-center mb-4">
-                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-700">
+                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-slate/10">
                     <ChevronLeft className="w-6 h-6" />
                 </button>
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-xl font-semibold text-charcoal-dark">
                     {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </h3>
-                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-700">
+                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-slate/10">
                     <ChevronRight className="w-6 h-6" />
                 </button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 mb-2">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs text-slate mb-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day}>{day}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
-                {emptyDays.map((_, index) => <div key={`empty-${index}`} className="border border-gray-700/50 rounded-md h-28"></div>)}
+                {emptyDays.map((_, index) => <div key={`empty-${index}`} className="border border-slate/30 rounded-md h-28"></div>)}
                 {days.map(day => {
                     const postsForDay = getPostsForDay(day);
                     const isToday = new Date().getFullYear() === currentDate.getFullYear() &&
                                     new Date().getMonth() === currentDate.getMonth() &&
                                     new Date().getDate() === day;
                     return (
-                        <div key={day} className={`border border-gray-700/50 rounded-md h-28 p-2 text-left flex flex-col ${isToday ? 'bg-indigo-900/30' : ''}`}>
-                            <span className={`font-semibold ${isToday ? 'text-indigo-400' : 'text-white'}`}>{day}</span>
+                        <div key={day} className={`border border-slate/30 rounded-md h-28 p-2 text-left flex flex-col ${isToday ? 'bg-charcoal/10' : ''}`}>
+                            <span className={`font-semibold ${isToday ? 'text-charcoal-dark' : 'text-charcoal-dark'}`}>{day}</span>
                              <div className="flex-grow overflow-y-auto mt-1 space-y-1">
                                 {postsForDay.map(post => (
-                                    <div key={post.id} className="flex items-center gap-1.5 text-xs text-gray-300 truncate">
+                                    <div key={post.id} className="flex items-center gap-1.5 text-xs text-charcoal truncate">
                                         <StatusDot status={post.status} />
                                         <p className="truncate">{post.topic}</p>
                                     </div>

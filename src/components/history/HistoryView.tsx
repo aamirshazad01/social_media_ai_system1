@@ -38,16 +38,16 @@ const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDe
     if (postsForPublishing.length === 0 && searchTerm === '' && platformFilter === 'all') {
         return (
             <div className="text-center py-20">
-                <h2 className="text-3xl font-semibold text-gray-400">Nothing to Publish</h2>
-                <p className="text-gray-500 mt-2">Finalize a post in "Manage Posts" and it will appear here, ready for action.</p>
+                <h2 className="text-3xl font-semibold text-slate">Nothing to Publish</h2>
+                <p className="text-slate mt-2">Finalize a post in "Manage Posts" and it will appear here, ready for action.</p>
             </div>
         );
     }
-    
+
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                <h2 className="text-3xl font-bold text-white">Publishing Command Center</h2>
+                <h2 className="text-3xl font-bold text-charcoal-dark">Publishing Command Center</h2>
             </div>
 
             <FilterBar

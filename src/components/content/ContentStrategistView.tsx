@@ -249,15 +249,15 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
 
         if (isSystem && msg.postData) {
             return (
-                <div className="bg-gray-700 rounded-lg p-4 my-2 text-sm text-gray-200 border border-indigo-500 shadow-lg">
+                <div className="bg-white rounded-lg p-4 my-2 text-sm text-charcoal border border-charcoal shadow-lg">
                     <p className="font-semibold mb-4">{msg.content}</p>
-                    <div className="bg-gray-800 p-3 rounded-md mb-4">
-                        <h4 className="font-bold text-white mb-2">Topic: <span className="font-normal">{msg.postData.topic}</span></h4>
-                        <p className="text-xs text-gray-400 whitespace-pre-wrap">{JSON.stringify(msg.postData, null, 2)}</p>
+                    <div className="bg-light-gray p-3 rounded-md mb-4">
+                        <h4 className="font-bold text-charcoal-dark mb-2">Topic: <span className="font-normal">{msg.postData.topic}</span></h4>
+                        <p className="text-xs text-slate whitespace-pre-wrap">{JSON.stringify(msg.postData, null, 2)}</p>
                     </div>
                     <button
                         onClick={() => handleCreatePost(msg.postData)}
-                        className="w-full flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500"
+                        className="w-full flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-charcoal hover:bg-charcoal-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-charcoal"
                     >
                         <CheckCircle className="w-5 h-5 mr-2" />
                         Accept & Create Post
@@ -268,10 +268,10 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
 
         return (
             <div className={`flex items-start gap-3 my-4 ${isUser ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-indigo-600' : 'bg-gray-600'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-charcoal' : 'bg-slate'}`}>
                     {isUser ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                 </div>
-                <div className={`p-3 rounded-lg max-w-lg text-sm ${isUser ? 'bg-indigo-800 text-white' : 'bg-gray-700 text-gray-200'}`}>
+                <div className={`p-3 rounded-lg max-w-lg text-sm ${isUser ? 'bg-charcoal text-white' : 'bg-light-gray text-charcoal'}`}>
                     {isModel ? renderMarkdown(msg.content) : <p className="whitespace-pre-wrap">{msg.content}</p>}
                 </div>
             </div>
@@ -281,29 +281,29 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
     return (
         <div className="max-w-7xl mx-auto h-full flex flex-row gap-6">
             {isHistoryVisible && (
-                <div className="w-1/3 lg:w-1/4 bg-gray-800 rounded-lg shadow-xl flex flex-col h-full">
-                    <div className="p-4 border-b border-gray-700">
+                <div className="w-1/3 lg:w-1/4 bg-white rounded-lg shadow-xl flex flex-col h-full border border-slate/30">
+                    <div className="p-4 border-b border-slate/30">
                         <button
                             onClick={() => startNewChat()}
-                            className="w-full flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                            className="w-full flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-charcoal hover:bg-charcoal-dark"
                         >
                             <PlusCircle className="w-5 h-5 mr-2" />
                             New Chat
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
-                        <h3 className="px-2 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">History</h3>
+                        <h3 className="px-2 pb-2 text-xs font-semibold text-slate uppercase tracking-wider">History</h3>
                         <nav className="space-y-1">
                             {chatHistory.map(thread => (
                                 <button
                                     key={thread.id}
                                     onClick={() => handleSelectThread(thread)}
                                     className={`w-full text-left flex flex-col p-2 rounded-md transition-colors ${
-                                        activeThreadId === thread.id ? 'bg-gray-700' : 'hover:bg-gray-700/50'
+                                        activeThreadId === thread.id ? 'bg-light-gray' : 'hover:bg-slate/10'
                                     }`}
                                 >
-                                    <p className="text-sm font-medium text-white truncate">{thread.title}</p>
-                                    <p className="text-xs text-gray-400">{new Date(thread.timestamp).toLocaleDateString()}</p>
+                                    <p className="text-sm font-medium text-charcoal-dark truncate">{thread.title}</p>
+                                    <p className="text-xs text-slate">{new Date(thread.timestamp).toLocaleDateString()}</p>
                                 </button>
                             ))}
                         </nav>
@@ -313,30 +313,30 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
 
             <div className="flex-1 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-3xl font-bold text-white">AI Content Strategist</h2>
+                    <h2 className="text-3xl font-bold text-charcoal-dark">AI Content Strategist</h2>
                     <button
                         onClick={() => setIsHistoryVisible(!isHistoryVisible)}
-                        className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                        className="p-2 rounded-full text-slate hover:bg-slate/10 hover:text-charcoal-dark transition-colors"
                         title={isHistoryVisible ? "Hide History" : "Show History"}
                     >
                         {isHistoryVisible ? <PanelLeftClose className="w-5 h-5" /> : <History className="w-5 h-5" />}
                     </button>
                 </div>
-                <div className="flex-grow bg-gray-800 rounded-lg shadow-xl flex flex-col p-4 min-h-0">
+                <div className="flex-grow bg-white rounded-lg shadow-xl flex flex-col p-4 min-h-0 border border-slate/30">
                     <div ref={chatContainerRef} className="flex-1 overflow-y-auto pr-2">
                         {messages.map((msg, index) => <MessageBubble key={index} msg={msg} />)}
                         {isLoading && (
                             <div className="flex items-start gap-3 my-4">
-                                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-slate flex items-center justify-center flex-shrink-0">
                                     <Bot className="w-5 h-5 text-white" />
                                 </div>
-                                <div className="p-3 rounded-lg bg-gray-700 text-gray-200 flex items-center">
-                                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                                <div className="p-3 rounded-lg bg-light-gray text-charcoal flex items-center">
+                                    <Loader2 className="w-5 h-5 animate-spin text-slate" />
                                 </div>
                             </div>
                         )}
                     </div>
-                    <div className="mt-4 border-t border-gray-700 pt-4">
+                    <div className="mt-4 border-t border-slate/30 pt-4">
                         {error && <p className="text-red-400 text-sm text-center mb-2">{error}</p>}
                         <form onSubmit={handleSubmit} className="flex items-center gap-3">
                             <input
@@ -344,13 +344,13 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
                                 value={userInput}
                                 onChange={(e) => setUserInput(e.target.value)}
                                 placeholder={activeThreadId !== 'new' ? "Viewing history (read-only)" : "Let's brainstorm some content..."}
-                                className="flex-1 bg-gray-700 border border-gray-600 rounded-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-white p-3 px-5"
+                                className="flex-1 bg-white border border-slate/30 rounded-full shadow-sm focus:ring-charcoal focus:border-charcoal text-charcoal p-3 px-5"
                                 disabled={isLoading || activeThreadId !== 'new'}
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !userInput.trim() || activeThreadId !== 'new'}
-                                className="p-3 rounded-full text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors"
+                                className="p-3 rounded-full text-white bg-charcoal hover:bg-charcoal-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-charcoal disabled:bg-slate disabled:cursor-not-allowed transition-colors"
                             >
                                 <Send className="w-5 h-5" />
                             </button>

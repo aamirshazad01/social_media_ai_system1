@@ -61,58 +61,58 @@ const CreateContentForm: React.FC<CreateContentFormProps> = ({ onPostCreated }) 
 
     return (
         <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8 text-white">Create New Content</h2>
-            <div className="bg-gray-800 p-8 rounded-lg shadow-xl">
+            <h2 className="text-3xl font-bold mb-8 text-charcoal-dark">Create New Content</h2>
+            <div className="bg-white p-8 rounded-lg shadow-xl border border-slate/30">
             <form onSubmit={handleSubmit} className="space-y-8">
-                
+
                 <div>
-                    <label className="block text-md font-medium text-gray-300 mb-3">1. Select Platforms</label>
+                    <label className="block text-md font-medium text-charcoal mb-3">1. Select Platforms</label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {PLATFORMS.map(({ id, name, icon: Icon }) => (
-                            <label key={id} className={`flex items-center space-x-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2 ${selectedPlatforms.includes(id) ? 'bg-indigo-900/50 border-indigo-500' : 'bg-gray-700 border-transparent hover:border-gray-500'}`}>
+                            <label key={id} className={`flex items-center space-x-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2 ${selectedPlatforms.includes(id) ? 'bg-charcoal/10 border-charcoal' : 'bg-gray-50 border-transparent hover:border-slate/30'}`}>
                                 <input type="checkbox" checked={selectedPlatforms.includes(id)} onChange={() => handlePlatformChange(id)} className="hidden" />
-                                <Icon className={`w-6 h-6 ${selectedPlatforms.includes(id) ? 'text-indigo-400' : 'text-gray-400'}`} />
-                                <span className="font-medium text-white">{name}</span>
+                                <Icon className={`w-6 h-6 ${selectedPlatforms.includes(id) ? 'text-charcoal-dark' : 'text-slate'}`} />
+                                <span className="font-medium text-charcoal-dark">{name}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
                 <div>
-                    <label htmlFor="topic" className="block text-md font-medium text-gray-300 mb-3">2. Enter Topic/Subject</label>
+                    <label htmlFor="topic" className="block text-md font-medium text-charcoal mb-3">2. Enter Topic/Subject</label>
                     <textarea
                         id="topic"
                         rows={4}
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
-                        className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-white p-3"
+                        className="mt-1 block w-full bg-white border border-slate/30 rounded-md shadow-sm focus:ring-charcoal focus:border-charcoal text-charcoal p-3"
                         placeholder="e.g., Launch of our new productivity app..."
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label htmlFor="contentType" className="block text-md font-medium text-gray-300 mb-3">3. Choose Content Type</label>
-                        <select id="contentType" value={contentType} onChange={(e) => setContentType(e.target.value as ContentType)} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-white p-3 capitalize">
+                        <label htmlFor="contentType" className="block text-md font-medium text-charcoal mb-3">3. Choose Content Type</label>
+                        <select id="contentType" value={contentType} onChange={(e) => setContentType(e.target.value as ContentType)} className="mt-1 block w-full bg-white border-slate/30 rounded-md shadow-sm focus:ring-charcoal focus:border-charcoal text-charcoal p-3 capitalize">
                             {CONTENT_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="tone" className="block text-md font-medium text-gray-300 mb-3">4. Adjust Tone</label>
-                        <select id="tone" value={tone} onChange={(e) => setTone(e.target.value as Tone)} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-white p-3 capitalize">
+                        <label htmlFor="tone" className="block text-md font-medium text-charcoal mb-3">4. Adjust Tone</label>
+                        <select id="tone" value={tone} onChange={(e) => setTone(e.target.value as Tone)} className="mt-1 block w-full bg-white border-slate/30 rounded-md shadow-sm focus:ring-charcoal focus:border-charcoal text-charcoal p-3 capitalize">
                             {TONES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label htmlFor="schedule" className="block text-md font-medium text-gray-300 mb-3">5. Schedule for Later (Optional)</label>
+                    <label htmlFor="schedule" className="block text-md font-medium text-charcoal mb-3">5. Schedule for Later (Optional)</label>
                     <input
                         type="datetime-local"
                         id="schedule"
                         value={schedule}
                         onChange={(e) => setSchedule(e.target.value)}
-                        className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-white p-3"
+                        className="mt-1 block w-full bg-white border-slate/30 rounded-md shadow-sm focus:ring-charcoal focus:border-charcoal text-charcoal p-3"
                     />
                 </div>
 
@@ -122,7 +122,7 @@ const CreateContentForm: React.FC<CreateContentFormProps> = ({ onPostCreated }) 
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="inline-flex justify-center items-center py-3 px-8 border border-transparent shadow-sm text-base font-medium rounded-full text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-transform duration-200 transform hover:scale-105"
+                        className="inline-flex justify-center items-center py-3 px-8 border border-transparent shadow-sm text-base font-medium rounded-full text-white bg-charcoal hover:bg-charcoal-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-charcoal disabled:bg-slate disabled:cursor-not-allowed transition-transform duration-200 transform hover:scale-105"
                     >
                         {isLoading ? (
                             <>

@@ -43,15 +43,15 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ posts }) => {
     }, [posts]);
 
     const StatCard: React.FC<{ title: string; value: number; className?: string }> = ({ title, value, className }) => (
-        <div className={`bg-gray-800 p-6 rounded-lg shadow-lg ${className}`}>
-            <h3 className="text-sm font-medium text-gray-400">{title}</h3>
-            <p className="mt-2 text-3xl font-semibold text-white">{value || 0}</p>
+        <div className={`bg-white p-6 rounded-lg shadow-lg border border-slate/30 ${className}`}>
+            <h3 className="text-sm font-medium text-slate">{title}</h3>
+            <p className="mt-2 text-3xl font-semibold text-charcoal-dark">{value || 0}</p>
         </div>
     );
 
     return (
         <div>
-            <h2 className="text-3xl font-bold mb-8 text-white">Analytics Dashboard</h2>
+            <h2 className="text-3xl font-bold mb-8 text-charcoal-dark">Analytics Dashboard</h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                 <StatCard title="Total Posts" value={stats.totalPosts} className="bg-indigo-900" />
@@ -62,8 +62,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ posts }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Platform Distribution</h3>
+                <div className="bg-white p-6 rounded-lg shadow-lg border border-slate/30">
+                    <h3 className="text-lg font-semibold text-charcoal-dark mb-4">Platform Distribution</h3>
                     {stats.platformData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
@@ -79,8 +79,8 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ posts }) => {
                     ) : <p className="text-gray-500 text-center py-10">No data to display.</p>}
                 </div>
 
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Post Status Overview</h3>
+                <div className="bg-white p-6 rounded-lg shadow-lg border border-slate/30">
+                    <h3 className="text-lg font-semibold text-charcoal-dark mb-4">Post Status Overview</h3>
                      {stats.statusData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={stats.statusData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>

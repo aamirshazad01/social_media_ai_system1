@@ -70,10 +70,10 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ posts }) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold text-white">Campaign Management</h2>
+        <h2 className="text-3xl font-bold text-charcoal-dark">Campaign Management</h2>
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+          className="flex items-center px-4 py-2 bg-charcoal hover:bg-charcoal-dark text-white rounded-lg transition"
         >
           <Plus className="w-5 h-5 mr-2" />
           New Campaign
@@ -81,13 +81,13 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ posts }) => {
       </div>
 
       {campaigns.length === 0 && !isCreating ? (
-        <div className="text-center py-20 bg-gray-800 rounded-lg">
-          <Target className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-400">No campaigns yet</h3>
-          <p className="text-gray-500 mt-2">Create a campaign to organize your content strategy</p>
+        <div className="text-center py-20 bg-white rounded-lg border border-slate/30">
+          <Target className="w-16 h-16 text-slate mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-slate">No campaigns yet</h3>
+          <p className="text-slate mt-2">Create a campaign to organize your content strategy</p>
           <button
             onClick={() => setIsCreating(true)}
-            className="mt-4 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+            className="mt-4 px-6 py-2 bg-charcoal hover:bg-charcoal-dark text-white rounded-lg transition"
           >
             Create Your First Campaign
           </button>

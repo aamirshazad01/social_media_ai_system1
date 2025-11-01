@@ -92,12 +92,12 @@ const MediaLibrary: React.FC = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-white">Media Library</h2>
-          <p className="text-gray-400 mt-1">
+          <h2 className="text-3xl font-bold text-charcoal-dark">Media Library</h2>
+          <p className="text-slate mt-1">
             {storageStats.totalAssets} assets · {formatFileSize(storageStats.totalSize)} total
           </p>
         </div>
-        <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
+        <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-charcoal hover:bg-charcoal-dark text-white rounded-lg transition">
           <Upload className="w-5 h-5 mr-2" />
           {isUploading ? 'Uploading...' : 'Upload Media'}
           <input
@@ -114,20 +114,20 @@ const MediaLibrary: React.FC = () => {
       {/* Filters */}
       <div className="flex gap-4 mb-6">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate w-5 h-5" />
           <input
             type="text"
             placeholder="Search by name or tags..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate/30 rounded-lg text-charcoal focus:ring-2 focus:ring-charcoal focus:border-transparent"
           />
         </div>
-        <div className="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
+        <div className="flex bg-light-gray rounded-lg p-1 border border-slate/30">
           <button
             onClick={() => setFilterType('all')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-              filterType === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+              filterType === 'all' ? 'bg-charcoal text-white' : 'text-slate hover:text-charcoal-dark'
             }`}
           >
             All
@@ -135,7 +135,7 @@ const MediaLibrary: React.FC = () => {
           <button
             onClick={() => setFilterType('image')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-              filterType === 'image' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+              filterType === 'image' ? 'bg-charcoal text-white' : 'text-slate hover:text-charcoal-dark'
             }`}
           >
             Images
@@ -143,7 +143,7 @@ const MediaLibrary: React.FC = () => {
           <button
             onClick={() => setFilterType('video')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-              filterType === 'video' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+              filterType === 'video' ? 'bg-charcoal text-white' : 'text-slate hover:text-charcoal-dark'
             }`}
           >
             Videos
@@ -153,10 +153,10 @@ const MediaLibrary: React.FC = () => {
 
       {/* Media Grid */}
       {filteredAssets.length === 0 ? (
-        <div className="text-center py-20 bg-gray-800 rounded-lg">
-          <ImageIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-400">No media assets found</h3>
-          <p className="text-gray-500 mt-2">Upload images or videos to get started</p>
+        <div className="text-center py-20 bg-white rounded-lg border border-slate/30">
+          <ImageIcon className="w-16 h-16 text-slate mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-slate">No media assets found</h3>
+          <p className="text-slate mt-2">Upload images or videos to get started</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -164,7 +164,7 @@ const MediaLibrary: React.FC = () => {
             <div
               key={asset.id}
               onClick={() => setSelectedAsset(asset)}
-              className="group relative bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-500 transition"
+              className="group relative bg-white rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-charcoal transition border border-slate/30"
             >
               <div className="aspect-square bg-gray-900 flex items-center justify-center">
                 {asset.type === 'image' ? (
@@ -185,9 +185,9 @@ const MediaLibrary: React.FC = () => {
                 )}
               </div>
               <div className="p-2">
-                <p className="text-xs text-gray-300 truncate">{asset.name}</p>
+                <p className="text-xs text-charcoal truncate">{asset.name}</p>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-gray-500">{formatFileSize(asset.size)}</span>
+                  <span className="text-xs text-slate">{formatFileSize(asset.size)}</span>
                   {asset.source === 'ai-generated' && (
                     <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded">AI</span>
                   )}
@@ -201,11 +201,11 @@ const MediaLibrary: React.FC = () => {
       {/* Asset Detail Modal */}
       {selectedAsset && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setSelectedAsset(null)}>
-          <div className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate/30" onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-2xl font-bold text-white">{selectedAsset.name}</h3>
-                <button onClick={() => setSelectedAsset(null)} className="text-gray-400 hover:text-white">
+                <h3 className="text-2xl font-bold text-charcoal-dark">{selectedAsset.name}</h3>
+                <button onClick={() => setSelectedAsset(null)} className="text-slate hover:text-charcoal-dark">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -220,32 +220,32 @@ const MediaLibrary: React.FC = () => {
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-400">Type</p>
-                  <p className="text-white capitalize">{selectedAsset.type}</p>
+                  <p className="text-sm text-slate">Type</p>
+                  <p className="text-charcoal-dark capitalize">{selectedAsset.type}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Size</p>
-                  <p className="text-white">{formatFileSize(selectedAsset.size)}</p>
+                  <p className="text-sm text-slate">Size</p>
+                  <p className="text-charcoal-dark">{formatFileSize(selectedAsset.size)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Source</p>
-                  <p className="text-white capitalize">{selectedAsset.source.replace('-', ' ')}</p>
+                  <p className="text-sm text-slate">Source</p>
+                  <p className="text-charcoal-dark capitalize">{selectedAsset.source.replace('-', ' ')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Created</p>
-                  <p className="text-white">{new Date(selectedAsset.createdAt).toLocaleString()}</p>
+                  <p className="text-sm text-slate">Created</p>
+                  <p className="text-charcoal-dark">{new Date(selectedAsset.createdAt).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-2">Tags</p>
+                  <p className="text-sm text-slate mb-2">Tags</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedAsset.tags.length > 0 ? (
                       selectedAsset.tags.map((tag, index) => (
-                        <span key={index} className="px-2 py-1 bg-indigo-900/50 text-indigo-300 rounded text-sm">
+                        <span key={index} className="px-2 py-1 bg-charcoal/10 text-charcoal-dark rounded text-sm">
                           {tag}
                         </span>
                       ))
                     ) : (
-                      <p className="text-gray-500 text-sm">No tags</p>
+                      <p className="text-slate text-sm">No tags</p>
                     )}
                   </div>
                 </div>
@@ -255,7 +255,7 @@ const MediaLibrary: React.FC = () => {
                 <a
                   href={selectedAsset.url}
                   download={selectedAsset.name}
-                  className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
+                  className="flex items-center px-4 py-2 bg-charcoal hover:bg-charcoal-dark text-white rounded-lg transition"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download

@@ -150,8 +150,8 @@ const AppContent: React.FC = () => {
             onClick={() => setActiveView(viewName)}
             className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
                 activeView === viewName
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                    ? 'bg-charcoal text-white shadow-md'
+                    : 'text-slate hover:bg-slate/10 hover:text-charcoal-dark'
             }`}
         >
             <Icon className="w-5 h-5 mr-3" />
@@ -192,11 +192,11 @@ const AppContent: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
-            <aside className="w-64 bg-gray-800 p-4 flex flex-col justify-between border-r border-gray-700">
+        <div className="flex h-screen bg-white text-charcoal font-sans">
+            <aside className="w-64 bg-light-gray p-4 flex flex-col justify-between border-r border-slate/30">
                 <div>
                     <div className="flex items-center justify-between mb-8">
-                        <h1 className="text-xl font-bold text-white">
+                        <h1 className="text-xl font-bold text-charcoal-dark">
                            AI Content OS
                         </h1>
                         <NotificationBell />
@@ -206,7 +206,7 @@ const AppContent: React.FC = () => {
                         <SidebarItem viewName="repurpose" icon={Sparkles} label="Repurpose" />
                         <SidebarItem viewName="manage" icon={LayoutGrid} label="Manage Posts" />
                         <SidebarItem viewName="history" icon={History} label="Published" />
-                        <div className="border-t border-gray-700 my-2"></div>
+                        <div className="border-t border-slate/30 my-2"></div>
                         <SidebarItem viewName="campaigns" icon={Target} label="Campaigns" />
                         <SidebarItem viewName="media" icon={Image} label="Media Library" />
                         <SidebarItem viewName="analytics" icon={BarChart3} label="Analytics" />
@@ -214,18 +214,18 @@ const AppContent: React.FC = () => {
                     </nav>
                 </div>
                  <div className="space-y-2">
-                    <div className="text-xs p-3 bg-gray-900 rounded-lg">
-                        <p className="font-semibold text-white">Video API Key</p>
-                        <p className={`text-xs ${isApiKeyReady ? 'text-green-400' : 'text-yellow-400'}`}>
+                    <div className="text-xs p-3 bg-white border border-slate/30 rounded-lg">
+                        <p className="font-semibold text-charcoal-dark">Video API Key</p>
+                        <p className={`text-xs ${isApiKeyReady ? 'text-green-600' : 'text-yellow-600'}`}>
                             {isApiKeyReady ? 'Ready' : 'Selection required'}
                         </p>
-                        <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline text-xs mt-1 block">
+                        <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-charcoal hover:underline text-xs mt-1 block">
                             Billing info
                         </a>
                     </div>
                     <button
                         onClick={handleSelectKey}
-                        className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-400 hover:bg-gray-700 hover:text-white"
+                        className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate hover:bg-slate/10 hover:text-charcoal-dark"
                     >
                         <Settings className="w-5 h-5 mr-3" />
                         <span>Change API Key</span>

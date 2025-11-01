@@ -31,7 +31,7 @@ const NotificationBell: React.FC = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition"
+        className="relative p-2 text-slate hover:text-charcoal-dark hover:bg-slate/10 rounded-lg transition"
       >
         <Bell className="w-6 h-6" />
         {unreadCount > 0 && (
@@ -42,13 +42,13 @@ const NotificationBell: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 max-h-[600px] overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-white">Notifications</h3>
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-slate/30 z-50 max-h-[600px] overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate/30 flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-charcoal-dark">Notifications</h3>
             {notifications.length > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center"
+                className="text-xs text-charcoal-dark hover:text-charcoal flex items-center"
               >
                 <CheckCheck className="w-4 h-4 mr-1" />
                 Mark all read
@@ -59,29 +59,29 @@ const NotificationBell: React.FC = () => {
           <div className="overflow-y-auto flex-1">
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <Bell className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-400">No notifications yet</p>
+                <Bell className="w-12 h-12 text-slate mx-auto mb-2" />
+                <p className="text-slate">No notifications yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-700">
+              <div className="divide-y divide-slate/30">
                 {notifications.map(notification => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-700/50 transition ${
-                      !notification.read ? 'bg-indigo-900/20' : ''
+                    className={`p-4 hover:bg-slate/10 transition ${
+                      !notification.read ? 'bg-charcoal/10' : ''
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1 pr-2">
-                        <p className="text-white font-medium text-sm">{notification.title}</p>
-                        <p className="text-gray-400 text-sm mt-1">{notification.message}</p>
-                        <p className="text-gray-500 text-xs mt-2">{getTimeAgo(notification.createdAt)}</p>
+                        <p className="text-charcoal-dark font-medium text-sm">{notification.title}</p>
+                        <p className="text-slate text-sm mt-1">{notification.message}</p>
+                        <p className="text-slate text-xs mt-2">{getTimeAgo(notification.createdAt)}</p>
                       </div>
                       <div className="flex gap-2">
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="text-indigo-400 hover:text-indigo-300"
+                            className="text-charcoal-dark hover:text-charcoal"
                             title="Mark as read"
                           >
                             <Check className="w-4 h-4" />
@@ -89,7 +89,7 @@ const NotificationBell: React.FC = () => {
                         )}
                         <button
                           onClick={() => clearNotification(notification.id)}
-                          className="text-gray-400 hover:text-gray-300"
+                          className="text-slate hover:text-charcoal-dark"
                           title="Remove"
                         >
                           <X className="w-4 h-4" />

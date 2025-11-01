@@ -92,24 +92,24 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-white flex items-center">
+        <h2 className="text-3xl font-bold text-charcoal-dark flex items-center">
           <Sparkles className="w-8 h-8 mr-3 text-yellow-400" />
           Content Repurposer
         </h2>
-        <p className="text-gray-400 mt-2">
+        <p className="text-slate mt-2">
           Transform long-form content into multiple engaging social media posts
         </p>
       </div>
 
-      <div className="bg-gray-800 p-8 rounded-lg shadow-xl">
+      <div className="bg-white p-8 rounded-lg shadow-xl border border-slate/30">
         {/* Input Type Selection */}
         <div className="mb-6">
-          <label className="block text-md font-medium text-gray-300 mb-3">Input Source</label>
+          <label className="block text-md font-medium text-charcoal mb-3">Input Source</label>
           <div className="flex gap-4">
             <button
               onClick={() => setInputType('text')}
               className={`flex items-center px-4 py-2 rounded-lg transition ${
-                inputType === 'text' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                inputType === 'text' ? 'bg-charcoal text-white' : 'bg-gray-50 text-charcoal hover:bg-slate/10'
               }`}
             >
               <FileText className="w-4 h-4 mr-2" />
@@ -118,7 +118,7 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
             <button
               onClick={() => setInputType('url')}
               className={`flex items-center px-4 py-2 rounded-lg transition ${
-                inputType === 'url' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                inputType === 'url' ? 'bg-charcoal text-white' : 'bg-gray-50 text-charcoal hover:bg-slate/10'
               }`}
             >
               <LinkIcon className="w-4 h-4 mr-2" />
@@ -126,7 +126,7 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
             </button>
             <label
               className={`flex items-center px-4 py-2 rounded-lg transition cursor-pointer ${
-                inputType === 'file' ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                inputType === 'file' ? 'bg-charcoal text-white' : 'bg-gray-50 text-charcoal hover:bg-slate/10'
               }`}
             >
               <Upload className="w-4 h-4 mr-2" />
@@ -147,14 +147,14 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
         {/* Content Input */}
         {inputType === 'text' && (
           <div className="mb-6">
-            <label className="block text-md font-medium text-gray-300 mb-3">Long-Form Content</label>
+            <label className="block text-md font-medium text-charcoal mb-3">Long-Form Content</label>
             <textarea
               value={longFormContent}
               onChange={(e) => setLongFormContent(e.target.value)}
               placeholder="Paste your blog post, article, video transcript, or any long-form content here..."
-              className="w-full h-64 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+              className="w-full h-64 px-4 py-3 bg-white border border-slate/30 rounded-lg text-charcoal focus:ring-2 focus:ring-charcoal focus:border-transparent resize-none"
             />
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-slate mt-2">
               {longFormContent.length} characters · Minimum 500 characters recommended
             </p>
           </div>
@@ -197,15 +197,15 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
 
         {/* Platform Selection */}
         <div className="mb-6">
-          <label className="block text-md font-medium text-gray-300 mb-3">Target Platforms</label>
+          <label className="block text-md font-medium text-charcoal mb-3">Target Platforms</label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {PLATFORMS.map(({ id, name, icon: Icon }) => (
               <label
                 key={id}
                 className={`flex items-center space-x-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2 ${
                   selectedPlatforms.includes(id)
-                    ? 'bg-indigo-900/50 border-indigo-500'
-                    : 'bg-gray-700 border-transparent hover:border-gray-500'
+                    ? 'bg-charcoal/10 border-charcoal'
+                    : 'bg-gray-50 border-transparent hover:border-slate/30'
                 }`}
               >
                 <input
@@ -214,8 +214,8 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
                   onChange={() => handlePlatformChange(id)}
                   className="hidden"
                 />
-                <Icon className={`w-6 h-6 ${selectedPlatforms.includes(id) ? 'text-indigo-400' : 'text-gray-400'}`} />
-                <span className="font-medium text-white">{name}</span>
+                <Icon className={`w-6 h-6 ${selectedPlatforms.includes(id) ? 'text-charcoal-dark' : 'text-slate'}`} />
+                <span className="font-medium text-charcoal-dark">{name}</span>
               </label>
             ))}
           </div>
@@ -223,7 +223,7 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
 
         {/* Number of Posts */}
         <div className="mb-6">
-          <label className="block text-md font-medium text-gray-300 mb-3">
+          <label className="block text-md font-medium text-charcoal mb-3">
             Number of Posts to Generate: {numberOfPosts}
           </label>
           <input
@@ -232,9 +232,9 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
             max="10"
             value={numberOfPosts}
             onChange={(e) => setNumberOfPosts(parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            className="w-full h-2 bg-light-gray rounded-lg appearance-none cursor-pointer accent-charcoal"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-slate mt-1">
             <span>3 posts</span>
             <span>10 posts</span>
           </div>
@@ -246,7 +246,7 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
         <button
           onClick={handleRepurpose}
           disabled={isProcessing || !longFormContent.trim()}
-          className="w-full flex items-center justify-center py-3 px-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition font-medium"
+          className="w-full flex items-center justify-center py-3 px-6 bg-charcoal hover:bg-charcoal-dark disabled:bg-slate disabled:cursor-not-allowed text-white rounded-lg transition font-medium"
         >
           {isProcessing ? (
             <>
@@ -266,7 +266,7 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
       {generatedPosts.length > 0 && (
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold text-white">
+            <h3 className="text-2xl font-bold text-charcoal-dark">
               Generated Posts ({generatedPosts.length})
             </h3>
             <button
@@ -279,14 +279,14 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {generatedPosts.map((post, index) => (
-              <div key={post.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <div key={post.id} className="bg-white rounded-lg p-6 border border-slate/30">
                 <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-semibold text-white">Post {index + 1}</h4>
-                  <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-1 rounded">Draft</span>
+                  <h4 className="font-semibold text-charcoal-dark">Post {index + 1}</h4>
+                  <span className="text-xs bg-charcoal/10 text-charcoal-dark px-2 py-1 rounded">Draft</span>
                 </div>
-                <p className="text-gray-400 text-sm mb-3">{post.topic}</p>
-                <div className="bg-gray-700/50 p-3 rounded">
-                  <p className="text-gray-200 text-sm line-clamp-4">
+                <p className="text-slate text-sm mb-3">{post.topic}</p>
+                <div className="bg-slate/10 p-3 rounded">
+                  <p className="text-charcoal text-sm line-clamp-4">
                     {post.content[selectedPlatforms[0]] || 'No content'}
                   </p>
                 </div>
