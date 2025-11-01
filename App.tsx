@@ -4,14 +4,21 @@ import { Post, Platform } from './types';
 import ContentStrategistView from './components/ContentStrategistView';
 import ManagePosts from './components/ManagePosts';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import PublishedView from './components/HistoryView'; // Renamed component, file name is the same
+import PublishedView from './components/HistoryView';
 import ConnectedAccountsView from './components/ConnectedAccountsView';
+import MediaLibrary from './components/MediaLibrary';
+import CampaignManager from './components/CampaignManager';
+import ContentRepurposer from './components/ContentRepurposer';
+import NotificationBell from './components/NotificationBell';
+import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
 import { checkVideoOperationStatus, fetchVideo } from './services/geminiService';
-import { Edit3, LayoutGrid, BarChart3, Settings, History, Link as LinkIcon } from 'lucide-react';
+import { autoSaveAIMedia } from './services/mediaService';
+import { Edit3, LayoutGrid, BarChart3, Settings, History, Link as LinkIcon, Image, Target, Sparkles } from 'lucide-react';
 
-type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts';
+type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts' | 'media' | 'campaigns' | 'repurpose';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+    const { addNotification } = useNotifications();
     const [activeView, setActiveView] = useState<View>('create');
     const [posts, setPosts] = useState<Post[]>(() => {
         try {
@@ -89,6 +96,10 @@ const App: React.FC = () => {
                             const uri = updatedOp.response?.generatedVideos?.[0]?.video?.uri;
                             if (uri) {
                                 const videoUrl = await fetchVideo(uri);
+                                // Auto-save to media library
+                                await autoSaveAIMedia(videoUrl, 'video', post.topic);
+                                // Send notification
+                                addNotification('video_complete', 'Video Generation Complete', `Video for "${post.topic}" is ready!`, post.id);
                                 updatePost({ ...post, generatedVideoUrl: videoUrl, isGeneratingVideo: false, videoGenerationStatus: 'Completed!', videoOperation: updatedOp });
                             } else {
                                 updatePost({ ...post, isGeneratingVideo: false, videoGenerationStatus: 'Failed: No URI.', videoOperation: updatedOp });
@@ -106,7 +117,7 @@ const App: React.FC = () => {
                     });
             }
         });
-    }, [posts, updatePost]);
+    }, [posts, updatePost, addNotification]);
 
     useEffect(() => {
         const scheduleInterval = setInterval(checkScheduledPosts, 60000);
@@ -121,6 +132,13 @@ const App: React.FC = () => {
     const addPost = (post: Post) => {
         setPosts(prevPosts => [post, ...prevPosts]);
         setActiveView('manage');
+        addNotification('post_scheduled', 'New Post Created', `Post "${post.topic}" has been added to drafts.`, post.id);
+    };
+
+    const addMultiplePosts = (newPosts: Post[]) => {
+        setPosts(prevPosts => [...newPosts, ...prevPosts]);
+        setActiveView('manage');
+        addNotification('post_scheduled', 'Posts Created', `${newPosts.length} posts have been added to your drafts.`);
     };
 
     const deletePost = (postId: string) => {
@@ -162,6 +180,12 @@ const App: React.FC = () => {
                 return <AnalyticsDashboard posts={posts} />;
             case 'accounts':
                 return <ConnectedAccountsView connectedAccounts={connectedAccounts} onUpdateAccounts={setConnectedAccounts} />;
+            case 'media':
+                return <MediaLibrary />;
+            case 'campaigns':
+                return <CampaignManager posts={posts} />;
+            case 'repurpose':
+                return <ContentRepurposer onPostsCreated={addMultiplePosts} />;
             default:
                 return null;
         }
@@ -171,15 +195,20 @@ const App: React.FC = () => {
         <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
             <aside className="w-64 bg-gray-800 p-4 flex flex-col justify-between border-r border-gray-700">
                 <div>
-                    <div className="flex items-center mb-8">
+                    <div className="flex items-center justify-between mb-8">
                         <h1 className="text-xl font-bold text-white">
                            AI Content OS
                         </h1>
+                        <NotificationBell />
                     </div>
                     <nav className="space-y-2">
                         <SidebarItem viewName="create" icon={Edit3} label="Create Content" />
+                        <SidebarItem viewName="repurpose" icon={Sparkles} label="Repurpose" />
                         <SidebarItem viewName="manage" icon={LayoutGrid} label="Manage Posts" />
                         <SidebarItem viewName="history" icon={History} label="Published" />
+                        <div className="border-t border-gray-700 my-2"></div>
+                        <SidebarItem viewName="campaigns" icon={Target} label="Campaigns" />
+                        <SidebarItem viewName="media" icon={Image} label="Media Library" />
                         <SidebarItem viewName="analytics" icon={BarChart3} label="Analytics" />
                         <SidebarItem viewName="accounts" icon={LinkIcon} label="Accounts" />
                     </nav>
@@ -207,6 +236,15 @@ const App: React.FC = () => {
                 {renderViewContent()}
             </main>
         </div>
+    );
+};
+
+// Wrap AppContent with NotificationProvider
+const App: React.FC = () => {
+    return (
+        <NotificationProvider>
+            <AppContent />
+        </NotificationProvider>
     );
 };
 

@@ -169,3 +169,139 @@ export const fetchVideo = async (uri: string): Promise<string> => {
         throw error;
     }
 };
+
+// Repurpose long-form content into multiple social media posts
+export const repurposeContent = async (
+    longFormContent: string,
+    platforms: Platform[],
+    numberOfPosts: number = 5
+): Promise<Array<{ platforms: Platform[]; content: PostContent; topic: string }>> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const platformDetails = getPlatformDetails(platforms);
+
+    const prompt = `
+        You are an expert social media strategist. Your task is to repurpose the following long-form content into ${numberOfPosts} distinct, engaging social media posts.
+
+        **Long-form Content:**
+        ${longFormContent}
+
+        **Target Platforms:**
+        ${platformDetails}
+
+        Create ${numberOfPosts} unique posts. Each post should:
+        1. Focus on a different angle, key point, or insight from the content
+        2. Be tailored for the specified platforms
+        3. Include engaging hooks and calls-to-action
+        4. Have a clear, specific topic/focus
+        5. Include image and video suggestions
+
+        Return the response as a JSON array of ${numberOfPosts} post objects. Each object must have:
+        - "topic": A brief description of the post's focus
+        - "platforms": Array of platform names (${platforms.join(', ')})
+        - "content": Object with keys for each platform (${platforms.join(', ')}) plus "imageSuggestion" and "videoSuggestion"
+
+        Do not include any markdown formatting or explanatory text outside of the JSON array.
+    `;
+
+    const postSchema = {
+        type: Type.OBJECT,
+        properties: {
+            topic: { type: Type.STRING },
+            platforms: { type: Type.ARRAY, items: { type: Type.STRING } },
+            content: {
+                type: Type.OBJECT,
+                properties: {
+                    ...platforms.reduce((acc, platform) => {
+                        acc[platform] = { type: Type.STRING };
+                        return acc;
+                    }, {} as Record<string, any>),
+                    imageSuggestion: { type: Type.STRING },
+                    videoSuggestion: { type: Type.STRING },
+                },
+            },
+        },
+    };
+
+    const responseSchema = {
+        type: Type.ARRAY,
+        items: postSchema,
+    };
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText);
+    } catch (error) {
+        console.error("Error repurposing content:", error);
+        throw new Error("Failed to repurpose content. Please try again.");
+    }
+};
+
+// Generate AI engagement score and suggestions for a post
+export const generateEngagementScore = async (
+    postContent: string,
+    platform: Platform,
+    hasImage: boolean,
+    hasVideo: boolean
+): Promise<{ score: number; suggestions: string[] }> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const prompt = `
+        You are a social media analytics expert. Analyze the following post and predict its engagement potential.
+
+        **Platform:** ${platform}
+        **Has Image:** ${hasImage ? 'Yes' : 'No'}
+        **Has Video:** ${hasVideo ? 'Yes' : 'No'}
+        **Post Content:**
+        ${postContent}
+
+        Analyze the post based on:
+        - Readability and clarity
+        - Emotional appeal and sentiment
+        - Use of hashtags (if applicable)
+        - Presence of call-to-action
+        - Content length appropriateness for the platform
+        - Visual content presence
+
+        Return a JSON object with:
+        - "score": A number between 0-100 indicating predicted engagement potential
+        - "suggestions": An array of 3-5 specific, actionable suggestions to improve engagement
+
+        Do not include markdown or explanatory text outside the JSON object.
+    `;
+
+    const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+            score: { type: Type.NUMBER },
+            suggestions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        },
+        required: ['score', 'suggestions'],
+    };
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText);
+    } catch (error) {
+        console.error("Error generating engagement score:", error);
+        throw new Error("Failed to generate engagement score.");
+    }
+};
