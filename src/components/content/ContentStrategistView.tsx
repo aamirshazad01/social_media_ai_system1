@@ -58,7 +58,13 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
         try {
             const savedHistory = localStorage.getItem('socialMediaChatHistory');
             if (savedHistory) {
-                setChatHistory(JSON.parse(savedHistory));
+                const parsedHistory = JSON.parse(savedHistory);
+                // Filter out temporary threads on load
+                const cleanedHistory = parsedHistory.filter((t: ChatThread) => !t.id.startsWith('temp-'));
+                setChatHistory(cleanedHistory);
+                if (cleanedHistory.length !== parsedHistory.length) {
+                    localStorage.setItem('socialMediaChatHistory', JSON.stringify(cleanedHistory));
+                }
             }
         } catch (e) {
             console.error("Could not parse chat history from localStorage", e);
@@ -70,12 +76,36 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
         chatContainerRef.current?.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
     }, [messages]);
 
+    // Auto-save chat history after each message exchange
+    useEffect(() => {
+        if (messages.length > 1 && activeThreadId === 'new') {
+            const firstUserMessage = messages.find(m => m.role === 'user');
+            const title = firstUserMessage
+                ? firstUserMessage.content.substring(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '')
+                : 'Untitled Chat';
+
+            const tempThread: ChatThread = {
+                id: 'temp-' + Date.now(),
+                title,
+                timestamp: new Date().toISOString(),
+                messages,
+            };
+
+            setChatHistory(prevHistory => {
+                const filteredHistory = prevHistory.filter(t => !t.id.startsWith('temp-'));
+                const newHistory = [tempThread, ...filteredHistory];
+                localStorage.setItem('socialMediaChatHistory', JSON.stringify(newHistory));
+                return newHistory;
+            });
+        }
+    }, [messages, activeThreadId]);
+
     const saveCurrentChat = () => {
         if (messages.length <= 1) return;
 
         const firstUserMessage = messages.find(m => m.role === 'user');
-        const title = firstUserMessage 
-            ? firstUserMessage.content.substring(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '') 
+        const title = firstUserMessage
+            ? firstUserMessage.content.substring(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '')
             : 'Untitled Chat';
 
         const newThread: ChatThread = {
@@ -84,9 +114,11 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
             timestamp: new Date().toISOString(),
             messages,
         };
-        
+
         setChatHistory(prevHistory => {
-            const newHistory = [newThread, ...prevHistory];
+            // Remove temporary threads and add the permanent one
+            const filteredHistory = prevHistory.filter(t => !t.id.startsWith('temp-'));
+            const newHistory = [newThread, ...filteredHistory];
             localStorage.setItem('socialMediaChatHistory', JSON.stringify(newHistory));
             return newHistory;
         });
@@ -271,7 +303,7 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-charcoal' : 'bg-slate'}`}>
                     {isUser ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                 </div>
-                <div className={`p-3 rounded-lg max-w-lg text-sm ${isUser ? 'bg-charcoal text-white' : 'bg-light-gray text-charcoal'}`}>
+                <div className={`p-3 rounded-lg max-w-2xl text-base ${isUser ? 'bg-charcoal text-white' : 'bg-light-gray text-gray-900'}`}>
                     {isModel ? renderMarkdown(msg.content) : <p className="whitespace-pre-wrap">{msg.content}</p>}
                 </div>
             </div>
