@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Post } from '@/types';
 import { STATUS_CONFIG } from '@/constants';

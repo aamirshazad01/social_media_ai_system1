@@ -18,7 +18,7 @@ export const generateSocialMediaContent = async (
     contentType: ContentType,
     tone: Tone
 ): Promise<PostContent> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
 
     const platformDetails = getPlatformDetails(platforms);
 
@@ -75,7 +75,7 @@ export const generateSocialMediaContent = async (
 };
 
 export const improvePrompt = async (prompt: string, type: 'image' | 'video'): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
     const improvePromptText = `
         You are a creative prompt engineer for an advanced generative AI.
         Your task is to take a user's idea and expand it into a rich, detailed, and evocative prompt that will produce a stunning visual.
@@ -98,7 +98,7 @@ export const improvePrompt = async (prompt: string, type: 'image' | 'video'): Pr
 
 export const generateImageForPost = async (prompt: string): Promise<string> => {
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: { parts: [{ text: prompt }] },
@@ -121,7 +121,7 @@ export const generateImageForPost = async (prompt: string): Promise<string> => {
 
 export const generateVideoForPost = async (prompt: string) => {
      try {
-        const aiWithKey = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const aiWithKey = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
         let operation = await aiWithKey.models.generateVideos({
             model: 'veo-3.1-fast-generate-preview',
             prompt: prompt,
@@ -144,7 +144,7 @@ export const generateVideoForPost = async (prompt: string) => {
 
 export const checkVideoOperationStatus = async (operation: any) => {
     try {
-        const aiWithKey = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const aiWithKey = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
         const updatedOperation = await aiWithKey.operations.getVideosOperation({ operation: operation });
         return updatedOperation;
     } catch (error) {
@@ -158,7 +158,7 @@ export const checkVideoOperationStatus = async (operation: any) => {
 
 export const fetchVideo = async (uri: string): Promise<string> => {
     try {
-        const response = await fetch(`${uri}&key=${process.env.API_KEY}`);
+        const response = await fetch(`${uri}&key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch video: ${response.statusText}`);
         }
@@ -176,7 +176,7 @@ export const repurposeContent = async (
     platforms: Platform[],
     numberOfPosts: number = 5
 ): Promise<Array<{ platforms: Platform[]; content: PostContent; topic: string }>> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
 
     const platformDetails = getPlatformDetails(platforms);
 
@@ -253,7 +253,7 @@ export const generateEngagementScore = async (
     hasImage: boolean,
     hasVideo: boolean
 ): Promise<{ score: number; suggestions: string[] }> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
 
     const prompt = `
         You are a social media analytics expert. Analyze the following post and predict its engagement potential.

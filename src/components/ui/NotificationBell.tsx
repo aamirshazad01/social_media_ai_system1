@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, X, Check, CheckCheck } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';

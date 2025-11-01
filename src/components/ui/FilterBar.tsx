@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { PostStatus, Platform } from '@/types';
 import { PLATFORMS, STATUS_CONFIG } from '@/constants';

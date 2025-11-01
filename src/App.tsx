@@ -1,3 +1,4 @@
+'use client'
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Post, Platform } from '@/types';
@@ -20,25 +21,35 @@ type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts' | 'media'
 const AppContent: React.FC = () => {
     const { addNotification } = useNotifications();
     const [activeView, setActiveView] = useState<View>('create');
-    const [posts, setPosts] = useState<Post[]>(() => {
-        try {
-            const savedPosts = localStorage.getItem('socialMediaPosts');
-            return savedPosts ? JSON.parse(savedPosts) : [];
-        } catch (error) {
-            console.error("Could not parse posts from localStorage", error);
-            return [];
-        }
+    const [posts, setPosts] = useState<Post[]>([]);
+
+    const [connectedAccounts, setConnectedAccounts] = useState<Record<Platform, boolean>>({
+        twitter: false,
+        linkedin: false,
+        facebook: false,
+        instagram: false
     });
 
-    const [connectedAccounts, setConnectedAccounts] = useState<Record<Platform, boolean>>(() => {
+    // Load data from localStorage on mount (client-side only)
+    useEffect(() => {
+        try {
+            const savedPosts = localStorage.getItem('socialMediaPosts');
+            if (savedPosts) {
+                setPosts(JSON.parse(savedPosts));
+            }
+        } catch (error) {
+            console.error("Could not parse posts from localStorage", error);
+        }
+
         try {
             const savedAccounts = localStorage.getItem('connectedSocialAccounts');
-            return savedAccounts ? JSON.parse(savedAccounts) : { twitter: false, linkedin: false, facebook: false, instagram: false };
+            if (savedAccounts) {
+                setConnectedAccounts(JSON.parse(savedAccounts));
+            }
         } catch (error) {
             console.error("Could not parse connected accounts from localStorage", error);
-            return { twitter: false, linkedin: false, facebook: false, instagram: false };
         }
-    });
+    }, []);
 
 
     const [isApiKeyReady, setIsApiKeyReady] = useState(false);

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { Notification, NotificationType } from '@/types';
@@ -27,18 +29,28 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>(() => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Load notifications from localStorage only on client side after hydration
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('notifications');
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        setNotifications(JSON.parse(saved));
+      }
     } catch {
-      return [];
+      // Ignore localStorage errors
     }
-  });
+    setIsHydrated(true);
+  }, []);
 
+  // Save notifications to localStorage when they change (only after hydration)
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
-  }, [notifications]);
+    if (isHydrated) {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    }
+  }, [notifications, isHydrated]);
 
   const addNotification = useCallback((
     type: NotificationType,

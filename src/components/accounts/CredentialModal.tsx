@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Platform } from '@/types';
 import { X, AlertCircle, ExternalLink, Info } from 'lucide-react';

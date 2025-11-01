@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Post, Platform, Tone, ContentType, TONES, CONTENT_TYPES } from '@/types';
 import { PLATFORMS } from '@/constants';

@@ -5,7 +5,11 @@
       "Bash(mv:*)",
       "Bash(node update-imports.js:*)",
       "Bash(npm run build:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx tailwindcss init -p)",
+      "Bash(.gitignore)",
+      "Bash(nul)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

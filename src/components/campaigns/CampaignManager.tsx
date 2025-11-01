@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Campaign, Post } from '@/types';
 import { getAllCampaigns, createCampaign, deleteCampaign, saveCampaign } from '@/services/campaignService';

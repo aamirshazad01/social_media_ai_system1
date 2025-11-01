@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { GoogleGenAI, Chat } from '@google/genai';
 import { Post, PostContent, Platform } from '@/types';
@@ -130,7 +132,7 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
         }
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
             const newChat = ai.chats.create({
                 model: 'gemini-2.5-flash',
                 config: { systemInstruction },
