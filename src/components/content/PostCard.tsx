@@ -20,14 +20,14 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey, resetApiKeyStatus }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [editedContent, setEditedContent] = useState<PostContent>(post.content);
-    const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0]);
+    const [editedContent, setEditedContent] = useState<PostContent>(post.content ?? ({} as PostContent));
+    const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0] ?? 'twitter');
     const [isImproving, setIsImproving] = useState<{ image: boolean; video: boolean }>({ image: false, video: false });
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     useEffect(() => {
         if (!isEditing) {
-            setEditedContent(post.content);
+            setEditedContent(post.content ?? ({} as PostContent));
         }
     }, [post.content, isEditing]);
 
@@ -149,7 +149,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                     <div className="bg-slate/10 p-3 rounded-lg">
                         <textarea
                             readOnly={!isEditing}
-                            value={editedContent[activePlatform] || ''}
+                            value={editedContent?.[activePlatform] || ''}
                             onChange={(e) => handleContentChange(activePlatform, e.target.value)}
                             className={`w-full h-28 bg-transparent text-charcoal resize-none focus:outline-none text-sm ${isEditing ? 'focus:ring-2 focus:ring-charcoal rounded' : ''}`}
                         />
@@ -157,7 +157,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                     {isEditing ? (
                         <>
                             {/* EDITING VIEW FOR MEDIA */}
-                            {post.content.imageSuggestion && (
+                            {post.content?.imageSuggestion && (
                                 <div className="p-3 bg-slate/10 rounded-lg space-y-3">
                                     <label className="text-sm font-semibold text-charcoal">Image Prompt</label>
                                     <textarea
@@ -172,7 +172,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                                     {post.generatedImage && <img src={post.generatedImage} alt="Generated" className="rounded-md w-full mt-2" />}
                                 </div>
                             )}
-                            {post.content.videoSuggestion && (
+                            {post.content?.videoSuggestion && (
                                 <div className="p-3 bg-slate/10 rounded-lg space-y-3">
                                     <label className="text-sm font-semibold text-charcoal">Video Prompt</label>
                                     <textarea
@@ -198,9 +198,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                     ) : (
                         <>
                             {/* VIEWING VIEW FOR MEDIA */}
-                            {post.content.imageSuggestion && (
+                            {post.content?.imageSuggestion && (
                                 <div className="p-3 bg-slate/10 rounded-lg space-y-2">
-                                    <p className="text-xs text-slate italic">"{post.content.imageSuggestion}"</p>
+                                    <p className="text-xs text-slate italic">"{post.content?.imageSuggestion}"</p>
                                     {post.generatedImage ? (
                                         <img src={post.generatedImage} alt="Generated" className="rounded-md w-full" />
                                     ) : (
@@ -214,9 +214,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                                     )}
                                 </div>
                             )}
-                            {post.content.videoSuggestion && (
+                            {post.content?.videoSuggestion && (
                                 <div className="p-3 bg-slate/10 rounded-lg space-y-2">
-                                    <p className="text-xs text-slate italic">"{post.content.videoSuggestion}"</p>
+                                    <p className="text-xs text-slate italic">"{post.content?.videoSuggestion}"</p>
                                     {post.generatedVideoUrl ? (
                                         <div className="relative">
                                             <video src={post.generatedVideoUrl} controls className="rounded-md w-full" />

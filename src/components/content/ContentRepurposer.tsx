@@ -289,7 +289,7 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
                 <p className="text-slate text-sm mb-3">{post.topic}</p>
                 <div className="bg-slate/10 p-3 rounded">
                   <p className="text-charcoal text-sm line-clamp-4">
-                    {post.content[selectedPlatforms[0]] || 'No content'}
+                    {post?.content?.[selectedPlatforms?.[0]] ?? 'No content'}
                   </p>
                 </div>
               </div>

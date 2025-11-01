@@ -11,6 +11,61 @@ const getPlatformDetails = (platforms: Platform[]) => {
     }).join('\n');
 };
 
+// Robustly parse JSON from model text output, handling code fences and extra text
+const parseJsonFromText = <T = any>(text: string): T => {
+    if (!text) {
+        throw new Error('Empty JSON response');
+    }
+    let cleaned = text.trim();
+    // Strip common code fences
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+    // Quick attempt
+    try {
+        return JSON.parse(cleaned) as T;
+    } catch {}
+    // Extract first balanced JSON block ({...} or [...])
+    const firstBrace = cleaned.indexOf('{');
+    const firstBracket = cleaned.indexOf('[');
+    let start = -1;
+    let openChar = '';
+    if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+        start = firstBracket;
+        openChar = '[';
+    } else if (firstBrace !== -1) {
+        start = firstBrace;
+        openChar = '{';
+    }
+    if (start === -1) {
+        throw new Error('No JSON found in response');
+    }
+    const closeChar = openChar === '[' ? ']' : '}';
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for (let i = start; i < cleaned.length; i++) {
+        const ch = cleaned[i];
+        if (inString) {
+            if (!escape && ch === '"') inString = false;
+            escape = !escape && ch === '\\';
+        } else {
+            if (ch === '"') {
+                inString = true;
+            } else if (ch === openChar) {
+                depth++;
+            } else if (ch === closeChar) {
+                depth--;
+                if (depth === 0) {
+                    const candidate = cleaned.slice(start, i + 1);
+                    // Remove trailing commas before closing braces/brackets
+                    const fixed = candidate.replace(/,\s*([}\]])/g, '$1');
+                    return JSON.parse(fixed) as T;
+                }
+            }
+        }
+    }
+    throw new Error('Failed to extract valid JSON');
+};
+
 // Fix: Implement the missing generateSocialMediaContent function.
 export const generateSocialMediaContent = async (
     topic: string,
@@ -66,7 +121,7 @@ export const generateSocialMediaContent = async (
             },
         });
         const jsonText = (response.text ?? '').trim();
-        return JSON.parse(jsonText);
+        return parseJsonFromText(jsonText);
     } catch (error) {
         console.error("Error generating social media content:", error);
         throw new Error("Failed to generate content. Please try again.");
@@ -242,7 +297,7 @@ export const repurposeContent = async (
             },
         });
         const jsonText = (response.text ?? '').trim();
-        return JSON.parse(jsonText);
+        return parseJsonFromText(jsonText);
     } catch (error) {
         console.error("Error repurposing content:", error);
         throw new Error("Failed to repurpose content. Please try again.");
@@ -301,7 +356,7 @@ export const generateEngagementScore = async (
             },
         });
         const jsonText = (response.text ?? '').trim();
-        return JSON.parse(jsonText);
+        return parseJsonFromText(jsonText);
     } catch (error) {
         console.error("Error generating engagement score:", error);
         throw new Error("Failed to generate engagement score.");

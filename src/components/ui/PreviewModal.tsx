@@ -11,7 +11,7 @@ interface PreviewModalProps {
 }
 
 const PreviewModal: React.FC<PreviewModalProps> = ({ post, onClose }) => {
-    const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0]);
+    const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0] ?? 'twitter');
 
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -27,7 +27,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ post, onClose }) => {
         const platformInfo = PLATFORMS.find(p => p.id === platform);
         if (!platformInfo) return null;
 
-        const content = post.content[platform] || '';
+        const content = post.content?.[platform] || '';
         const hasGeneratedMedia = post.generatedImage || post.generatedVideoUrl;
 
         return (
@@ -48,12 +48,12 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ post, onClose }) => {
                     <img src={post.generatedImage} alt="Generated content" className="rounded-lg w-full border border-slate/30 mb-4" />
                 ) : post.generatedVideoUrl ? (
                     <video src={post.generatedVideoUrl} controls className="rounded-lg w-full border border-slate/30 mb-4" />
-                ) : post.content.imageSuggestion ? (
+                ) : post.content?.imageSuggestion ? (
                     <div className="bg-white rounded-lg w-full aspect-video flex flex-col items-center justify-center text-slate p-4 mb-4 border border-slate/30">
                          <ImageIcon className="w-12 h-12 mb-2" />
                          <p className="text-center text-xs italic">Image will be generated for: "{post.content.imageSuggestion}"</p>
                     </div>
-                ) : post.content.videoSuggestion && (
+                ) : post.content?.videoSuggestion && (
                     <div className="bg-white rounded-lg w-full aspect-video flex flex-col items-center justify-center text-slate p-4 mb-4 border border-slate/30">
                          <VideoIcon className="w-12 h-12 mb-2" />
                          <p className="text-center text-xs italic">Video will be generated for: "{post.content.videoSuggestion}"</p>

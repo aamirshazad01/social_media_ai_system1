@@ -997,6 +997,60 @@ const getPlatformDetails = (platforms)=>{
         return `- ${platformInfo?.name}: Be mindful of its audience and character limit of ${platformInfo?.characterLimit}.`;
     }).join('\n');
 };
+// Robustly parse JSON from model text output, handling code fences and extra text
+const parseJsonFromText = (text)=>{
+    if (!text) {
+        throw new Error('Empty JSON response');
+    }
+    let cleaned = text.trim();
+    // Strip common code fences
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+    // Quick attempt
+    try {
+        return JSON.parse(cleaned);
+    } catch  {}
+    // Extract first balanced JSON block ({...} or [...])
+    const firstBrace = cleaned.indexOf('{');
+    const firstBracket = cleaned.indexOf('[');
+    let start = -1;
+    let openChar = '';
+    if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+        start = firstBracket;
+        openChar = '[';
+    } else if (firstBrace !== -1) {
+        start = firstBrace;
+        openChar = '{';
+    }
+    if (start === -1) {
+        throw new Error('No JSON found in response');
+    }
+    const closeChar = openChar === '[' ? ']' : '}';
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for(let i = start; i < cleaned.length; i++){
+        const ch = cleaned[i];
+        if (inString) {
+            if (!escape && ch === '"') inString = false;
+            escape = !escape && ch === '\\';
+        } else {
+            if (ch === '"') {
+                inString = true;
+            } else if (ch === openChar) {
+                depth++;
+            } else if (ch === closeChar) {
+                depth--;
+                if (depth === 0) {
+                    const candidate = cleaned.slice(start, i + 1);
+                    // Remove trailing commas before closing braces/brackets
+                    const fixed = candidate.replace(/,\s*([}\]])/g, '$1');
+                    return JSON.parse(fixed);
+                }
+            }
+        }
+    }
+    throw new Error('Failed to extract valid JSON');
+};
 const generateSocialMediaContent = async (topic, platforms, contentType, tone)=>{
     const ai = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$google$2f$genai$2f$dist$2f$web$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["GoogleGenAI"]({
         apiKey: ("TURBOPACK compile-time value", "AIzaSyAKztOeoF7i42xaQ5tHKC18jrQZl4IS91o") || __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.API_KEY
@@ -1056,7 +1110,7 @@ const generateSocialMediaContent = async (topic, platforms, contentType, tone)=>
             }
         });
         const jsonText = (response.text ?? '').trim();
-        return JSON.parse(jsonText);
+        return parseJsonFromText(jsonText);
     } catch (error) {
         console.error("Error generating social media content:", error);
         throw new Error("Failed to generate content. Please try again.");
@@ -1248,7 +1302,7 @@ const repurposeContent = async (longFormContent, platforms, numberOfPosts = 5)=>
             }
         });
         const jsonText = (response.text ?? '').trim();
-        return JSON.parse(jsonText);
+        return parseJsonFromText(jsonText);
     } catch (error) {
         console.error("Error repurposing content:", error);
         throw new Error("Failed to repurpose content. Please try again.");
@@ -1309,7 +1363,7 @@ const generateEngagementScore = async (postContent, platform, hasImage, hasVideo
             }
         });
         const jsonText = (response.text ?? '').trim();
-        return JSON.parse(jsonText);
+        return parseJsonFromText(jsonText);
     } catch (error) {
         console.error("Error generating engagement score:", error);
         throw new Error("Failed to generate engagement score.");
@@ -1506,7 +1560,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 const PreviewModal = ({ post, onClose })=>{
     _s();
-    const [activePlatform, setActivePlatform] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(post.platforms[0]);
+    const [activePlatform, setActivePlatform] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(post.platforms[0] ?? 'twitter');
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "PreviewModal.useEffect": ()=>{
             const handleEsc = {
@@ -1527,7 +1581,7 @@ const PreviewModal = ({ post, onClose })=>{
     const PlatformPreview = ({ platform })=>{
         const platformInfo = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$constants$2f$index$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["PLATFORMS"].find((p)=>p.id === platform);
         if (!platformInfo) return null;
-        const content = post.content[platform] || '';
+        const content = post.content?.[platform] || '';
         const hasGeneratedMedia = post.generatedImage || post.generatedVideoUrl;
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "bg-light-gray rounded-lg p-4 w-full max-w-lg mx-auto border border-slate/30",
@@ -1601,7 +1655,7 @@ const PreviewModal = ({ post, onClose })=>{
                     fileName: "[project]/src/components/ui/PreviewModal.tsx",
                     lineNumber: 50,
                     columnNumber: 21
-                }, ("TURBOPACK compile-time value", void 0)) : post.content.imageSuggestion ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                }, ("TURBOPACK compile-time value", void 0)) : post.content?.imageSuggestion ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "bg-white rounded-lg w-full aspect-video flex flex-col items-center justify-center text-slate p-4 mb-4 border border-slate/30",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Image$3e$__["Image"], {
@@ -1628,7 +1682,7 @@ const PreviewModal = ({ post, onClose })=>{
                     fileName: "[project]/src/components/ui/PreviewModal.tsx",
                     lineNumber: 52,
                     columnNumber: 21
-                }, ("TURBOPACK compile-time value", void 0)) : post.content.videoSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                }, ("TURBOPACK compile-time value", void 0)) : post.content?.videoSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "bg-white rounded-lg w-full aspect-video flex flex-col items-center justify-center text-slate p-4 mb-4 border border-slate/30",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$video$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Video$3e$__["Video"], {
@@ -1893,7 +1947,7 @@ const PreviewModal = ({ post, onClose })=>{
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };
-_s(PreviewModal, "cvvlAPqxg8LkmU5uou6v7DRpqgQ=");
+_s(PreviewModal, "utT9G9nsVhT94s0amrJgj9jRBTk=");
 _c = PreviewModal;
 const __TURBOPACK__default__export__ = PreviewModal;
 var _c;
@@ -1941,8 +1995,8 @@ var _s = __turbopack_context__.k.signature();
 const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey, resetApiKeyStatus })=>{
     _s();
     const [isEditing, setIsEditing] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [editedContent, setEditedContent] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(post.content);
-    const [activePlatform, setActivePlatform] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(post.platforms[0]);
+    const [editedContent, setEditedContent] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(post.content ?? {});
+    const [activePlatform, setActivePlatform] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(post.platforms[0] ?? 'twitter');
     const [isImproving, setIsImproving] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
         image: false,
         video: false
@@ -1951,7 +2005,7 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "PostCard.useEffect": ()=>{
             if (!isEditing) {
-                setEditedContent(post.content);
+                setEditedContent(post.content ?? {});
             }
         }
     }["PostCard.useEffect"], [
@@ -2188,7 +2242,7 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
                                 className: "bg-slate/10 p-3 rounded-lg",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
                                     readOnly: !isEditing,
-                                    value: editedContent[activePlatform] || '',
+                                    value: editedContent?.[activePlatform] || '',
                                     onChange: (e)=>handleContentChange(activePlatform, e.target.value),
                                     className: `w-full h-28 bg-transparent text-charcoal resize-none focus:outline-none text-sm ${isEditing ? 'focus:ring-2 focus:ring-charcoal rounded' : ''}`
                                 }, void 0, false, {
@@ -2203,7 +2257,7 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
                             }, ("TURBOPACK compile-time value", void 0)),
                             isEditing ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                 children: [
-                                    post.content.imageSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    post.content?.imageSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "p-3 bg-slate/10 rounded-lg space-y-3",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -2269,7 +2323,7 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
                                         lineNumber: 161,
                                         columnNumber: 33
                                     }, ("TURBOPACK compile-time value", void 0)),
-                                    post.content.videoSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    post.content?.videoSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "p-3 bg-slate/10 rounded-lg space-y-3",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -2361,14 +2415,14 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
                                 ]
                             }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                 children: [
-                                    post.content.imageSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    post.content?.imageSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "p-3 bg-slate/10 rounded-lg space-y-2",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 className: "text-xs text-slate italic",
                                                 children: [
                                                     '"',
-                                                    post.content.imageSuggestion,
+                                                    post.content?.imageSuggestion,
                                                     '"'
                                                 ]
                                             }, void 0, true, {
@@ -2401,14 +2455,14 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
                                         lineNumber: 202,
                                         columnNumber: 33
                                     }, ("TURBOPACK compile-time value", void 0)),
-                                    post.content.videoSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    post.content?.videoSuggestion && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "p-3 bg-slate/10 rounded-lg space-y-2",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 className: "text-xs text-slate italic",
                                                 children: [
                                                     '"',
-                                                    post.content.videoSuggestion,
+                                                    post.content?.videoSuggestion,
                                                     '"'
                                                 ]
                                             }, void 0, true, {
@@ -2661,7 +2715,7 @@ const PostCard = ({ post, onUpdatePost, onDeletePost, isApiKeyReady, onSelectKey
         ]
     }, void 0, true);
 };
-_s(PostCard, "NZ1gGEv1QgrlBU9zI2WCHpsdXas=");
+_s(PostCard, "J4v0m3GTMUIWjUvX9tpPrvaeFCA=");
 _c = PostCard;
 const __TURBOPACK__default__export__ = PostCard;
 var _c;
@@ -8276,7 +8330,7 @@ const ContentRepurposer = ({ onPostsCreated })=>{
                                         className: "bg-slate/10 p-3 rounded",
                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                             className: "text-charcoal text-sm line-clamp-4",
-                                            children: post.content[selectedPlatforms[0]] || 'No content'
+                                            children: post?.content?.[selectedPlatforms?.[0]] ?? 'No content'
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/content/ContentRepurposer.tsx",
                                             lineNumber: 291,
