@@ -65,8 +65,7 @@ export const generateSocialMediaContent = async (
                 responseSchema: responseSchema,
             },
         });
-        
-        const jsonText = response.text.trim();
+        const jsonText = (response.text ?? '').trim();
         return JSON.parse(jsonText);
     } catch (error) {
         console.error("Error generating social media content:", error);
@@ -89,7 +88,7 @@ export const improvePrompt = async (prompt: string, type: 'image' | 'video'): Pr
             model: "gemini-2.5-flash",
             contents: improvePromptText,
         });
-        return response.text.trim();
+        return (response.text ?? '').trim();
     } catch (error) {
         console.error("Error improving prompt:", error);
         throw new Error("Failed to improve prompt.");
@@ -105,9 +104,14 @@ export const generateImageForPost = async (prompt: string): Promise<string> => {
             config: { responseModalities: [Modality.IMAGE] },
         });
 
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                const base64ImageBytes: string = part.inlineData.data;
+        const candidates = response.candidates ?? []
+        if (candidates.length === 0) {
+            throw new Error('No candidates in response')
+        }
+        const parts = candidates[0]?.content?.parts ?? []
+        for (const part of parts) {
+            if (part.inlineData && part.inlineData.data) {
+                const base64ImageBytes: string = part.inlineData.data as string;
                 return `data:image/png;base64,${base64ImageBytes}`;
             }
         }
@@ -237,8 +241,7 @@ export const repurposeContent = async (
                 responseSchema: responseSchema,
             },
         });
-
-        const jsonText = response.text.trim();
+        const jsonText = (response.text ?? '').trim();
         return JSON.parse(jsonText);
     } catch (error) {
         console.error("Error repurposing content:", error);
@@ -297,8 +300,7 @@ export const generateEngagementScore = async (
                 responseSchema: responseSchema,
             },
         });
-
-        const jsonText = response.text.trim();
+        const jsonText = (response.text ?? '').trim();
         return JSON.parse(jsonText);
     } catch (error) {
         console.error("Error generating engagement score:", error);

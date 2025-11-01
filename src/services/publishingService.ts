@@ -1,4 +1,4 @@
-import { Platform, Post, PostContent } from '@/types';
+import { Platform, Post, PostContent, TwitterCredentials, LinkedInCredentials, FacebookCredentials, InstagramCredentials } from '@/types';
 import { getPlatformCredentials } from './credentialService';
 import { postTweet, uploadTwitterMedia } from './platforms/twitterService';
 import { postToLinkedIn } from './platforms/linkedinService';
@@ -47,7 +47,7 @@ export async function publishToSinglePlatform(
           console.log('Twitter media upload would happen here');
         }
 
-        result = await postTweet(credentials, {
+        result = await postTweet(credentials as TwitterCredentials, {
           text: content,
           mediaIds
         });
@@ -55,7 +55,7 @@ export async function publishToSinglePlatform(
       }
 
       case 'linkedin': {
-        result = await postToLinkedIn(credentials, {
+        result = await postToLinkedIn(credentials as LinkedInCredentials, {
           text: content,
           visibility: 'PUBLIC',
           mediaUrl
@@ -64,7 +64,7 @@ export async function publishToSinglePlatform(
       }
 
       case 'facebook': {
-        result = await postToFacebook(credentials, {
+        result = await postToFacebook(credentials as FacebookCredentials, {
           message: content,
           imageUrl: mediaUrl
         });
@@ -80,7 +80,7 @@ export async function publishToSinglePlatform(
           };
         }
 
-        result = await postToInstagram(credentials, {
+        result = await postToInstagram(credentials as InstagramCredentials, {
           caption: content,
           imageUrl: mediaUrl
         });
@@ -98,7 +98,7 @@ export async function publishToSinglePlatform(
     return {
       platform,
       success: result.success,
-      postId: result.postId,
+      postId: (result as any).postId ?? (result as any).tweetId,
       url: result.url,
       error: result.error
     };

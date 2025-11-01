@@ -26,9 +26,15 @@ const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDe
                 return matchesSearch && matchesPlatform;
             })
             .sort((a, b) => {
-                const statusOrder = { 'ready to publish': 1, 'scheduled': 2, 'published': 3 };
-                if (statusOrder[a.status] !== statusOrder[b.status]) {
-                    return statusOrder[a.status] - statusOrder[b.status];
+                const statusOrder: Partial<Record<PostStatus, number>> = {
+                    'ready to publish': 1,
+                    'scheduled': 2,
+                    'published': 3,
+                };
+                const weightA = statusOrder[a.status] ?? 99;
+                const weightB = statusOrder[b.status] ?? 99;
+                if (weightA !== weightB) {
+                    return weightA - weightB;
                 }
                 const dateA = a.publishedAt || a.scheduledAt || a.createdAt;
                 const dateB = b.publishedAt || b.scheduledAt || b.createdAt;

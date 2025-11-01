@@ -121,7 +121,8 @@ export type NotificationType =
   | 'approval_needed'
   | 'comment_added'
   | 'insight_available'
-  | 'queue_published';
+  | 'queue_published'
+  | 'error';
 
 export interface Notification {
   id: string;
@@ -147,12 +148,12 @@ export interface AIInsight {
 }
 
 // Social Media Platform Credentials
-export interface PlatformCredentials {
-  twitter?: TwitterCredentials;
-  linkedin?: LinkedInCredentials;
-  facebook?: FacebookCredentials;
-  instagram?: InstagramCredentials;
-}
+export type PlatformCredentials = Partial<
+  Record<
+    Platform,
+    TwitterCredentials | LinkedInCredentials | FacebookCredentials | InstagramCredentials
+  >
+>
 
 export interface TwitterCredentials {
   apiKey: string;

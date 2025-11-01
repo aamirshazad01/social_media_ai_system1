@@ -1,0 +1,10 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/twitter/auth/route": "/api/twitter/auth",
+  "/api/twitter/callback/route": "/api/twitter/callback",
+  "/api/twitter/post/route": "/api/twitter/post",
+  "/api/twitter/upload-media/route": "/api/twitter/upload-media",
+  "/api/twitter/verify/route": "/api/twitter/verify",
+  "/page": "/"
+}

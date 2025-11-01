@@ -1,0 +1,92 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/auth",
+      "regex": "^/api/twitter/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/auth(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/callback",
+      "regex": "^/api/twitter/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/callback(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/post",
+      "regex": "^/api/twitter/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/post(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/upload-media",
+      "regex": "^/api/twitter/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/verify",
+      "regex": "^/api/twitter/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/verify(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

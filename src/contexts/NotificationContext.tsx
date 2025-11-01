@@ -1,56 +1,60 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import { Notification, NotificationType } from '@/types';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
+import { Notification, NotificationType } from '@/types'
 
 interface NotificationContextType {
-  notifications: Notification[];
-  addNotification: (type: NotificationType, title: string, message: string, postId?: string) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearNotification: (id: string) => void;
-  clearAllNotifications: () => void;
-  unreadCount: number;
+  notifications: Notification[]
+  addNotification: (type: NotificationType, title: string, message: string, postId?: string) => void
+  markAsRead: (id: string) => void
+  markAllAsRead: () => void
+  clearNotification: (id: string) => void
+  clearAllNotifications: () => void
+  unreadCount: number
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
 export const useNotifications = () => {
-  const context = useContext(NotificationContext);
+  const context = useContext(NotificationContext)
   if (!context) {
-    throw new Error('useNotifications must be used within NotificationProvider');
+    throw new Error('useNotifications must be used within NotificationProvider')
   }
-  return context;
-};
+  return context
+}
 
 interface NotificationProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
 
-  // Load notifications from localStorage only on client side after hydration
+  // Hydrate from localStorage on client
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('notifications');
+      const saved = localStorage.getItem('notifications')
       if (saved) {
-        setNotifications(JSON.parse(saved));
+        setNotifications(JSON.parse(saved))
       }
     } catch {
-      // Ignore localStorage errors
+      // ignore
     }
-    setIsHydrated(true);
-  }, []);
+    setIsHydrated(true)
+  }, [])
 
-  // Save notifications to localStorage when they change (only after hydration)
+  // Persist to localStorage
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
+      try {
+        localStorage.setItem('notifications', JSON.stringify(notifications))
+      } catch {
+        // ignore
+      }
     }
-  }, [notifications, isHydrated]);
+  }, [notifications, isHydrated])
 
   const addNotification = useCallback((
     type: NotificationType,
@@ -66,37 +70,35 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       postId,
       read: false,
       createdAt: new Date().toISOString(),
-    };
+    }
 
-    setNotifications(prev => [notification, ...prev]);
+    setNotifications(prev => [notification, ...prev])
 
-    // Show toast notification
-    const emoji = getEmojiForType(type);
+    // Toast UI
+    const emoji = getEmojiForType(type)
     toast.success(`${emoji} ${title}`, {
       duration: 4000,
       position: 'top-right',
-    });
-  }, []);
+    })
+  }, [])
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev =>
-      prev.map(notif => (notif.id === id ? { ...notif, read: true } : notif))
-    );
-  }, []);
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)))
+  }, [])
 
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-  }, []);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }, [])
 
   const clearNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  }, []);
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }, [])
 
   const clearAllNotifications = useCallback(() => {
-    setNotifications([]);
-  }, []);
+    setNotifications([])
+  }, [])
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length
 
   return (
     <NotificationContext.Provider
@@ -113,19 +115,21 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       {children}
       <Toaster />
     </NotificationContext.Provider>
-  );
-};
+  )
+}
 
 function getEmojiForType(type: NotificationType): string {
   const emojiMap: Record<NotificationType, string> = {
     video_complete: '🎬',
     image_complete: '🖼️',
-    post_scheduled: '📅',
-    post_published: '🚀',
-    approval_needed: '⚠️',
+    post_scheduled: '⏰',
+    post_published: '✅',
+    approval_needed: '📝',
     comment_added: '💬',
     insight_available: '💡',
     queue_published: '📤',
-  };
-  return emojiMap[type] || '🔔';
+    error: '⚠️',
+  }
+  return emojiMap[type] || '🔔'
 }
+
