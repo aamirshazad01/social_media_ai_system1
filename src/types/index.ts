@@ -145,3 +145,61 @@ export interface AIInsight {
   dataPoints?: Record<string, any>;
   createdAt: string;
 }
+
+// Social Media Platform Credentials
+export interface PlatformCredentials {
+  twitter?: TwitterCredentials;
+  linkedin?: LinkedInCredentials;
+  facebook?: FacebookCredentials;
+  instagram?: InstagramCredentials;
+}
+
+export interface TwitterCredentials {
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessTokenSecret: string;
+  isConnected: boolean;
+  username?: string;
+  connectedAt?: string;
+}
+
+export interface LinkedInCredentials {
+  clientId: string;
+  clientSecret: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  isConnected: boolean;
+  profileId?: string;
+  profileName?: string;
+  connectedAt?: string;
+}
+
+export interface FacebookCredentials {
+  appId: string;
+  appSecret: string;
+  accessToken: string;
+  pageId?: string;
+  pageName?: string;
+  expiresAt?: string;
+  isConnected: boolean;
+  connectedAt?: string;
+}
+
+export interface InstagramCredentials {
+  accessToken: string;
+  userId?: string;
+  username?: string;
+  expiresAt?: string;
+  isConnected: boolean;
+  connectedAt?: string;
+}
+
+export interface AccountConnection {
+  platform: Platform;
+  isConnected: boolean;
+  username?: string;
+  lastVerified?: string;
+  error?: string;
+}

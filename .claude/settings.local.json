@@ -4,7 +4,8 @@
       "Bash(npm install:*)",
       "Bash(mv:*)",
       "Bash(node update-imports.js:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
