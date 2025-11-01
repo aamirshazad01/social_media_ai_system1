@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MediaAsset } from '../types';
+import { MediaAsset } from '@/types';
 import {
   getAllMediaAssets,
   deleteMediaAsset,
@@ -7,7 +7,7 @@ import {
   updateMediaTags,
   searchMediaByTags,
   getStorageStats,
-} from '../services/mediaService';
+} from '@/services/mediaService';
 import { Upload, Search, Trash2, Tag, Image as ImageIcon, Video, Download, X, Filter } from 'lucide-react';
 
 const MediaLibrary: React.FC = () => {

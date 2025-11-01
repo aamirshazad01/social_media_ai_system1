@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { Post, PostStatus, Platform } from '../types';
-import FilterBar from './FilterBar';
-import PublishedCard from './HistoryCard';
+import { Post, PostStatus, Platform } from '@/types';
+import FilterBar from '@/components/ui/FilterBar';
+import PublishedCard from '@/components/history/HistoryCard';
 
 interface PublishedViewProps {
     posts: Post[];

@@ -1,4 +1,4 @@
-import { ContentQueue, QueueSchedule } from '../types';
+import { ContentQueue, QueueSchedule } from '@/types';
 
 const STORAGE_KEY = 'contentQueues';
 

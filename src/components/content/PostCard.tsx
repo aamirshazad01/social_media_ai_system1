@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Post, Platform, PostContent } from '../types';
-import { PLATFORMS, STATUS_CONFIG } from '../constants';
-import { generateImageForPost, generateVideoForPost, improvePrompt } from '../services/geminiService';
-import { autoSaveAIMedia } from '../services/mediaService';
+import { Post, Platform, PostContent } from '@/types';
+import { PLATFORMS, STATUS_CONFIG } from '@/constants';
+import { generateImageForPost, generateVideoForPost, improvePrompt } from '@/services/api/geminiService';
+import { autoSaveAIMedia } from '@/services/mediaService';
 import { Loader2, Video, Image as ImageIcon, Edit, Save, Trash2, Send, CheckCircle, AlertTriangle, ExternalLink, Sparkles, Eye, X, ArrowRightCircle } from 'lucide-react';
-import PreviewModal from './PreviewModal';
+import PreviewModal from '@/components/ui/PreviewModal';
 
 interface PostCardProps {
     post: Post;

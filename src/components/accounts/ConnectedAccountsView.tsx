@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Platform } from '../types';
-import { PLATFORMS } from '../constants';
+import { Platform } from '@/types';
+import { PLATFORMS } from '@/constants';
 import { CheckCircle, Link } from 'lucide-react';
 
 interface ConnectedAccountsViewProps {

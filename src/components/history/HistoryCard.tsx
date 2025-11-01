@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Post, Platform } from '../types';
-import { PLATFORMS, STATUS_CONFIG } from '../constants';
+import { Post, Platform } from '@/types';
+import { PLATFORMS, STATUS_CONFIG } from '@/constants';
 import { Link as LinkIcon, Globe, Send, Clock, X, Trash2 } from 'lucide-react';
 
 interface PublishedCardProps {

@@ -1,8 +1,8 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 // Fix: Add PostContent, Tone, and ContentType to imports for the new function.
-import { Platform, Tone, ContentType, PostContent } from '../types';
-import { PLATFORMS } from '../constants';
+import { Platform, Tone, ContentType, PostContent } from '@/types';
+import { PLATFORMS } from '@/constants';
 
 const getPlatformDetails = (platforms: Platform[]) => {
     return platforms.map(p => {

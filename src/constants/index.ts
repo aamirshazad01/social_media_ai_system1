@@ -1,8 +1,8 @@
 
 // Fix: Import React to resolve namespace errors for React types.
 import React from 'react';
-import { Platform, PostStatus } from './types';
-import { TwitterIcon, LinkedinIcon, FacebookIcon, InstagramIcon } from './components/icons/PlatformIcons';
+import { Platform, PostStatus } from '@/types';
+import { TwitterIcon, LinkedinIcon, FacebookIcon, InstagramIcon } from '@/components/icons/PlatformIcons';
 
 export const PLATFORMS: { id: Platform; name: string; icon: React.FC<React.SVGProps<SVGSVGElement>>; characterLimit: number }[] = [
     { id: 'twitter', name: 'Twitter/X', icon: TwitterIcon, characterLimit: 280 },

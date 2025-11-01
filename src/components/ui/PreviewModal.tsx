@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Post, Platform } from '../types';
-import { PLATFORMS } from '../constants';
+import { Post, Platform } from '@/types';
+import { PLATFORMS } from '@/constants';
 import { X, ThumbsUp, MessageCircle, Repeat, Send, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 
 interface PreviewModalProps {

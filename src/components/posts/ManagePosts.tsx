@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { Post, PostStatus, Platform } from '../types';
-import PostCard from './PostCard';
-import FilterBar from './FilterBar';
-import CalendarView from './CalendarView';
+import { Post, PostStatus, Platform } from '@/types';
+import PostCard from '@/components/content/PostCard';
+import FilterBar from '@/components/ui/FilterBar';
+import CalendarView from '@/components/calendar/CalendarView';
 import { LayoutGrid, Calendar } from 'lucide-react';
 
 interface ManagePostsProps {

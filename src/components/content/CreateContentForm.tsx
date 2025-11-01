@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Post, Platform, Tone, ContentType, TONES, CONTENT_TYPES } from '../types';
-import { PLATFORMS } from '../constants';
-import { generateSocialMediaContent } from '../services/geminiService';
+import { Post, Platform, Tone, ContentType, TONES, CONTENT_TYPES } from '@/types';
+import { PLATFORMS } from '@/constants';
+import { generateSocialMediaContent } from '@/services/api/geminiService';
 import { Loader2 } from 'lucide-react';
 
 interface CreateContentFormProps {

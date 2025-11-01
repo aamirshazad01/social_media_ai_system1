@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { Notification, NotificationType } from '../types';
+import { Notification, NotificationType } from '@/types';
 
 interface NotificationContextType {
   notifications: Notification[];

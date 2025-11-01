@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Post, Platform } from '../types';
-import { PLATFORMS } from '../constants';
-import { repurposeContent } from '../services/geminiService';
+import { Post, Platform } from '@/types';
+import { PLATFORMS } from '@/constants';
+import { repurposeContent } from '@/services/api/geminiService';
 import { Sparkles, Loader2, FileText, Link as LinkIcon, Upload } from 'lucide-react';
 
 interface ContentRepurposerProps {

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { GoogleGenAI, Chat } from '@google/genai';
-import { Post, PostContent, Platform } from '../types';
-import { PLATFORMS } from '../constants';
+import { Post, PostContent, Platform } from '@/types';
+import { PLATFORMS } from '@/constants';
 import { Send, Bot, User, Loader2, CheckCircle, PlusCircle, History, PanelLeftClose } from 'lucide-react';
 
 interface ContentStrategistViewProps {

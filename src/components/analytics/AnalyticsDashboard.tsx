@@ -1,8 +1,8 @@
 
 import React, { useMemo } from 'react';
-import { Post, Platform, PostStatus } from '../types';
+import { Post, Platform, PostStatus } from '@/types';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { PLATFORMS, STATUS_CONFIG } from '../constants';
+import { PLATFORMS, STATUS_CONFIG } from '@/constants';
 
 interface AnalyticsDashboardProps {
     posts: Post[];

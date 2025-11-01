@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Campaign, Post } from '../types';
-import { getAllCampaigns, createCampaign, deleteCampaign, saveCampaign } from '../services/campaignService';
+import { Campaign, Post } from '@/types';
+import { getAllCampaigns, createCampaign, deleteCampaign, saveCampaign } from '@/services/campaignService';
 import { Plus, Trash2, Edit, Target, Calendar, TrendingUp, X } from 'lucide-react';
 
 interface CampaignManagerProps {

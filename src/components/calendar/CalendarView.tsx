@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Post } from '../types';
-import { STATUS_CONFIG } from '../constants';
+import { Post } from '@/types';
+import { STATUS_CONFIG } from '@/constants';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CalendarViewProps {

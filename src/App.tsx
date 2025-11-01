@@ -1,18 +1,18 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Post, Platform } from './types';
-import ContentStrategistView from './components/ContentStrategistView';
-import ManagePosts from './components/ManagePosts';
-import AnalyticsDashboard from './components/AnalyticsDashboard';
-import PublishedView from './components/HistoryView';
-import ConnectedAccountsView from './components/ConnectedAccountsView';
-import MediaLibrary from './components/MediaLibrary';
-import CampaignManager from './components/CampaignManager';
-import ContentRepurposer from './components/ContentRepurposer';
-import NotificationBell from './components/NotificationBell';
-import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
-import { checkVideoOperationStatus, fetchVideo } from './services/geminiService';
-import { autoSaveAIMedia } from './services/mediaService';
+import { Post, Platform } from '@/types';
+import ContentStrategistView from '@/components/content/ContentStrategistView';
+import ManagePosts from '@/components/posts/ManagePosts';
+import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
+import PublishedView from '@/components/history/HistoryView';
+import ConnectedAccountsView from '@/components/accounts/ConnectedAccountsView';
+import MediaLibrary from '@/components/media/MediaLibrary';
+import CampaignManager from '@/components/campaigns/CampaignManager';
+import ContentRepurposer from '@/components/content/ContentRepurposer';
+import NotificationBell from '@/components/ui/NotificationBell';
+import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext';
+import { checkVideoOperationStatus, fetchVideo } from '@/services/api/geminiService';
+import { autoSaveAIMedia } from '@/services/mediaService';
 import { Edit3, LayoutGrid, BarChart3, Settings, History, Link as LinkIcon, Image, Target, Sparkles } from 'lucide-react';
 
 type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts' | 'media' | 'campaigns' | 'repurpose';

@@ -1,4 +1,4 @@
-import { Campaign } from '../types';
+import { Campaign } from '@/types';
 
 const STORAGE_KEY = 'campaigns';
 

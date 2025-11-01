@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { MediaAsset } from '../types';
+import { MediaAsset } from '@/types';
 
 interface MediaDB extends DBSchema {
   media: {
