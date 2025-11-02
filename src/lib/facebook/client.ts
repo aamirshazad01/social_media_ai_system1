@@ -6,9 +6,9 @@
 /**
  * Facebook OAuth 2.0 URLs
  */
-export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth';
-export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token';
-export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v18.0';
+export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/dialog/oauth';
+export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/oauth/access_token';
+export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
 
 /**
  * Required OAuth scopes for Facebook Pages
@@ -19,6 +19,7 @@ export const FACEBOOK_SCOPES = [
   'pages_manage_posts',
   'pages_manage_engagement',
   'public_profile',
+  'email',
 ];
 
 /**
@@ -35,6 +36,8 @@ export function generateFacebookAuthUrl(
     state: state,
     scope: FACEBOOK_SCOPES.join(','),
     response_type: 'code',
+    auth_type: 'rerequest',
+    display: 'popup',
   });
 
   return `${FACEBOOK_OAUTH_URL}?${params.toString()}`;

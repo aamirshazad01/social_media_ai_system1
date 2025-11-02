@@ -686,10 +686,6 @@
     margin-left: calc(var(--spacing) * 3);
   }
 
-  .ml-11 {
-    margin-left: calc(var(--spacing) * 11);
-  }
-
   .ml-auto {
     margin-left: auto;
   }
@@ -814,10 +810,6 @@
 
   .h-screen {
     height: 100vh;
-  }
-
-  .max-h-32 {
-    max-height: calc(var(--spacing) * 32);
   }
 
   .max-h-\[90vh\] {
@@ -2391,12 +2383,6 @@
   @media (min-width: 64rem) {
     .lg\:grid-cols-5 {
       grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-  }
-
-  @media (min-width: 80rem) {
-    .xl\:grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
