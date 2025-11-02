@@ -63,8 +63,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/?error=linkedin_config_missing', req.url))
     }
 
-    // Get callback URL
-    const callbackURL = `${process.env.NEXT_PUBLIC_APP_URL}/api/linkedin/callback`
+    // Get callback URL (ensure no double slash)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || ''
+    const callbackURL = `${baseUrl}/api/linkedin/callback`
 
     // Exchange code for access token
     const tokenData = await exchangeCodeForToken(code, clientId, clientSecret, callbackURL)

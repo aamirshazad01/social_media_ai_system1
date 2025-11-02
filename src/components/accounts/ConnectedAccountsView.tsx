@@ -41,6 +41,22 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
     useEffect(() => {
         loadConnectionStatus();
         
+        // Restore verifying state from sessionStorage (in case of page reload during OAuth)
+        const savedVerifyingPlatform = sessionStorage.getItem('verifying_platform');
+        if (savedVerifyingPlatform) {
+            setVerifyingPlatform(savedVerifyingPlatform as Platform);
+            
+            // Set a timeout to clear the loading state if OAuth doesn't complete
+            const timeoutId = setTimeout(() => {
+                console.warn('OAuth flow timeout - clearing loading state');
+                setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
+            }, 60000); // 60 seconds timeout
+            
+            // Cleanup timeout on unmount
+            return () => clearTimeout(timeoutId);
+        }
+        
         // Check for OAuth callback messages in URL
         const urlParams = new URLSearchParams(window.location.search);
         const twitterConnected = urlParams.get('twitter_connected');
@@ -51,8 +67,9 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         const errorDetails = urlParams.get('details');
         
         if (twitterConnected === 'true') {
-            // Clear URL parameters
+            // Clear URL parameters and sessionStorage
             window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('verifying_platform');
             // Reload connection status after a short delay
             setTimeout(() => {
                 loadConnectionStatus();
@@ -61,8 +78,9 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         }
         
         if (linkedinConnected === 'true') {
-            // Clear URL parameters
+            // Clear URL parameters and sessionStorage
             window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('verifying_platform');
             // Reload connection status after a short delay
             setTimeout(() => {
                 loadConnectionStatus();
@@ -71,8 +89,9 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         }
         
         if (instagramConnected === 'true') {
-            // Clear URL parameters
+            // Clear URL parameters and sessionStorage
             window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('verifying_platform');
             // Reload connection status after a short delay
             setTimeout(() => {
                 loadConnectionStatus();
@@ -81,8 +100,9 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         }
         
         if (facebookConnected === 'true') {
-            // Clear URL parameters
+            // Clear URL parameters and sessionStorage
             window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('verifying_platform');
             // Reload connection status after a short delay
             setTimeout(() => {
                 loadConnectionStatus();
@@ -107,9 +127,18 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
                 setPlatformErrors(prev => ({ ...prev, facebook: errorMessage }));
             }
             
-            // Clear URL parameters
+            // Clear URL parameters and sessionStorage
             window.history.replaceState({}, document.title, window.location.pathname);
+            sessionStorage.removeItem('verifying_platform');
             setVerifyingPlatform(null);
+        }
+        
+        // If no success or error parameter, but we have saved verifying state, clear it
+        // This handles the case when user presses back button from OAuth page
+        if (!twitterConnected && !linkedinConnected && !instagramConnected && !facebookConnected && !error && savedVerifyingPlatform) {
+            console.log('No OAuth callback detected - clearing loading state');
+            setVerifyingPlatform(null);
+            sessionStorage.removeItem('verifying_platform');
         }
     }, []);
 
@@ -151,10 +180,12 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         // Twitter and LinkedIn use OAuth flow
         if (platform === 'twitter') {
             setVerifyingPlatform(platform);
+            sessionStorage.setItem('verifying_platform', platform); // Save to sessionStorage
             const result = await startTwitterAuth();
             if (!result.success) {
                 setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
                 setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
             }
             // Will redirect to Twitter, so loading state will persist
             return;
@@ -162,10 +193,12 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         
         if (platform === 'linkedin') {
             setVerifyingPlatform(platform);
+            sessionStorage.setItem('verifying_platform', platform); // Save to sessionStorage
             const result = await startLinkedInAuth();
             if (!result.success) {
                 setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
                 setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
             }
             // Will redirect to LinkedIn, so loading state will persist
             return;
@@ -173,10 +206,12 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         
         if (platform === 'instagram') {
             setVerifyingPlatform(platform);
+            sessionStorage.setItem('verifying_platform', platform); // Save to sessionStorage
             const result = await startInstagramAuth();
             if (!result.success) {
                 setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
                 setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
             }
             // Will redirect to Instagram/Facebook, so loading state will persist
             return;
@@ -184,10 +219,12 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         
         if (platform === 'facebook') {
             setVerifyingPlatform(platform);
+            sessionStorage.setItem('verifying_platform', platform); // Save to sessionStorage
             const result = await startFacebookAuth();
             if (!result.success) {
                 setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
                 setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
             }
             // Will redirect to Facebook, so loading state will persist
             return;

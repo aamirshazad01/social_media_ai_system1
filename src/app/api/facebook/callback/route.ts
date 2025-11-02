@@ -68,8 +68,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/?error=facebook_config_missing', req.url))
     }
 
-    // Get callback URL
-    const callbackURL = `${process.env.NEXT_PUBLIC_APP_URL}/api/facebook/callback`
+    // Get callback URL (ensure no double slash)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || ''
+    const callbackURL = `${baseUrl}/api/facebook/callback`
 
     // Exchange code for short-lived access token
     const tokenData = await exchangeCodeForToken(code, appId, appSecret, callbackURL)

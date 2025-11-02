@@ -19,8 +19,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get callback URL from environment
-    const callbackURL = `${process.env.NEXT_PUBLIC_APP_URL}/api/twitter/callback`
+    // Get callback URL from environment (ensure no double slash)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || ''
+    const callbackURL = `${baseUrl}/api/twitter/callback`
 
     // Create Twitter client
     const twitterClient = createTwitterClient()

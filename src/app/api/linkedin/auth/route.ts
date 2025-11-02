@@ -31,8 +31,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate callback URL
-    const callbackURL = `${process.env.NEXT_PUBLIC_APP_URL}/api/linkedin/callback`
+    // Generate callback URL (ensure no double slash)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || ''
+    const callbackURL = `${baseUrl}/api/linkedin/callback`
 
     // Generate random state for CSRF protection
     const state = randomBytes(32).toString('hex')
