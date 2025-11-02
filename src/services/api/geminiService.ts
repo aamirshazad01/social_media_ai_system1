@@ -128,15 +128,16 @@ export const generateSocialMediaContent = async (
     }
 };
 
-export const improvePrompt = async (prompt: string, type: 'image' | 'video'): Promise<string> => {
+export const improvePrompt = async (prompt: string, type: 'image' | 'video', userGuidance?: string): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
+    const guidanceText = userGuidance ? `\n\nUser's specific guidance: "${userGuidance}"\nMake sure to incorporate this guidance into your improvements.` : '';
     const improvePromptText = `
         You are a creative prompt engineer for an advanced generative AI.
         Your task is to take a user's idea and expand it into a rich, detailed, and evocative prompt that will produce a stunning visual.
         For an ${type}, focus on cinematic quality, lighting, composition, and mood.
         Do NOT add any explanatory text, markdown, or preamble. Return ONLY the improved prompt text.
 
-        Original idea: "${prompt}"
+        Original idea: "${prompt}"${guidanceText}
     `;
     try {
         const response = await ai.models.generateContent({

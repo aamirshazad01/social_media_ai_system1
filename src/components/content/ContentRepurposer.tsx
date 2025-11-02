@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Post, Platform } from '@/types';
 import { PLATFORMS } from '@/constants';
 import { repurposeContent } from '@/services/api/geminiService';
-import { Sparkles, Loader2, FileText, Link as LinkIcon, Upload } from 'lucide-react';
+import { Sparkles, Loader2, FileText, Link as LinkIcon, Upload, Save, Video, Image as ImageIcon } from 'lucide-react';
 
 interface ContentRepurposerProps {
   onPostsCreated: (posts: Post[]) => void;
@@ -267,30 +267,98 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
       {/* Generated Posts Preview */}
       {generatedPosts.length > 0 && (
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-2xl font-bold text-charcoal-dark">
-              Generated Posts ({generatedPosts.length})
-            </h3>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-charcoal-dark flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-yellow-400" />
+                Generated Posts
+              </h3>
+              <p className="text-sm text-slate mt-1">{generatedPosts.length} posts ready to save</p>
+            </div>
             <button
               onClick={handleSaveAll}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium"
+              className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
+              <Save className="w-4 h-4" />
               Save All to Drafts
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {generatedPosts.map((post, index) => (
-              <div key={post.id} className="bg-white rounded-lg p-6 border border-slate/30">
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-semibold text-charcoal-dark">Post {index + 1}</h4>
-                  <span className="text-xs bg-charcoal/10 text-charcoal-dark px-2 py-1 rounded">Draft</span>
+              <div key={post.id} className="bg-white rounded-lg shadow-lg border border-slate/30 overflow-hidden hover:shadow-xl transition-shadow duration-200">
+                {/* Card Header */}
+                <div className="bg-light-gray px-6 py-4 border-b border-slate/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-charcoal text-white flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-charcoal-dark">Post {index + 1}</h4>
+                        <p className="text-xs text-slate">Draft</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {selectedPlatforms.map(platform => {
+                        const platformInfo = PLATFORMS.find(p => p.id === platform);
+                        if (!platformInfo) return null;
+                        const { icon: Icon } = platformInfo;
+                        return <Icon key={platform} className="w-5 h-5 text-slate" />;
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-slate text-sm mb-3">{post.topic}</p>
-                <div className="bg-slate/10 p-3 rounded">
-                  <p className="text-charcoal text-sm line-clamp-4">
-                    {post?.content?.[selectedPlatforms?.[0]] ?? 'No content'}
-                  </p>
+
+                {/* Card Body */}
+                <div className="p-6 space-y-4">
+                  {/* Topic */}
+                  <div className="pb-3 border-b border-slate/20">
+                    <p className="text-sm font-semibold text-charcoal-dark leading-relaxed">{post.topic}</p>
+                  </div>
+                  
+                  {/* Content Preview */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-charcoal" />
+                      <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Content</p>
+                    </div>
+                    <div className="bg-slate/5 border border-slate/20 p-4 rounded-lg">
+                      <p className="text-charcoal text-sm leading-relaxed line-clamp-4">
+                        {post?.content?.[selectedPlatforms?.[0]] ?? 'No content'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Image Script Preview */}
+                  {post.content?.imageSuggestion && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-teal-600" />
+                        <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Picture Script</p>
+                      </div>
+                      <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg">
+                        <p className="text-slate text-xs italic leading-relaxed line-clamp-3">
+                          "{post.content.imageSuggestion}"
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Video Script Preview */}
+                  {post.content?.videoSuggestion && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4 text-purple-600" />
+                        <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Video Script</p>
+                      </div>
+                      <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+                        <p className="text-slate text-xs italic leading-relaxed line-clamp-3">
+                          "{post.content.videoSuggestion}"
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

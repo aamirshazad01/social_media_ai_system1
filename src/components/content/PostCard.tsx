@@ -24,6 +24,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
     const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0] ?? 'twitter');
     const [isImproving, setIsImproving] = useState<{ image: boolean; video: boolean }>({ image: false, video: false });
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [improveModalOpen, setImproveModalOpen] = useState<'image' | 'video' | null>(null);
+    const [improvePromptInput, setImprovePromptInput] = useState('');
 
     useEffect(() => {
         if (!isEditing) {
@@ -54,19 +56,28 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
         onUpdatePost({ ...post, ...updates });
     };
 
-    const handleImproveSuggestion = async (type: 'image' | 'video') => {
+    const handleOpenImproveModal = (type: 'image' | 'video') => {
+        setImproveModalOpen(type);
+        setImprovePromptInput('');
+    };
+
+    const handleImproveSuggestion = async () => {
+        if (!improveModalOpen) return;
+        const type = improveModalOpen;
         const suggestionKey = type === 'image' ? 'imageSuggestion' : 'videoSuggestion';
         const currentSuggestion = editedContent[suggestionKey];
         if (!currentSuggestion) return;
 
         setIsImproving(prev => ({...prev, [type]: true}));
+        setImproveModalOpen(null);
         try {
-            const improved = await improvePrompt(currentSuggestion, type);
+            const improved = await improvePrompt(currentSuggestion, type, improvePromptInput);
             setEditedContent(prev => ({ ...prev, [suggestionKey]: improved }));
         } catch (error) {
             console.error(`Error improving ${type} suggestion:`, error);
         } finally {
             setIsImproving(prev => ({...prev, [type]: false}));
+            setImprovePromptInput('');
         }
     };
 
@@ -122,11 +133,66 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
 
     const ActionButton: React.FC<{ onClick: () => void, icon: React.ElementType, label: string, className?: string, disabled?: boolean }> = 
     ({ onClick, icon: Icon, label, className, disabled }) => (
-        <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center text-xs font-bold py-2 px-3 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}>
-            <Icon className={`w-4 h-4 ${label ? 'mr-1.5' : ''} ${disabled && (label.includes('Generating') || label.includes('Improving') || label.includes('Processing')) ? 'animate-spin' : ''}`} />
+        <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center text-xs font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md ${className}`}>
+            <Icon className={`w-4 h-4 ${label ? 'mr-2' : ''} ${disabled && (label.includes('Generating') || label.includes('Improving') || label.includes('Processing')) ? 'animate-spin' : ''}`} />
             {label && <span>{label}</span>}
         </button>
     );
+
+    const ImproveModal = () => {
+        if (!improveModalOpen) return null;
+        const type = improveModalOpen;
+        const typeLabel = type === 'image' ? 'Picture' : 'Video';
+
+        return (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setImproveModalOpen(null)}>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col border border-slate/30" onClick={e => e.stopPropagation()}>
+                    <header className="flex justify-between items-center p-6 border-b border-slate/30">
+                        <div>
+                            <h2 className="text-xl font-bold text-charcoal-dark">Improve {typeLabel} Script</h2>
+                            <p className="text-sm text-slate mt-1">Provide guidance to enhance the script</p>
+                        </div>
+                        <button onClick={() => setImproveModalOpen(null)} className="p-2 rounded-full text-slate hover:bg-slate/10 hover:text-charcoal-dark transition-colors">
+                            <X className="w-6 h-6" />
+                        </button>
+                    </header>
+                    <div className="p-6 space-y-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-charcoal mb-2">
+                                What would you like to improve? (Optional)
+                            </label>
+                            <textarea
+                                value={improvePromptInput}
+                                onChange={(e) => setImprovePromptInput(e.target.value)}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                placeholder={`e.g., "Make it more cinematic", "Add more details about lighting", "Focus on emotional impact"...`}
+                                className="w-full h-32 px-4 py-3 bg-white border border-slate/30 rounded-lg text-charcoal focus:ring-2 focus:ring-charcoal focus:border-transparent resize-none text-sm leading-relaxed"
+                                autoFocus
+                            />
+                            <p className="text-xs text-slate mt-2">
+                                Leave empty to use AI's default improvement suggestions
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleImproveSuggestion}
+                                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-black font-semibold rounded-lg transition-all shadow-sm hover:shadow-md"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                Improve Script
+                            </button>
+                            <button
+                                onClick={() => setImproveModalOpen(null)}
+                                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-charcoal font-semibold rounded-lg transition-all"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <>
@@ -146,52 +212,71 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                     <div className="flex border-b border-slate/30">
                         {post.platforms.map(p => <PlatformTab key={p} platform={p} />)}
                     </div>
-                    <div className="bg-slate/10 p-3 rounded-lg">
-                        <textarea
-                            readOnly={!isEditing}
-                            value={editedContent?.[activePlatform] || ''}
-                            onChange={(e) => handleContentChange(activePlatform, e.target.value)}
-                            className={`w-full h-28 bg-transparent text-charcoal resize-none focus:outline-none text-sm ${isEditing ? 'focus:ring-2 focus:ring-charcoal rounded' : ''}`}
-                        />
+                    {/* Content Section */}
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Edit className="w-4 h-4 text-charcoal" />
+                            <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Content</p>
+                        </div>
+                        <div className="bg-slate/5 border border-slate/20 p-4 rounded-lg">
+                            <textarea
+                                readOnly={!isEditing}
+                                value={editedContent?.[activePlatform] || ''}
+                                onChange={(e) => handleContentChange(activePlatform, e.target.value)}
+                                className={`w-full h-40 bg-transparent text-charcoal resize-none focus:outline-none text-sm leading-relaxed ${isEditing ? 'focus:ring-2 focus:ring-charcoal rounded p-2' : ''}`}
+                            />
+                        </div>
                     </div>
                     {isEditing ? (
                         <>
                             {/* EDITING VIEW FOR MEDIA */}
                             {post.content?.imageSuggestion && (
-                                <div className="p-3 bg-slate/10 rounded-lg space-y-3">
-                                    <label className="text-sm font-semibold text-charcoal">Image Prompt</label>
-                                    <textarea
-                                        value={editedContent.imageSuggestion || ''}
-                                        onChange={(e) => handleSuggestionChange('imageSuggestion', e.target.value)}
-                                        className="w-full h-24 bg-white p-2 rounded-md text-sm text-charcoal resize-none focus:outline-none focus:ring-2 focus:ring-charcoal border border-slate/30"
-                                    />
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ActionButton onClick={() => handleImproveSuggestion('image')} disabled={isImproving.image} icon={isImproving.image ? Loader2 : Sparkles} label={isImproving.image ? 'Improving...' : 'Improve'} className="w-full bg-amber-500 hover:bg-amber-600 text-black" />
-                                        <ActionButton onClick={handleGenerateImage} disabled={post.isGeneratingImage} icon={post.isGeneratingImage ? Loader2 : ImageIcon} label={post.isGeneratingImage ? 'Generating...' : 'Regenerate'} className="w-full text-white bg-teal-600 hover:bg-teal-700" />
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="w-4 h-4 text-teal-600" />
+                                        <label className="text-xs font-semibold text-charcoal uppercase tracking-wide">Picture Script</label>
                                     </div>
-                                    {post.generatedImage && <img src={post.generatedImage} alt="Generated" className="rounded-md w-full mt-2" />}
+                                    <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg space-y-3">
+                                        <textarea
+                                            value={editedContent.imageSuggestion || ''}
+                                            onChange={(e) => handleSuggestionChange('imageSuggestion', e.target.value)}
+                                            className="w-full h-24 bg-white p-3 rounded-md text-sm text-charcoal resize-none focus:outline-none focus:ring-2 focus:ring-teal-500 border border-teal-300"
+                                            placeholder="Describe the image you want to generate..."
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <ActionButton onClick={() => handleOpenImproveModal('image')} disabled={isImproving.image} icon={isImproving.image ? Loader2 : Sparkles} label={isImproving.image ? 'Improving...' : 'Improve'} className="w-full bg-amber-500 hover:bg-amber-600 text-black" />
+                                            <ActionButton onClick={handleGenerateImage} disabled={post.isGeneratingImage} icon={post.isGeneratingImage ? Loader2 : ImageIcon} label={post.isGeneratingImage ? 'Generating...' : 'Regenerate'} className="w-full text-white bg-teal-600 hover:bg-teal-700" />
+                                        </div>
+                                        {post.generatedImage && <img src={post.generatedImage} alt="Generated" className="rounded-lg w-full mt-2 border border-teal-300" />}
+                                    </div>
                                 </div>
                             )}
                             {post.content?.videoSuggestion && (
-                                <div className="p-3 bg-slate/10 rounded-lg space-y-3">
-                                    <label className="text-sm font-semibold text-charcoal">Video Prompt</label>
-                                    <textarea
-                                        value={editedContent.videoSuggestion || ''}
-                                        onChange={(e) => handleSuggestionChange('videoSuggestion', e.target.value)}
-                                        className="w-full h-24 bg-white p-2 rounded-md text-sm text-charcoal resize-none focus:outline-none focus:ring-2 focus:ring-charcoal border border-slate/30"
-                                    />
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <ActionButton onClick={() => handleImproveSuggestion('video')} disabled={isImproving.video} icon={isImproving.video ? Loader2 : Sparkles} label={isImproving.video ? 'Improving...' : 'Improve'} className="w-full bg-amber-500 hover:bg-amber-600 text-black" />
-                                        {!isApiKeyReady && !post.generatedVideoUrl ? (
-                                            <button onClick={onSelectKey} className="flex items-center justify-center gap-2 p-2 bg-yellow-900/50 rounded text-xs text-yellow-200 underline hover:text-white">
-                                                <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0"/>
-                                                <span>Select key to generate</span>
-                                            </button>
-                                        ) : (
-                                            <ActionButton onClick={handleGenerateVideo} disabled={post.isGeneratingVideo} icon={post.isGeneratingVideo ? Loader2 : Video} label={post.isGeneratingVideo ? post.videoGenerationStatus.split(' ')[0] : 'Regenerate'} className="w-full text-white bg-purple-600 hover:bg-purple-700" />
-                                        )}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Video className="w-4 h-4 text-purple-600" />
+                                        <label className="text-xs font-semibold text-charcoal uppercase tracking-wide">Video Script</label>
                                     </div>
-                                    {post.generatedVideoUrl && <video src={post.generatedVideoUrl} controls className="rounded-md w-full mt-2" />}
+                                    <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg space-y-3">
+                                        <textarea
+                                            value={editedContent.videoSuggestion || ''}
+                                            onChange={(e) => handleSuggestionChange('videoSuggestion', e.target.value)}
+                                            className="w-full h-24 bg-white p-3 rounded-md text-sm text-charcoal resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 border border-purple-300"
+                                            placeholder="Describe the video you want to generate..."
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <ActionButton onClick={() => handleOpenImproveModal('video')} disabled={isImproving.video} icon={isImproving.video ? Loader2 : Sparkles} label={isImproving.video ? 'Improving...' : 'Improve'} className="w-full bg-amber-500 hover:bg-amber-600 text-black" />
+                                            {!isApiKeyReady && !post.generatedVideoUrl ? (
+                                                <button onClick={onSelectKey} className="flex items-center justify-center gap-2 p-2 bg-yellow-900/50 rounded text-xs text-yellow-200 underline hover:text-white">
+                                                    <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0"/>
+                                                    <span>Select key to generate</span>
+                                                </button>
+                                            ) : (
+                                                <ActionButton onClick={handleGenerateVideo} disabled={post.isGeneratingVideo} icon={post.isGeneratingVideo ? Loader2 : Video} label={post.isGeneratingVideo ? post.videoGenerationStatus.split(' ')[0] : 'Regenerate'} className="w-full text-white bg-purple-600 hover:bg-purple-700" />
+                                            )}
+                                        </div>
+                                        {post.generatedVideoUrl && <video src={post.generatedVideoUrl} controls className="rounded-lg w-full mt-2 border border-purple-300" />}
+                                    </div>
                                 </div>
                             )}
                         </>
@@ -199,74 +284,86 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                         <>
                             {/* VIEWING VIEW FOR MEDIA */}
                             {post.content?.imageSuggestion && (
-                                <div className="p-3 bg-slate/10 rounded-lg space-y-2">
-                                    <p className="text-xs text-slate italic">"{post.content?.imageSuggestion}"</p>
-                                    {post.generatedImage ? (
-                                        <img src={post.generatedImage} alt="Generated" className="rounded-md w-full" />
-                                    ) : (
-                                        <ActionButton
-                                            onClick={handleGenerateImage}
-                                            disabled={post.isGeneratingImage}
-                                            icon={post.isGeneratingImage ? Loader2 : ImageIcon}
-                                            label={post.isGeneratingImage ? 'Generating...' : 'Generate Image'}
-                                            className="w-full text-white bg-teal-600 hover:bg-teal-700"
-                                        />
-                                    )}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="w-4 h-4 text-teal-600" />
+                                        <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Picture Script</p>
+                                    </div>
+                                    <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg space-y-3">
+                                        <p className="text-slate text-xs italic leading-relaxed">"{post.content?.imageSuggestion}"</p>
+                                        {post.generatedImage ? (
+                                            <img src={post.generatedImage} alt="Generated" className="rounded-lg w-full border border-teal-300" />
+                                        ) : (
+                                            <ActionButton
+                                                onClick={handleGenerateImage}
+                                                disabled={post.isGeneratingImage}
+                                                icon={post.isGeneratingImage ? Loader2 : ImageIcon}
+                                                label={post.isGeneratingImage ? 'Generating...' : 'Generate Image'}
+                                                className="w-full text-white bg-teal-600 hover:bg-teal-700"
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             {post.content?.videoSuggestion && (
-                                <div className="p-3 bg-slate/10 rounded-lg space-y-2">
-                                    <p className="text-xs text-slate italic">"{post.content?.videoSuggestion}"</p>
-                                    {post.generatedVideoUrl ? (
-                                        <div className="relative">
-                                            <video src={post.generatedVideoUrl} controls className="rounded-md w-full" />
-                                            <a href={post.generatedVideoUrl} download={`video_${post.id}.mp4`} target="_blank" rel="noopener noreferrer" className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white hover:bg-black/80">
-                                                <ExternalLink className="w-4 h-4"/>
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        !isApiKeyReady ? (
-                                            <button onClick={onSelectKey} className="flex items-center justify-center gap-2 w-full p-2 bg-yellow-900/50 rounded text-xs text-yellow-200 underline hover:text-white">
-                                                <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0"/>
-                                                <span>Select key to generate</span>
-                                            </button>
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Video className="w-4 h-4 text-purple-600" />
+                                        <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Video Script</p>
+                                    </div>
+                                    <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg space-y-3">
+                                        <p className="text-slate text-xs italic leading-relaxed">"{post.content?.videoSuggestion}"</p>
+                                        {post.generatedVideoUrl ? (
+                                            <div className="relative">
+                                                <video src={post.generatedVideoUrl} controls className="rounded-lg w-full border border-purple-300" />
+                                                <a href={post.generatedVideoUrl} download={`video_${post.id}.mp4`} target="_blank" rel="noopener noreferrer" className="absolute top-2 right-2 bg-black/50 p-1.5 rounded-full text-white hover:bg-black/80 transition-colors">
+                                                    <ExternalLink className="w-4 h-4"/>
+                                                </a>
+                                            </div>
                                         ) : (
-                                            <ActionButton
-                                                onClick={handleGenerateVideo}
-                                                disabled={post.isGeneratingVideo}
-                                                icon={post.isGeneratingVideo ? Loader2 : Video}
-                                                label={post.isGeneratingVideo ? post.videoGenerationStatus.split(' ')[0] : 'Generate Video'}
-                                                className="w-full text-white bg-purple-600 hover:bg-purple-700"
-                                            />
-                                        )
-                                    )}
+                                            !isApiKeyReady ? (
+                                                <button onClick={onSelectKey} className="flex items-center justify-center gap-2 w-full p-2 bg-yellow-900/50 rounded text-xs text-yellow-200 underline hover:text-white transition-colors">
+                                                    <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0"/>
+                                                    <span>Select key to generate</span>
+                                                </button>
+                                            ) : (
+                                                <ActionButton
+                                                    onClick={handleGenerateVideo}
+                                                    disabled={post.isGeneratingVideo}
+                                                    icon={post.isGeneratingVideo ? Loader2 : Video}
+                                                    label={post.isGeneratingVideo ? post.videoGenerationStatus.split(' ')[0] : 'Generate Video'}
+                                                    className="w-full text-white bg-purple-600 hover:bg-purple-700"
+                                                />
+                                            )
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </>
                     )}
                 </div>
-                <div className="p-3 bg-light-gray flex flex-wrap gap-2 justify-between items-center">
+                <div className="p-4 bg-light-gray flex flex-wrap gap-3 justify-between items-center border-t border-slate/20">
                     {isEditing ? (
                          <div className="flex items-center justify-between w-full">
-                            <div className="flex gap-2">
-                                <ActionButton onClick={handleSave} icon={Save} label="Save" className="bg-green-600 hover:bg-green-700 text-white" />
-                                <ActionButton onClick={handleCancel} icon={X} label="Cancel" className="bg-slate hover:bg-slate/80 text-white" />
+                            <div className="flex gap-2 flex-wrap">
+                                <ActionButton onClick={handleSave} icon={Save} label="Save Changes" className="bg-green-600 hover:bg-green-700 text-white" />
+                                <ActionButton onClick={handleCancel} icon={X} label="Cancel" className="bg-gray-500 hover:bg-gray-600 text-white" />
                                 <ActionButton onClick={() => setIsPreviewOpen(true)} icon={Eye} label="Preview" className="bg-blue-600 hover:bg-blue-700 text-white" />
                             </div>
-                            <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white" />
+                            <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white w-10 h-10" />
                         </div>
                     ) : (
                          <div className="flex items-center justify-between w-full">
                             <div className="flex gap-2 flex-wrap">
-                                <ActionButton onClick={() => setIsEditing(true)} icon={Edit} label="Edit" className="bg-slate hover:bg-slate/80 text-white" />
+                                <ActionButton onClick={() => setIsEditing(true)} icon={Edit} label="Edit" className="bg-charcoal hover:bg-charcoal-dark text-white" />
                                 <ActionButton onClick={() => setIsPreviewOpen(true)} icon={Eye} label="Preview" className="bg-blue-600 hover:bg-blue-700 text-white" />
-                                {post.status === 'draft' && <ActionButton onClick={() => handleStatusChange('needs approval')} icon={Send} label="Request Approval" className="bg-yellow-500 hover:bg-yellow-600 text-black" />}
+                                {post.status === 'draft' && <ActionButton onClick={() => handleStatusChange('needs approval')} icon={Send} label="Request Approval" className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold" />}
                                 {post.status === 'needs approval' && <ActionButton onClick={() => handleStatusChange('approved')} icon={CheckCircle} label="Approve" className="bg-cyan-500 hover:bg-cyan-600 text-white" />}
                                 {post.status === 'approved' && (
                                     <ActionButton onClick={() => handleStatusChange('ready to publish')} icon={ArrowRightCircle} label="Finalize & Move" className="bg-charcoal hover:bg-charcoal-dark text-white" />
                                 )}
                             </div>
-                            <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white" />
+                            <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white w-10 h-10" />
                         </div>
                     )}
                 </div>
@@ -277,6 +374,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                     onClose={() => setIsPreviewOpen(false)} 
                 />
             )}
+            <ImproveModal />
         </>
     );
 };
