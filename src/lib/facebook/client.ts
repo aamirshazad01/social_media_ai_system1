@@ -6,8 +6,9 @@
 /**
  * Facebook OAuth 2.0 URLs
  */
-export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/dialog/oauth';
-export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/oauth/access_token';
+// Use versioned OAuth endpoints to align with latest login experience
+export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
+export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v21.0/oauth/access_token';
 export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
 
 /**
@@ -37,7 +38,8 @@ export function generateFacebookAuthUrl(
     scope: FACEBOOK_SCOPES.join(','),
     response_type: 'code',
     auth_type: 'rerequest',
-    display: 'popup',
+    // Prefer full-page display to avoid cookie consent/popup blockers
+    display: 'page',
   });
 
   return `${FACEBOOK_OAUTH_URL}?${params.toString()}`;
