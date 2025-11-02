@@ -69,8 +69,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/?error=instagram_config_missing', req.url))
     }
 
-    // Get callback URL
-    const callbackURL = `${process.env.NEXT_PUBLIC_APP_URL}/api/instagram/callback`
+    // Get callback URL (ensure no double slash)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || ''
+    const callbackURL = `${baseUrl}/api/instagram/callback`
 
     // Exchange code for short-lived access token
     const tokenData = await exchangeCodeForToken(code, appId, appSecret, callbackURL)

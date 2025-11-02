@@ -1,0 +1,280 @@
+# 🚀 Social Media OS
+
+A comprehensive social media management platform that allows you to manage multiple social media accounts, schedule posts, generate AI content, and track analytics - all from one unified dashboard.
+
+## 🌐 Live Demo
+
+**Production**: [https://social-medias-os.vercel.app/](https://social-medias-os.vercel.app/)
+
+## ✨ Features
+
+### 📱 Multi-Platform Support
+- **Twitter/X** - Post, schedule, and track engagement
+- **LinkedIn** - Professional content management
+- **Instagram** - Photo and video sharing
+- **Facebook** - Page and group management
+- **Threads** - Quick updates and conversations
+
+### 🤖 AI-Powered Content
+- Generate engaging post content with Google Gemini AI
+- AI-assisted captions and hashtags
+- Content suggestions based on trends
+
+### 📅 Smart Scheduling
+- Schedule posts across all platforms
+- Optimal posting time recommendations
+- Bulk scheduling capabilities
+- Calendar view for content planning
+
+### 📊 Analytics & Insights
+- Real-time engagement metrics
+- Cross-platform performance tracking
+- Audience insights
+- Export reports
+
+### 👥 Team Collaboration
+- Multi-user workspaces
+- Role-based permissions (Admin, Editor, Viewer)
+- Approval workflows
+- Activity logs and audit trail
+
+### 📁 Media Library
+- Centralized media asset management
+- AI-generated images
+- Tag-based organization
+- Cloud storage integration
+
+### 🎯 Campaign Management
+- Organize posts into campaigns
+- Track campaign performance
+- Color-coded organization
+- Date range tracking
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 16, React 19, TailwindCSS 4
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **AI**: Google Gemini API
+- **Storage**: Supabase Storage
+- **Deployment**: Vercel
+- **Icons**: Lucide React
+- **Charts**: Recharts
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+- Social media API credentials
+
+### Local Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd social_media_os
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+   - Copy `.env.example` to `.env`
+   - Update with your credentials (see `.env` file)
+
+4. **Set up Supabase database**
+   - Follow instructions in `SUPABASE_SETUP.md`
+   - Run the SQL schema from `src/lib/supabase/schema.sql`
+
+5. **Run development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open in browser**
+   ```
+   http://localhost:3000
+   ```
+
+## 🚀 Deployment
+
+The application is deployed on Vercel. See `DEPLOYMENT_GUIDE.md` for detailed deployment instructions and configuration.
+
+### Quick Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=<your-repo-url>)
+
+**After deployment:**
+1. Configure all environment variables in Vercel
+2. Update OAuth callback URLs for each platform
+3. Update Supabase redirect URLs
+4. Test all social media connections
+
+See `DEPLOYMENT_GUIDE.md` for complete checklist.
+
+## 📚 Documentation
+
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Vercel deployment and configuration
+- **[Supabase Setup](SUPABASE_SETUP.md)** - Database schema and authentication setup
+- **[Platform Setup](ALL_PLATFORMS_COMPLETE.md)** - Social media API configuration
+
+## 🔑 Environment Variables
+
+Required environment variables:
+
+```bash
+# AI Configuration
+GEMINI_API_KEY=
+NEXT_PUBLIC_GEMINI_API_KEY=
+
+# Database
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# Twitter/X
+TWITTER_API_KEY=
+TWITTER_API_SECRET=
+TWITTER_BEARER_TOKEN=
+Access_Token=
+Access_Token_Secret=
+Twitter_CLIENT_ID=
+Twitter_CLIENT_SECRET=
+
+# LinkedIn
+LINKEDIN_CLIENT_ID=
+LINKEDIN_CLIENT_SECRET=
+
+# Instagram/Facebook
+INSTAGRAM_APP_ID=
+INSTAGRAM_APP_SECRET=
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+
+# Threads
+THREADS_APP_ID=
+THREADS_APP_SECRET=
+
+# Application
+NEXT_PUBLIC_APP_URL=https://social-medias-os.vercel.app/
+```
+
+## 🏗️ Project Structure
+
+```
+social_media_os/
+├── src/
+│   ├── app/                    # Next.js app directory
+│   │   ├── api/               # API routes
+│   │   │   ├── twitter/       # Twitter OAuth & posting
+│   │   │   ├── linkedin/      # LinkedIn integration
+│   │   │   ├── instagram/     # Instagram integration
+│   │   │   ├── facebook/      # Facebook integration
+│   │   │   └── threads/       # Threads integration
+│   │   ├── auth/              # Authentication pages
+│   │   ├── dashboard/         # Main dashboard
+│   │   └── ...
+│   ├── components/            # React components
+│   ├── lib/                   # Utility libraries
+│   │   ├── supabase/         # Database client & schema
+│   │   ├── twitter/          # Twitter client
+│   │   ├── linkedin/         # LinkedIn client
+│   │   └── ...
+│   └── types/                # TypeScript types
+├── public/                    # Static assets
+├── .env                       # Environment variables
+├── next.config.mjs           # Next.js configuration
+├── vercel.json               # Vercel configuration
+└── package.json              # Dependencies
+```
+
+## 🔐 Security Features
+
+- **Row Level Security (RLS)** - Database-level access control
+- **Multi-tenancy** - Complete workspace isolation
+- **Encrypted credentials** - Social media tokens stored securely
+- **Role-based access** - Admin, Editor, Viewer permissions
+- **Activity logging** - Audit trail for all actions
+- **HTTPS only** - Enforced secure connections
+
+## 🧪 Testing
+
+Test all features after deployment:
+
+1. **Authentication**
+   - Sign up / Login / Logout
+   - Password reset
+
+2. **Social Media Connections**
+   - Connect each platform
+   - Verify OAuth flow
+   - Check token storage
+
+3. **Post Management**
+   - Create posts
+   - Schedule posts
+   - Publish to platforms
+   - View analytics
+
+4. **Team Features**
+   - Invite users
+   - Test permissions
+   - Approval workflows
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**OAuth Callback Errors**
+- Verify callback URLs match exactly in platform settings
+- Check environment variables are set correctly
+- Wait 5-10 minutes after updating OAuth settings
+
+**Database Connection Issues**
+- Verify Supabase URL and key
+- Check RLS policies are enabled
+- Ensure schema is properly deployed
+
+**AI Generation Fails**
+- Verify Gemini API key is valid
+- Check API quota limits
+- Review API key permissions
+
+See `DEPLOYMENT_GUIDE.md` for more troubleshooting tips.
+
+## 📝 License
+
+MIT License - See LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📧 Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check documentation in `/docs`
+- Review troubleshooting guides
+
+## 🎉 Acknowledgments
+
+Built with:
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.com/)
+- [Vercel](https://vercel.com/)
+- [Google Gemini AI](https://ai.google.dev/)
+- [TailwindCSS](https://tailwindcss.com/)
+
+---
+
+**Made with ❤️ for social media managers and content creators**
