@@ -2,7 +2,7 @@ import { FacebookCredentials } from '@/types';
 
 /**
  * Facebook API Service
- * This service uses Facebook Graph API for posting to pages
+ * Now uses real backend API endpoints for Facebook integration
  */
 
 const FACEBOOK_API_BASE = 'https://graph.facebook.com/v18.0';
@@ -12,36 +12,66 @@ export interface FacebookPostOptions {
   link?: string;
   imageUrl?: string;
   videoUrl?: string;
+  mediaType?: 'image' | 'video';
 }
 
 /**
- * Verify Facebook credentials
+ * Start Facebook OAuth flow
+ * Opens window for Facebook authentication
  */
-export async function verifyFacebookCredentials(
-  credentials: FacebookCredentials
-): Promise<{ success: boolean; pageName?: string; error?: string }> {
+export async function startFacebookAuth(): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!credentials.appId || !credentials.appSecret || !credentials.accessToken) {
-      return { success: false, error: 'Missing required credentials' };
+    // Call backend to start OAuth flow
+    const response = await fetch('/api/facebook/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to start Facebook authentication');
     }
 
-    // Check if token is expired
-    if (credentials.expiresAt && new Date(credentials.expiresAt) < new Date()) {
-      return { success: false, error: 'Access token expired. Please reconnect.' };
+    const { url } = await response.json();
+
+    // Open Facebook auth in current window
+    window.location.href = url;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Facebook auth start error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to start authentication'
+    };
+  }
+}
+
+/**
+ * Verify Facebook credentials by calling backend
+ */
+export async function verifyFacebookCredentials(credentials: FacebookCredentials): Promise<{
+  success: boolean;
+  pageName?: string;
+  error?: string
+}> {
+  try {
+    // Call backend to verify credentials
+    const response = await fetch('/api/facebook/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { success: false, error: error.error || 'Verification failed' };
     }
 
-    // TODO: Call backend endpoint to verify credentials
-    // const response = await fetch('/api/facebook/verify', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(credentials)
-    // });
-
-    console.log('Facebook credentials would be verified via backend');
+    const data = await response.json();
 
     return {
-      success: true,
-      pageName: credentials.pageName || 'Facebook Page'
+      success: data.connected,
+      pageName: data.pageName
     };
   } catch (error) {
     console.error('Facebook verification error:', error);
@@ -53,7 +83,7 @@ export async function verifyFacebookCredentials(
 }
 
 /**
- * Post to Facebook Page
+ * Post to Facebook via backend API
  */
 export async function postToFacebook(
   credentials: FacebookCredentials,
@@ -65,36 +95,31 @@ export async function postToFacebook(
     }
 
     if (!options.message || options.message.length > 63206) {
-      return { success: false, error: 'Post message must be between 1-63206 characters' };
+      return { success: false, error: 'Message must be between 1-63206 characters' };
     }
 
-    if (!credentials.pageId) {
-      return { success: false, error: 'Page ID is required to post' };
+    // Call backend to post
+    const response = await fetch('/api/facebook/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: options.message,
+        imageUrl: options.imageUrl,
+        link: options.link
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to post to Facebook');
     }
 
-    // Check token expiration
-    if (credentials.expiresAt && new Date(credentials.expiresAt) < new Date()) {
-      return { success: false, error: 'Access token expired. Please reconnect.' };
-    }
+    const data = await response.json();
 
-    // TODO: Call backend endpoint to post
-    // const response = await fetch('/api/facebook/post', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     credentials,
-    //     ...options
-    //   })
-    // });
-
-    console.log('Facebook post would be published via backend:', options.message);
-
-    // Simulated success response
-    const postId = `${credentials.pageId}_${Date.now()}`;
     return {
       success: true,
-      postId,
-      url: `https://www.facebook.com/${postId}`
+      postId: data.postId,
+      url: data.postUrl
     };
   } catch (error) {
     console.error('Facebook post error:', error);
@@ -106,7 +131,49 @@ export async function postToFacebook(
 }
 
 /**
- * Get Facebook Page info
+ * Upload media to Facebook via backend API
+ * Returns public URL for use in posting
+ */
+export async function uploadFacebookPhoto(
+  credentials: FacebookCredentials,
+  mediaData: string  // base64 encoded
+): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
+  try {
+    if (!credentials.isConnected) {
+      return { success: false, error: 'Facebook account not connected' };
+    }
+
+    // Call backend to upload media to Supabase Storage
+    const response = await fetch('/api/facebook/upload-media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mediaData
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to upload media');
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      imageUrl: data.imageUrl
+    };
+  } catch (error) {
+    console.error('Facebook media upload error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to upload media'
+    };
+  }
+}
+
+/**
+ * Get Facebook Page info via backend API
  */
 export async function getFacebookPageInfo(
   credentials: FacebookCredentials
@@ -116,16 +183,26 @@ export async function getFacebookPageInfo(
       return { success: false, error: 'Facebook account not connected' };
     }
 
-    // TODO: Call backend endpoint
-    console.log('Facebook page info would be fetched via backend');
+    // Call backend to get page info
+    const response = await fetch('/api/facebook/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch page info');
+    }
+
+    const data = await response.json();
 
     return {
       success: true,
       pageInfo: {
-        id: credentials.pageId || '123456',
-        name: credentials.pageName || 'Facebook Page',
-        followers: 0,
-        likes: 0
+        id: data.pageId,
+        name: data.pageName,
+        category: data.category,
+        fanCount: data.fanCount,
       }
     };
   } catch (error) {
@@ -137,42 +214,3 @@ export async function getFacebookPageInfo(
   }
 }
 
-/**
- * Upload photo to Facebook
- */
-export async function uploadFacebookPhoto(
-  credentials: FacebookCredentials,
-  photoFile: File,
-  caption?: string
-): Promise<{ success: boolean; photoId?: string; error?: string }> {
-  try {
-    if (!credentials.isConnected || !credentials.pageId) {
-      return { success: false, error: 'Facebook page not connected' };
-    }
-
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!allowedTypes.includes(photoFile.type)) {
-      return { success: false, error: 'Unsupported image type' };
-    }
-
-    // Validate file size (max 4MB for photos)
-    if (photoFile.size > 4 * 1024 * 1024) {
-      return { success: false, error: 'File size exceeds 4MB limit' };
-    }
-
-    // TODO: Call backend endpoint to upload
-    console.log('Photo would be uploaded via backend:', photoFile.name);
-
-    return {
-      success: true,
-      photoId: `photo_${Date.now()}`
-    };
-  } catch (error) {
-    console.error('Facebook photo upload error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to upload photo'
-    };
-  }
-}

@@ -56,6 +56,141 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/facebook/auth/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/facebook/auth">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/facebook/auth/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/facebook/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/facebook/callback">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/facebook/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/facebook/post/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/facebook/post">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/facebook/post/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/facebook/upload-media/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/facebook/upload-media">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/facebook/upload-media/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/facebook/verify/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/facebook/verify">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/facebook/verify/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/instagram/auth/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/instagram/auth">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/instagram/auth/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/instagram/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/instagram/callback">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/instagram/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/instagram/post/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/instagram/post">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/instagram/post/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/instagram/upload-media/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/instagram/upload-media">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/instagram/upload-media/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/instagram/verify/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/instagram/verify">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/instagram/verify/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/linkedin/auth/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/linkedin/auth">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/linkedin/auth/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/linkedin/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/linkedin/callback">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/linkedin/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/linkedin/post/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/linkedin/post">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/linkedin/post/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/linkedin/upload-media/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/linkedin/upload-media">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/linkedin/upload-media/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/linkedin/verify/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/linkedin/verify">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/linkedin/verify/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/twitter/auth/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/twitter/auth">> = Specific

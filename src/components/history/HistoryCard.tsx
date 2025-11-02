@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Post, Platform } from '@/types';
 import { PLATFORMS, STATUS_CONFIG } from '@/constants';
-import { Link as LinkIcon, Globe, Send, Clock, X, Trash2 } from 'lucide-react';
+import { publishPost } from '@/services/publishingService';
+import { Link as LinkIcon, Globe, Send, Clock, X, Trash2, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface PublishedCardProps {
     post: Post;
@@ -16,10 +17,45 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
     const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0]);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [scheduleDate, setScheduleDate] = useState('');
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [publishError, setPublishError] = useState<string | null>(null);
+    const [publishSuccess, setPublishSuccess] = useState(false);
 
-    const handlePublish = () => {
-        const updates: Partial<Post> = { status: 'published', publishedAt: new Date().toISOString() };
-        onUpdatePost({ ...post, ...updates });
+    const handlePublish = async () => {
+        setIsPublishing(true);
+        setPublishError(null);
+        setPublishSuccess(false);
+        
+        try {
+            // Actually publish to social media platforms!
+            const results = await publishPost(post);
+            
+            // Check for failures
+            const failures = results.filter(r => !r.success);
+            
+            if (failures.length === 0) {
+                // All platforms succeeded
+                const updates: Partial<Post> = { 
+                    status: 'published', 
+                    publishedAt: new Date().toISOString() 
+                };
+                onUpdatePost({ ...post, ...updates });
+                setPublishSuccess(true);
+                
+                // Auto-hide success message after 3 seconds
+                setTimeout(() => setPublishSuccess(false), 3000);
+            } else {
+                // Some platforms failed
+                const failedPlatforms = failures.map(f => f.platform).join(', ');
+                const errorMessages = failures.map(f => f.error).join('; ');
+                setPublishError(`Failed to publish to ${failedPlatforms}: ${errorMessages}`);
+            }
+        } catch (error) {
+            console.error('Publishing error:', error);
+            setPublishError(error instanceof Error ? error.message : 'An unexpected error occurred while publishing');
+        } finally {
+            setIsPublishing(false);
+        }
     };
     
     const handleSchedule = () => {
@@ -52,7 +88,7 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
     const ActionButton: React.FC<{ onClick: () => void, icon: React.ElementType, label: string, className?: string, disabled?: boolean }> = 
     ({ onClick, icon: Icon, label, className, disabled }) => (
         <button onClick={onClick} disabled={disabled} className={`flex items-center justify-center text-xs font-bold py-2 px-3 rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}>
-            <Icon className="w-4 h-4 mr-1.5" />
+            <Icon className={`w-4 h-4 mr-1.5 ${Icon === Loader2 ? 'animate-spin' : ''}`} />
             <span>{label}</span>
         </button>
     );
@@ -134,7 +170,13 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
                         <div className="flex items-center justify-between w-full">
                             <div className="flex gap-2 flex-wrap">
                                 <ActionButton onClick={() => setIsScheduleModalOpen(true)} icon={Clock} label="Schedule" className="text-white bg-purple-600 hover:bg-purple-700" />
-                                <ActionButton onClick={handlePublish} disabled={!canPublish} icon={Send} label="Publish Now" className="bg-charcoal hover:bg-charcoal-dark text-white" />
+                                <ActionButton 
+                                    onClick={handlePublish} 
+                                    disabled={!canPublish || isPublishing} 
+                                    icon={isPublishing ? Loader2 : Send} 
+                                    label={isPublishing ? 'Publishing...' : 'Publish Now'} 
+                                    className="bg-charcoal hover:bg-charcoal-dark text-white" 
+                                />
                             </div>
                             <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white" />
                         </div>
@@ -142,6 +184,18 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
                             <div className="text-xs text-yellow-300 bg-yellow-900/50 p-2 rounded flex items-center gap-2">
                                 <LinkIcon className="w-4 h-4 flex-shrink-0" />
                                 <span>Connect {unconnectedPlatforms.map(p => PLATFORMS.find(info => info.id === p)?.name).join(', ')} account(s) to publish.</span>
+                            </div>
+                        )}
+                        {publishError && (
+                            <div className="text-xs text-red-300 bg-red-900/50 p-2 rounded flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                <span>{publishError}</span>
+                            </div>
+                        )}
+                        {publishSuccess && (
+                            <div className="text-xs text-green-300 bg-green-900/50 p-2 rounded flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                                <span>Successfully published to all platforms! 🎉</span>
                             </div>
                         )}
                     </div>

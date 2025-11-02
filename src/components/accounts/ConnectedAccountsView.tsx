@@ -11,10 +11,10 @@ import {
     disconnectPlatform,
     getConnectionSummary
 } from '@/services/credentialService';
-import { verifyTwitterCredentials } from '@/services/platforms/twitterService';
-import { verifyLinkedInCredentials } from '@/services/platforms/linkedinService';
-import { verifyFacebookCredentials } from '@/services/platforms/facebookService';
-import { verifyInstagramCredentials } from '@/services/platforms/instagramService';
+import { startTwitterAuth, verifyTwitterCredentials } from '@/services/platforms/twitterService';
+import { startLinkedInAuth, verifyLinkedInCredentials } from '@/services/platforms/linkedinService';
+import { startInstagramAuth, verifyInstagramCredentials } from '@/services/platforms/instagramService';
+import { startFacebookAuth, verifyFacebookCredentials } from '@/services/platforms/facebookService';
 
 interface ConnectedAccountsViewProps {
     connectedAccounts: Record<Platform, boolean>;
@@ -40,6 +40,77 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
     // Load connection status on mount
     useEffect(() => {
         loadConnectionStatus();
+        
+        // Check for OAuth callback messages in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const twitterConnected = urlParams.get('twitter_connected');
+        const linkedinConnected = urlParams.get('linkedin_connected');
+        const instagramConnected = urlParams.get('instagram_connected');
+        const facebookConnected = urlParams.get('facebook_connected');
+        const error = urlParams.get('error');
+        const errorDetails = urlParams.get('details');
+        
+        if (twitterConnected === 'true') {
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Reload connection status after a short delay
+            setTimeout(() => {
+                loadConnectionStatus();
+                setVerifyingPlatform(null);
+            }, 500);
+        }
+        
+        if (linkedinConnected === 'true') {
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Reload connection status after a short delay
+            setTimeout(() => {
+                loadConnectionStatus();
+                setVerifyingPlatform(null);
+            }, 500);
+        }
+        
+        if (instagramConnected === 'true') {
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Reload connection status after a short delay
+            setTimeout(() => {
+                loadConnectionStatus();
+                setVerifyingPlatform(null);
+            }, 500);
+        }
+        
+        if (facebookConnected === 'true') {
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Reload connection status after a short delay
+            setTimeout(() => {
+                loadConnectionStatus();
+                setVerifyingPlatform(null);
+            }, 500);
+        }
+        
+        if (error) {
+            // Handle OAuth errors
+            const errorMessage = errorDetails 
+                ? `${error.replace(/_/g, ' ')}: ${decodeURIComponent(errorDetails)}`
+                : error.replace(/_/g, ' ');
+            
+            // Determine which platform had the error
+            if (error.includes('twitter')) {
+                setPlatformErrors(prev => ({ ...prev, twitter: errorMessage }));
+            } else if (error.includes('linkedin')) {
+                setPlatformErrors(prev => ({ ...prev, linkedin: errorMessage }));
+            } else if (error.includes('instagram')) {
+                setPlatformErrors(prev => ({ ...prev, instagram: errorMessage }));
+            } else if (error.includes('facebook')) {
+                setPlatformErrors(prev => ({ ...prev, facebook: errorMessage }));
+            }
+            
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setVerifyingPlatform(null);
+        }
     }, []);
 
     const loadConnectionStatus = () => {
@@ -74,9 +145,56 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({ connected
         setPlatformUsernames(usernames);
     };
 
-    const handleConnect = (platform: Platform) => {
-        setSelectedPlatform(platform);
+    const handleConnect = async (platform: Platform) => {
         setPlatformErrors(prev => ({ ...prev, [platform]: undefined }));
+        
+        // Twitter and LinkedIn use OAuth flow
+        if (platform === 'twitter') {
+            setVerifyingPlatform(platform);
+            const result = await startTwitterAuth();
+            if (!result.success) {
+                setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
+                setVerifyingPlatform(null);
+            }
+            // Will redirect to Twitter, so loading state will persist
+            return;
+        }
+        
+        if (platform === 'linkedin') {
+            setVerifyingPlatform(platform);
+            const result = await startLinkedInAuth();
+            if (!result.success) {
+                setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
+                setVerifyingPlatform(null);
+            }
+            // Will redirect to LinkedIn, so loading state will persist
+            return;
+        }
+        
+        if (platform === 'instagram') {
+            setVerifyingPlatform(platform);
+            const result = await startInstagramAuth();
+            if (!result.success) {
+                setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
+                setVerifyingPlatform(null);
+            }
+            // Will redirect to Instagram/Facebook, so loading state will persist
+            return;
+        }
+        
+        if (platform === 'facebook') {
+            setVerifyingPlatform(platform);
+            const result = await startFacebookAuth();
+            if (!result.success) {
+                setPlatformErrors(prev => ({ ...prev, [platform]: result.error }));
+                setVerifyingPlatform(null);
+            }
+            // Will redirect to Facebook, so loading state will persist
+            return;
+        }
+        
+        // No manual credential entry needed anymore - all use OAuth!
+        setSelectedPlatform(platform);
     };
 
     const handleDisconnect = (platform: Platform) => {

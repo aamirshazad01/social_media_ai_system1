@@ -40,6 +40,96 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/api/facebook/auth",
+      "regex": "^/api/facebook/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/auth(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/callback",
+      "regex": "^/api/facebook/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/callback(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/post",
+      "regex": "^/api/facebook/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/post(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/upload-media",
+      "regex": "^/api/facebook/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/verify",
+      "regex": "^/api/facebook/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/verify(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/auth",
+      "regex": "^/api/instagram/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/auth(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/callback",
+      "regex": "^/api/instagram/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/callback(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/post",
+      "regex": "^/api/instagram/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/post(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/upload-media",
+      "regex": "^/api/instagram/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/verify",
+      "regex": "^/api/instagram/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/verify(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/auth",
+      "regex": "^/api/linkedin/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/auth(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/callback",
+      "regex": "^/api/linkedin/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/callback(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/post",
+      "regex": "^/api/linkedin/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/post(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/upload-media",
+      "regex": "^/api/linkedin/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/verify",
+      "regex": "^/api/linkedin/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/verify(?:/)?$"
+    },
+    {
       "page": "/api/twitter/auth",
       "regex": "^/api/twitter/auth(?:/)?$",
       "routeKeys": {},

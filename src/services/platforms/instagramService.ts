@@ -2,48 +2,73 @@ import { InstagramCredentials } from '@/types';
 
 /**
  * Instagram API Service
- * This service uses Instagram Graph API for posting content
+ * Now uses real backend API endpoints for Instagram integration
  * Note: Instagram API requires a Facebook Business account
  */
 
-const INSTAGRAM_API_BASE = 'https://graph.instagram.com';
-
 export interface InstagramPostOptions {
   caption: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  isCarousel?: boolean;
-  carouselItems?: Array<{ type: 'IMAGE' | 'VIDEO'; url: string }>;
+  imageUrl: string; // Required for Instagram
+  mediaType?: 'image' | 'video';
 }
 
 /**
- * Verify Instagram credentials
+ * Start Instagram OAuth flow
+ * Opens window for Instagram/Facebook authentication
  */
-export async function verifyInstagramCredentials(
-  credentials: InstagramCredentials
-): Promise<{ success: boolean; username?: string; error?: string }> {
+export async function startInstagramAuth(): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!credentials.accessToken) {
-      return { success: false, error: 'Missing access token' };
+    // Call backend to start OAuth flow
+    const response = await fetch('/api/instagram/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to start Instagram authentication');
     }
 
-    // Check if token is expired
-    if (credentials.expiresAt && new Date(credentials.expiresAt) < new Date()) {
-      return { success: false, error: 'Access token expired. Please reconnect.' };
+    const { url } = await response.json();
+
+    // Open Instagram/Facebook auth in current window
+    window.location.href = url;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Instagram auth start error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to start authentication'
+    };
+  }
+}
+
+/**
+ * Verify Instagram credentials by calling backend
+ */
+export async function verifyInstagramCredentials(credentials: InstagramCredentials): Promise<{
+  success: boolean;
+  username?: string;
+  error?: string
+}> {
+  try {
+    // Call backend to verify credentials
+    const response = await fetch('/api/instagram/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { success: false, error: error.error || 'Verification failed' };
     }
 
-    // TODO: Call backend endpoint to verify credentials
-    // const response = await fetch('/api/instagram/verify', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(credentials)
-    // });
-
-    console.log('Instagram credentials would be verified via backend');
+    const data = await response.json();
 
     return {
-      success: true,
-      username: credentials.username || 'instagram_user'
+      success: data.connected,
+      username: data.username
     };
   } catch (error) {
     console.error('Instagram verification error:', error);
@@ -55,8 +80,8 @@ export async function verifyInstagramCredentials(
 }
 
 /**
- * Post to Instagram
- * Instagram requires a 2-step process: create container -> publish container
+ * Post to Instagram via backend API
+ * Instagram requires a 2-step process: create container → publish container
  */
 export async function postToInstagram(
   credentials: InstagramCredentials,
@@ -71,35 +96,31 @@ export async function postToInstagram(
       return { success: false, error: 'Caption must be between 1-2200 characters' };
     }
 
-    if (!options.imageUrl && !options.videoUrl && !options.isCarousel) {
-      return { success: false, error: 'Must provide media (image, video, or carousel)' };
+    if (!options.imageUrl) {
+      return { success: false, error: 'Instagram requires an image' };
     }
 
-    // Check token expiration
-    if (credentials.expiresAt && new Date(credentials.expiresAt) < new Date()) {
-      return { success: false, error: 'Access token expired. Please reconnect.' };
+    // Call backend to post (handles 2-step process)
+    const response = await fetch('/api/instagram/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caption: options.caption,
+        imageUrl: options.imageUrl
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to post to Instagram');
     }
 
-    // TODO: Call backend endpoint to post
-    // Step 1: Create media container
-    // Step 2: Publish container
-    // const response = await fetch('/api/instagram/post', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     credentials,
-    //     ...options
-    //   })
-    // });
+    const data = await response.json();
 
-    console.log('Instagram post would be published via backend:', options.caption);
-
-    // Simulated success response
-    const postId = `ig_${Date.now()}`;
     return {
       success: true,
-      postId,
-      url: `https://www.instagram.com/p/${postId}`
+      postId: data.postId,
+      url: data.postUrl
     };
   } catch (error) {
     console.error('Instagram post error:', error);
@@ -111,7 +132,49 @@ export async function postToInstagram(
 }
 
 /**
- * Get Instagram profile
+ * Upload media to Instagram via backend API
+ * Returns public URL for use in posting
+ */
+export async function uploadInstagramMedia(
+  credentials: InstagramCredentials,
+  mediaData: string  // base64 encoded
+): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
+  try {
+    if (!credentials.isConnected) {
+      return { success: false, error: 'Instagram account not connected' };
+    }
+
+    // Call backend to upload media to Supabase Storage
+    const response = await fetch('/api/instagram/upload-media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mediaData
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to upload media');
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      imageUrl: data.imageUrl
+    };
+  } catch (error) {
+    console.error('Instagram media upload error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to upload media'
+    };
+  }
+}
+
+/**
+ * Get Instagram profile via backend API
  */
 export async function getInstagramProfile(
   credentials: InstagramCredentials
@@ -121,18 +184,25 @@ export async function getInstagramProfile(
       return { success: false, error: 'Instagram account not connected' };
     }
 
-    // TODO: Call backend endpoint
-    console.log('Instagram profile would be fetched via backend');
+    // Call backend to get profile
+    const response = await fetch('/api/instagram/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch profile');
+    }
+
+    const data = await response.json();
 
     return {
       success: true,
       profile: {
-        id: credentials.userId || '123456',
-        username: credentials.username || 'instagram_user',
-        name: 'Instagram User',
-        followers: 0,
-        following: 0,
-        media_count: 0
+        id: data.userId,
+        username: data.username,
+        name: data.name,
       }
     };
   } catch (error) {
@@ -144,37 +214,3 @@ export async function getInstagramProfile(
   }
 }
 
-/**
- * Get Instagram media insights (analytics)
- */
-export async function getInstagramInsights(
-  credentials: InstagramCredentials,
-  mediaId: string
-): Promise<{ success: boolean; insights?: any; error?: string }> {
-  try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Instagram account not connected' };
-    }
-
-    // TODO: Call backend endpoint
-    console.log('Instagram insights would be fetched via backend');
-
-    return {
-      success: true,
-      insights: {
-        reach: 0,
-        impressions: 0,
-        engagement: 0,
-        likes: 0,
-        comments: 0,
-        saves: 0
-      }
-    };
-  } catch (error) {
-    console.error('Instagram insights fetch error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch insights'
-    };
-  }
-}

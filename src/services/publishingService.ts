@@ -1,9 +1,9 @@
 import { Platform, Post, PostContent, TwitterCredentials, LinkedInCredentials, FacebookCredentials, InstagramCredentials } from '@/types';
 import { getPlatformCredentials } from './credentialService';
 import { postTweet, uploadTwitterMedia } from './platforms/twitterService';
-import { postToLinkedIn } from './platforms/linkedinService';
+import { postToLinkedIn, uploadLinkedInMedia } from './platforms/linkedinService';
 import { postToFacebook, uploadFacebookPhoto } from './platforms/facebookService';
-import { postToInstagram } from './platforms/instagramService';
+import { postToInstagram, uploadInstagramMedia } from './platforms/instagramService';
 
 export interface PublishResult {
   platform: Platform;
@@ -19,8 +19,15 @@ export interface PublishResult {
 export async function publishToSinglePlatform(
   platform: Platform,
   content: string,
-  mediaUrl?: string
+  mediaUrl?: string,
+  mediaType?: 'image' | 'video'
 ): Promise<PublishResult> {
+  // Auto-detect media type if not provided
+  if (!mediaType && mediaUrl) {
+    mediaType = (mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('video')) 
+      ? 'video' 
+      : 'image';
+  }
   try {
     const credentials = getPlatformCredentials(platform);
 
@@ -39,12 +46,14 @@ export async function publishToSinglePlatform(
         // Handle media upload if present
         let mediaIds: string[] | undefined;
         if (mediaUrl) {
-          // TODO: Convert mediaUrl to File object and upload
-          // const mediaResult = await uploadTwitterMedia(credentials, mediaFile);
-          // if (mediaResult.success && mediaResult.mediaId) {
-          //   mediaIds = [mediaResult.mediaId];
-          // }
-          console.log('Twitter media upload would happen here');
+          const mediaResult = await uploadTwitterMedia(
+            credentials as TwitterCredentials, 
+            mediaUrl, 
+            mediaType || 'image'
+          );
+          if (mediaResult.success && mediaResult.mediaId) {
+            mediaIds = [mediaResult.mediaId];
+          }
         }
 
         result = await postTweet(credentials as TwitterCredentials, {
@@ -55,18 +64,41 @@ export async function publishToSinglePlatform(
       }
 
       case 'linkedin': {
+        // Handle media upload if present
+        let mediaUrn: string | undefined;
+        if (mediaUrl) {
+          const mediaResult = await uploadLinkedInMedia(
+            credentials as LinkedInCredentials, 
+            mediaUrl,
+            mediaType || 'image'
+          );
+          if (mediaResult.success && mediaResult.mediaUrn) {
+            mediaUrn = mediaResult.mediaUrn;
+          }
+        }
+
         result = await postToLinkedIn(credentials as LinkedInCredentials, {
           text: content,
           visibility: 'PUBLIC',
-          mediaUrl
+          mediaUrn
         });
         break;
       }
 
       case 'facebook': {
+        // Handle media upload if present
+        let imageUrl: string | undefined;
+        if (mediaUrl) {
+          const mediaResult = await uploadFacebookPhoto(credentials as FacebookCredentials, mediaUrl);
+          if (mediaResult.success && mediaResult.imageUrl) {
+            imageUrl = mediaResult.imageUrl;
+          }
+        }
+
         result = await postToFacebook(credentials as FacebookCredentials, {
           message: content,
-          imageUrl: mediaUrl
+          imageUrl: imageUrl,
+          mediaType: mediaType
         });
         break;
       }
@@ -80,9 +112,20 @@ export async function publishToSinglePlatform(
           };
         }
 
+        // Upload media to get public URL (Instagram requires public URLs)
+        const mediaResult = await uploadInstagramMedia(credentials as InstagramCredentials, mediaUrl);
+        if (!mediaResult.success || !mediaResult.imageUrl) {
+          return {
+            platform,
+            success: false,
+            error: mediaResult.error || 'Failed to upload media'
+          };
+        }
+
         result = await postToInstagram(credentials as InstagramCredentials, {
           caption: content,
-          imageUrl: mediaUrl
+          imageUrl: mediaResult.imageUrl,
+          mediaType: mediaType
         });
         break;
       }

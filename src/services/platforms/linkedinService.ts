@@ -2,46 +2,72 @@ import { LinkedInCredentials } from '@/types';
 
 /**
  * LinkedIn API Service
- * This service uses LinkedIn Share API for posting content
+ * Now uses real backend API endpoints for LinkedIn integration
  */
-
-const LINKEDIN_API_BASE = 'https://api.linkedin.com/v2';
 
 export interface LinkedInPostOptions {
   text: string;
-  visibility: 'PUBLIC' | 'CONNECTIONS';
-  mediaUrl?: string;
-  mediaType?: 'IMAGE' | 'VIDEO' | 'ARTICLE';
+  visibility?: 'PUBLIC' | 'CONNECTIONS';
+  mediaUrn?: string;
 }
 
 /**
- * Verify LinkedIn credentials
+ * Start LinkedIn OAuth flow
+ * Opens popup window for LinkedIn authentication
  */
-export async function verifyLinkedInCredentials(
-  credentials: LinkedInCredentials
-): Promise<{ success: boolean; profileName?: string; error?: string }> {
+export async function startLinkedInAuth(): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!credentials.clientId || !credentials.clientSecret || !credentials.accessToken) {
-      return { success: false, error: 'Missing required credentials' };
+    // Call backend to start OAuth flow
+    const response = await fetch('/api/linkedin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to start LinkedIn authentication');
     }
 
-    // Check if token is expired
-    if (credentials.expiresAt && new Date(credentials.expiresAt) < new Date()) {
-      return { success: false, error: 'Access token expired. Please reconnect.' };
+    const { url } = await response.json();
+
+    // Open LinkedIn auth in current window
+    window.location.href = url;
+
+    return { success: true };
+  } catch (error) {
+    console.error('LinkedIn auth start error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to start authentication'
+    };
+  }
+}
+
+/**
+ * Verify LinkedIn credentials by calling backend
+ */
+export async function verifyLinkedInCredentials(credentials: LinkedInCredentials): Promise<{
+  success: boolean;
+  profileName?: string;
+  error?: string
+}> {
+  try {
+    // Call backend to verify credentials
+    const response = await fetch('/api/linkedin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { success: false, error: error.error || 'Verification failed' };
     }
 
-    // TODO: Call backend endpoint to verify credentials
-    // const response = await fetch('/api/linkedin/verify', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(credentials)
-    // });
-
-    console.log('LinkedIn credentials would be verified via backend');
+    const data = await response.json();
 
     return {
-      success: true,
-      profileName: credentials.profileName || 'LinkedIn User'
+      success: data.connected,
+      profileName: data.profileName
     };
   } catch (error) {
     console.error('LinkedIn verification error:', error);
@@ -53,7 +79,7 @@ export async function verifyLinkedInCredentials(
 }
 
 /**
- * Post to LinkedIn
+ * Post to LinkedIn via backend API
  */
 export async function postToLinkedIn(
   credentials: LinkedInCredentials,
@@ -68,29 +94,28 @@ export async function postToLinkedIn(
       return { success: false, error: 'Post text must be between 1-3000 characters' };
     }
 
-    // Check token expiration
-    if (credentials.expiresAt && new Date(credentials.expiresAt) < new Date()) {
-      return { success: false, error: 'Access token expired. Please reconnect.' };
+    // Call backend to post
+    const response = await fetch('/api/linkedin/post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: options.text,
+        visibility: options.visibility || 'PUBLIC',
+        mediaUrn: options.mediaUrn
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to post to LinkedIn');
     }
 
-    // TODO: Call backend endpoint to post
-    // const response = await fetch('/api/linkedin/post', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     credentials,
-    //     ...options
-    //   })
-    // });
+    const data = await response.json();
 
-    console.log('LinkedIn post would be published via backend:', options.text);
-
-    // Simulated success response
-    const postId = `urn:li:share:${Date.now()}`;
     return {
       success: true,
-      postId,
-      url: `https://www.linkedin.com/feed/update/${postId}`
+      postId: data.postId,
+      url: data.postUrl
     };
   } catch (error) {
     console.error('LinkedIn post error:', error);
@@ -102,7 +127,50 @@ export async function postToLinkedIn(
 }
 
 /**
- * Get LinkedIn profile
+ * Upload media to LinkedIn via backend API
+ */
+export async function uploadLinkedInMedia(
+  credentials: LinkedInCredentials,
+  mediaData: string,
+  mediaType: 'image' | 'video' = 'image'
+): Promise<{ success: boolean; mediaUrn?: string; error?: string }> {
+  try {
+    if (!credentials.isConnected) {
+      return { success: false, error: 'LinkedIn account not connected' };
+    }
+
+    // Call backend to upload media
+    const response = await fetch('/api/linkedin/upload-media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mediaData,
+        mediaType
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to upload media');
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      mediaUrn: data.mediaUrn
+    };
+  } catch (error) {
+    console.error('LinkedIn media upload error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to upload media'
+    };
+  }
+}
+
+/**
+ * Get LinkedIn profile via backend API
  */
 export async function getLinkedInProfile(
   credentials: LinkedInCredentials
@@ -112,16 +180,25 @@ export async function getLinkedInProfile(
       return { success: false, error: 'LinkedIn account not connected' };
     }
 
-    // TODO: Call backend endpoint
-    console.log('LinkedIn profile would be fetched via backend');
+    // Call backend to get profile
+    const response = await fetch('/api/linkedin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch profile');
+    }
+
+    const data = await response.json();
 
     return {
       success: true,
       profile: {
-        id: credentials.profileId || '123456',
-        name: credentials.profileName || 'LinkedIn User',
-        headline: 'Professional',
-        connections: 0
+        id: data.profileId,
+        name: data.profileName,
+        email: data.email,
       }
     };
   } catch (error) {
@@ -129,34 +206,6 @@ export async function getLinkedInProfile(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch profile'
-    };
-  }
-}
-
-/**
- * Refresh LinkedIn access token
- */
-export async function refreshLinkedInToken(
-  credentials: LinkedInCredentials
-): Promise<{ success: boolean; newToken?: string; expiresAt?: string; error?: string }> {
-  try {
-    if (!credentials.refreshToken) {
-      return { success: false, error: 'No refresh token available' };
-    }
-
-    // TODO: Call backend endpoint to refresh token
-    console.log('Token would be refreshed via backend');
-
-    return {
-      success: true,
-      newToken: 'new_access_token',
-      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // 60 days
-    };
-  } catch (error) {
-    console.error('LinkedIn token refresh error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to refresh token'
     };
   }
 }
