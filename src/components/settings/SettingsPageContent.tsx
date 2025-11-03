@@ -6,8 +6,10 @@ import SettingsLayout from '@/components/settings/SettingsLayout'
 import MembersTab from '@/components/settings/MembersTab'
 import WorkspaceSettingsTab from '@/components/settings/WorkspaceSettingsTab'
 import ActivityLogTab from '@/components/settings/ActivityLogTab'
+import AccountSettingsTab from '@/components/settings/AccountSettingsTab'
+import ApiSettingsTab from '@/components/settings/ApiSettingsTab'
 
-type Tab = 'members' | 'workspace' | 'activity'
+type Tab = 'members' | 'workspace' | 'activity' | 'accounts' | 'api'
 
 export default function SettingsPageContent() {
   const searchParams = useSearchParams()
@@ -21,6 +23,10 @@ export default function SettingsPageContent() {
         return <WorkspaceSettingsTab />
       case 'activity':
         return <ActivityLogTab />
+      case 'accounts':
+        return <AccountSettingsTab />
+      case 'api':
+        return <ApiSettingsTab />
       default:
         return <MembersTab />
     }

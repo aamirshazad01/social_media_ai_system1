@@ -1,0 +1,355 @@
+'use client'
+
+import React, { useState, useEffect, useContext } from 'react'
+import {
+  CheckCircle,
+  Link,
+  AlertCircle,
+  Settings,
+  Loader2,
+  Clock,
+  AlertTriangle,
+} from 'lucide-react'
+import { PLATFORMS } from '@/constants'
+import type { Platform } from '@/types'
+import { AuthContext } from '@/contexts/AuthContext'
+
+const AccountSettingsTab: React.FC = () => {
+  const { userRole } = useContext(AuthContext)
+  const [connectedAccounts, setConnectedAccounts] = useState<Record<Platform, boolean>>({
+    twitter: false,
+    linkedin: false,
+    facebook: false,
+    instagram: false,
+  })
+  const [connectingPlatform, setConnectingPlatform] = useState<Platform | null>(null)
+  const [errors, setErrors] = useState<Record<Platform, string | undefined>>({
+    twitter: undefined,
+    linkedin: undefined,
+    facebook: undefined,
+    instagram: undefined,
+  })
+  const [statusInfo, setStatusInfo] = useState<Record<Platform, any>>({
+    twitter: {},
+    linkedin: {},
+    facebook: {},
+    instagram: {},
+  })
+  const [timeoutWarnings, setTimeoutWarnings] = useState<Set<Platform>>(new Set())
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Adaptive timeouts per platform
+  const TIMEOUTS = {
+    twitter: 45000, // 45 seconds
+    linkedin: 60000, // 60 seconds
+    facebook: 90000, // 90 seconds
+    instagram: 90000, // 90 seconds
+  }
+
+  // Check role - only admins can manage account settings
+  if (userRole !== 'admin') {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-3">
+        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-yellow-800">
+          <p className="font-semibold">Access Denied</p>
+          <p>Only workspace admins can manage account connections.</p>
+        </div>
+      </div>
+    )
+  }
+
+  useEffect(() => {
+    loadConnectionStatus()
+
+    // Check for OAuth callbacks
+    const urlParams = new URLSearchParams(window.location.search)
+    const successPlatform = urlParams.get('oauth_success')
+    const errorCode = urlParams.get('oauth_error')
+
+    if (successPlatform) {
+      // Success - reload status
+      setTimeout(() => {
+        loadConnectionStatus()
+        setConnectingPlatform(null)
+      }, 1000)
+      window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
+      return
+    }
+
+    if (errorCode) {
+      // Error - show to user
+      const platform = detectPlatformFromError(errorCode)
+      if (platform) {
+        setErrors(prev => ({
+          ...prev,
+          [platform]: mapErrorCode(errorCode),
+        }))
+      }
+      setConnectingPlatform(null)
+      window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
+      return
+    }
+  }, [])
+
+  const loadConnectionStatus = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/credentials/status')
+      if (!response.ok) throw new Error('Failed to load status')
+
+      const status = await response.json()
+      setStatusInfo(status)
+      setConnectedAccounts(
+        Object.fromEntries(
+          Object.entries(status).map(([platform, info]: [string, any]) => [
+            platform,
+            info.isConnected,
+          ])
+        ) as Record<Platform, boolean>
+      )
+    } catch (error) {
+      console.error('Failed to load connection status:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConnect = async (platform: Platform) => {
+    setErrors(prev => ({ ...prev, [platform]: undefined }))
+    setConnectingPlatform(platform)
+    setTimeoutWarnings(new Set())
+
+    try {
+      // POST to initiate OAuth
+      const response = await fetch(`/api/auth/oauth/${platform}`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to initiate connection')
+      }
+
+      const { redirectUrl } = await response.json()
+
+      // Set timeout warning (show warning 30s before timeout)
+      const timeoutMs = TIMEOUTS[platform]
+      setTimeout(() => {
+        if (connectingPlatform === platform) {
+          setTimeoutWarnings(prev => new Set(prev).add(platform))
+        }
+      }, timeoutMs - 30000)
+
+      // Set timeout to clear loading state
+      const timeoutId = setTimeout(() => {
+        if (connectingPlatform === platform) {
+          setConnectingPlatform(null)
+          setErrors(prev => ({
+            ...prev,
+            [platform]: 'Connection timed out. Please try again.',
+          }))
+        }
+      }, timeoutMs) as any
+
+      // Store timeout ID for cleanup
+      (window as any)[`timeout_${platform}`] = timeoutId
+
+      // Redirect to OAuth
+      window.location.href = redirectUrl
+    } catch (error) {
+      console.error(`Failed to connect ${platform}:`, error)
+      setErrors(prev => ({
+        ...prev,
+        [platform]: error instanceof Error ? error.message : 'Connection failed',
+      }))
+      setConnectingPlatform(null)
+    }
+  }
+
+  const handleDisconnect = async (platform: Platform) => {
+    try {
+      const response = await fetch(`/api/credentials/${platform}/disconnect`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Failed to disconnect')
+
+      loadConnectionStatus()
+      setErrors(prev => ({ ...prev, [platform]: undefined }))
+    } catch (error) {
+      console.error('Failed to disconnect:', error)
+      setErrors(prev => ({
+        ...prev,
+        [platform]: 'Failed to disconnect',
+      }))
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-6 text-charcoal-dark">Connected Accounts</h2>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex gap-3">
+        <Settings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-blue-800">
+          <p className="font-semibold mb-1">Production-Ready Integration</p>
+          <p>
+            Connect your social media accounts securely. Your credentials are encrypted and
+            stored on our servers. Never stored in your browser.
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-slate mr-2" />
+          <span className="text-slate">Loading connection status...</span>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {PLATFORMS.map(({ id, name, icon: Icon }) => {
+            const isConnected = connectedAccounts[id]
+            const isConnecting = connectingPlatform === id
+            const error = errors[id]
+            const info = statusInfo[id]
+            const hasTimeout = timeoutWarnings.has(id)
+
+            return (
+              <div key={id} className="bg-light-gray rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-4 flex-1">
+                    <Icon className="w-8 h-8 text-charcoal" />
+                    <div className="flex-1">
+                      <span className="text-lg font-medium text-charcoal-dark block">
+                        {name}
+                      </span>
+                      {isConnected && info?.username && (
+                        <div className="text-sm text-slate">
+                          <span>@{info.username}</span>
+                          {info.isExpired && (
+                            <span className="ml-2 text-red-600 font-semibold">
+                              Token Expired
+                            </span>
+                          )}
+                          {info.isExpiringSoon && !info.isExpired && (
+                            <span className="ml-2 text-orange-600 font-semibold">
+                              Expiring Soon
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {isConnected && info?.expiresAt && (
+                        <span className="text-xs text-slate">
+                          Expires: {new Date(info.expiresAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {isConnecting ? (
+                    <div className="flex items-center gap-2 text-slate">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="font-semibold text-sm">Connecting...</span>
+                    </div>
+                  ) : isConnected ? (
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        <span className="font-semibold text-sm">Connected</span>
+                      </div>
+                      <button
+                        onClick={() => handleDisconnect(id)}
+                        className="px-4 py-2 text-sm font-medium bg-slate hover:bg-slate/80 rounded-md text-white transition-colors"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleConnect(id)}
+                      className="px-4 py-2 text-sm font-medium bg-charcoal hover:bg-charcoal-dark rounded-md text-white flex items-center transition-colors"
+                    >
+                      <Link className="w-4 h-4 mr-2" />
+                      Connect
+                    </button>
+                  )}
+                </div>
+
+                {error && (
+                  <div className="px-4 pb-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  </div>
+                )}
+
+                {hasTimeout && (
+                  <div className="px-4 pb-4">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex gap-2">
+                      <Clock className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-orange-800">
+                        Connection is taking longer than expected. This window will close in 30
+                        seconds.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {isConnected && info?.isExpired && (
+                  <div className="px-4 pb-4">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
+                      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-red-800">
+                        <p className="font-semibold">Token Expired</p>
+                        <p>Please reconnect to refresh your credentials.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="mt-6 pt-6 border-t border-slate/30">
+        <p className="text-sm text-slate">
+          <strong>Security:</strong> Your API credentials are encrypted using AES-256 encryption
+          and stored securely on our servers. We never store them in your browser.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function detectPlatformFromError(errorCode: string): Platform | null {
+  if (errorCode.includes('twitter')) return 'twitter'
+  if (errorCode.includes('linkedin')) return 'linkedin'
+  if (errorCode.includes('facebook')) return 'facebook'
+  if (errorCode.includes('instagram')) return 'instagram'
+  return null
+}
+
+function mapErrorCode(errorCode: string): string {
+  const messages: Record<string, string> = {
+    oauth_unauthorized: 'Not authenticated. Please log in.',
+    no_workspace: 'Workspace error. Please refresh and try again.',
+    user_denied: 'You denied the connection request.',
+    missing_params: 'OAuth parameters missing. Please try again.',
+    csrf_check_failed: 'Security verification failed. Please try again.',
+    missing_verifier: 'Security token missing. Please restart connection.',
+    callback_error: 'Connection callback failed. Please try again.',
+    token_exchange_failed: 'Failed to exchange authorization code. Please try again.',
+    get_pages_failed: 'Failed to retrieve your pages. Please try again.',
+    no_pages_found: 'No pages found. Please create a page and try again.',
+    get_account_failed: 'Failed to retrieve your account. Please try again.',
+    no_account_found: 'No account found. Please try again.',
+    save_failed: 'Failed to save credentials. Please try again.',
+    config_missing: 'Platform is not configured. Please contact support.',
+  }
+  return messages[errorCode] || 'Connection failed. Please try again.'
+}
+
+export default AccountSettingsTab

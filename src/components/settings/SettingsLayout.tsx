@@ -1,26 +1,40 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Users, Settings, Activity, ChevronLeft } from 'lucide-react'
+import React, { useState, useContext } from 'react'
+import { Users, Settings, Activity, ChevronLeft, Zap } from 'lucide-react'
 import Link from 'next/link'
+import { AuthContext } from '@/contexts/AuthContext'
 
-type Tab = 'members' | 'workspace' | 'activity'
+type Tab = 'members' | 'workspace' | 'activity' | 'accounts' | 'api'
 
 interface SettingsLayoutProps {
   children: React.ReactNode
   activeTab: Tab
 }
 
-const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
+const ADMIN_TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
+  {
+    id: 'accounts',
+    label: 'Connected Accounts',
+    icon: <Zap size={20} />,
+  },
+  {
+    id: 'api',
+    label: 'API Settings',
+    icon: <Settings size={20} />,
+  },
+  {
+    id: 'workspace',
+    label: 'Workspace Settings',
+    icon: <Settings size={20} />,
+  },
+]
+
+const COMMON_TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   {
     id: 'members',
     label: 'Members',
     icon: <Users size={20} />,
-  },
-  {
-    id: 'workspace',
-    label: 'Settings',
-    icon: <Settings size={20} />,
   },
   {
     id: 'activity',
@@ -30,6 +44,11 @@ const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
 ]
 
 export default function SettingsLayout({ children, activeTab }: SettingsLayoutProps) {
+  const { userRole } = useContext(AuthContext)
+
+  // Show admin tabs only to admins
+  const visibleTabs = userRole === 'admin' ? [...ADMIN_TABS, ...COMMON_TABS] : COMMON_TABS
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -51,7 +70,7 @@ export default function SettingsLayout({ children, activeTab }: SettingsLayoutPr
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <nav className="space-y-2 sticky top-8">
-              {TABS.map(tab => (
+              {visibleTabs.map(tab => (
                 <Link
                   key={tab.id}
                   href={`/settings?tab=${tab.id}`}

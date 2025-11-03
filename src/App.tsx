@@ -7,7 +7,6 @@ import ContentStrategistView from '@/components/content/ContentStrategistView';
 import ManagePosts from '@/components/posts/ManagePosts';
 import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 import PublishedView from '@/components/history/HistoryView';
-import ConnectedAccountsView from '@/components/accounts/ConnectedAccountsView';
 import MediaLibrary from '@/components/media/MediaLibrary';
 import CampaignManager from '@/components/campaigns/CampaignManager';
 import ContentRepurposer from '@/components/content/ContentRepurposer';
@@ -18,9 +17,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PostService, CredentialService } from '@/services/database';
 import { checkVideoOperationStatus, fetchVideo } from '@/services/api/geminiService';
 import { autoSaveAIMedia } from '@/services/mediaService';
-import { Edit3, LayoutGrid, BarChart3, History, Link as LinkIcon, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
+import { Edit3, LayoutGrid, BarChart3, History, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
 
-type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts' | 'media' | 'campaigns' | 'repurpose';
+type View = 'create' | 'manage' | 'history' | 'analytics' | 'media' | 'campaigns' | 'repurpose';
 
 const AppContent: React.FC = () => {
     const { addNotification } = useNotifications();
@@ -259,8 +258,6 @@ const AppContent: React.FC = () => {
                 return <PublishedView {...viewProps} />;
             case 'analytics':
                 return <AnalyticsDashboard posts={posts} />;
-            case 'accounts':
-                return <ConnectedAccountsView connectedAccounts={connectedAccounts} onUpdateAccounts={setConnectedAccounts} />;
             case 'media':
                 return <MediaLibrary />;
             case 'campaigns':
@@ -291,7 +288,6 @@ const AppContent: React.FC = () => {
                         <SidebarItem viewName="campaigns" icon={Target} label="Campaigns" />
                         <SidebarItem viewName="media" icon={Image} label="Media Library" />
                         <SidebarItem viewName="analytics" icon={BarChart3} label="Analytics" />
-                        <SidebarItem viewName="accounts" icon={LinkIcon} label="Accounts" />
                     </nav>
                 </div>
                  <div className="space-y-2">
