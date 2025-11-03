@@ -98,7 +98,13 @@ A comprehensive social media management platform that allows you to manage multi
 
 
 ## 🚀 Deployment
-
+UPDATE public.users
+  SET role = 'admin'
+  WHERE email = 'your-email@example.com'
+  AND workspace_id = (
+    SELECT id FROM public.workspaces
+    ORDER BY created_at DESC LIMIT 1
+  );
 
 ## 🔑 Environment Variables
 
