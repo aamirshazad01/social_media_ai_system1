@@ -52,7 +52,13 @@ const AppContent: React.FC = () => {
                 setPosts(supabasePosts);
 
                 // Load connected accounts from Supabase
-                const accountsSummary = await CredentialService.getConnectionSummary(workspaceId);
+                const accountsStatus = await CredentialService.getConnectionStatus(workspaceId);
+                const accountsSummary: Record<Platform, boolean> = {
+                    twitter: accountsStatus.twitter?.isConnected ?? false,
+                    linkedin: accountsStatus.linkedin?.isConnected ?? false,
+                    facebook: accountsStatus.facebook?.isConnected ?? false,
+                    instagram: accountsStatus.instagram?.isConnected ?? false,
+                };
                 setConnectedAccounts(accountsSummary);
             } catch (error) {
                 console.error("Error loading data from Supabase:", error);

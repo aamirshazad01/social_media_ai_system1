@@ -106,11 +106,14 @@ export async function GET(req: NextRequest) {
     return response
   } catch (error) {
     console.error('LinkedIn callback error:', error)
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(
         `/?error=linkedin_auth_failed&details=${encodeURIComponent((error as Error).message)}`,
         req.url
       )
     )
+    // Clear the state cookie on error too
+    response.cookies.delete('linkedin_oauth_state')
+    return response
   }
 }

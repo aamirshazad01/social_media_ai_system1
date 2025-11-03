@@ -96,32 +96,9 @@ A comprehensive social media management platform that allows you to manage multi
    npm run dev
    ```
 
-6. **Open in browser**
-   ```
-   http://localhost:3000
-   ```
 
 ## 🚀 Deployment
 
-The application is deployed on Vercel. See `DEPLOYMENT_GUIDE.md` for detailed deployment instructions and configuration.
-
-### Quick Deploy to Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=<your-repo-url>)
-
-**After deployment:**
-1. Configure all environment variables in Vercel
-2. Update OAuth callback URLs for each platform
-3. Update Supabase redirect URLs
-4. Test all social media connections
-
-See `DEPLOYMENT_GUIDE.md` for complete checklist.
-
-## 📚 Documentation
-
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Vercel deployment and configuration
-- **[Supabase Setup](SUPABASE_SETUP.md)** - Database schema and authentication setup
-- **[Platform Setup](ALL_PLATFORMS_COMPLETE.md)** - Social media API configuration
 
 ## 🔑 Environment Variables
 

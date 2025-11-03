@@ -83,8 +83,11 @@ export async function GET(req: NextRequest) {
     return response
   } catch (error) {
     console.error('Twitter callback error:', error)
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(`/?error=twitter_auth_failed&details=${encodeURIComponent((error as Error).message)}`, req.url)
     )
+    // Clear the temporary cookie on error too
+    response.cookies.delete('twitter_oauth_token_secret')
+    return response
   }
 }

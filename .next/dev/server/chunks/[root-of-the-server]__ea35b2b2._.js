@@ -136,7 +136,8 @@ async function createClient() {
  * Handles Facebook Graph API OAuth 2.0 and content publishing
  */ /**
  * Facebook OAuth 2.0 URLs
- */ __turbopack_context__.s([
+ */ // Use versioned OAuth endpoints to align with latest login experience
+__turbopack_context__.s([
     "FACEBOOK_GRAPH_BASE",
     ()=>FACEBOOK_GRAPH_BASE,
     "FACEBOOK_OAUTH_URL",
@@ -172,8 +173,8 @@ async function createClient() {
     "uploadVideoToFacebookPage",
     ()=>uploadVideoToFacebookPage
 ]);
-const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/dialog/oauth';
-const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/oauth/access_token';
+const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
+const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v21.0/oauth/access_token';
 const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
 const FACEBOOK_SCOPES = [
     'pages_show_list',
@@ -191,6 +192,7 @@ function generateFacebookAuthUrl(appId, redirectUri, state) {
         scope: FACEBOOK_SCOPES.join(','),
         response_type: 'code',
         auth_type: 'rerequest',
+        // Use popup display to avoid cookie consent page issues
         display: 'popup'
     });
     return `${FACEBOOK_OAUTH_URL}?${params.toString()}`;
@@ -406,8 +408,9 @@ async function POST(req) {
                 status: 500
             });
         }
-        // Generate callback URL
-        const callbackURL = `${("TURBOPACK compile-time value", "http://localhost:3000")}/api/facebook/callback`;
+        // Generate callback URL (ensure no double slash)
+        const baseUrl = ("TURBOPACK compile-time value", "https://social-medias-os.vercel.app/")?.replace(/\/$/, '') || '';
+        const callbackURL = `${baseUrl}/api/facebook/callback`;
         // Generate random state for CSRF protection
         const state = (0, __TURBOPACK__imported__module__$5b$externals$5d2f$crypto__$5b$external$5d$__$28$crypto$2c$__cjs$29$__["randomBytes"])(32).toString('hex');
         // Generate Facebook OAuth URL

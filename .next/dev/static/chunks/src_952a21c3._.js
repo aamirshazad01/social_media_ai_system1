@@ -6410,9 +6410,11 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
             const facebookConnected = urlParams.get('facebook_connected');
             const error = urlParams.get('error');
             const errorDetails = urlParams.get('details');
-            if (twitterConnected === 'true') {
-                // Clear URL parameters
+            // Handle success states
+            if (twitterConnected === 'true' || linkedinConnected === 'true' || instagramConnected === 'true' || facebookConnected === 'true') {
+                // Clear URL parameters and sessionStorage immediately
                 window.history.replaceState({}, document.title, window.location.pathname);
+                sessionStorage.removeItem('verifying_platform');
                 // Reload connection status after a short delay
                 setTimeout({
                     "ConnectedAccountsView.useEffect": ()=>{
@@ -6420,42 +6422,11 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                         setVerifyingPlatform(null);
                     }
                 }["ConnectedAccountsView.useEffect"], 500);
+                return;
             }
-            if (linkedinConnected === 'true') {
-                // Clear URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
-                // Reload connection status after a short delay
-                setTimeout({
-                    "ConnectedAccountsView.useEffect": ()=>{
-                        loadConnectionStatus();
-                        setVerifyingPlatform(null);
-                    }
-                }["ConnectedAccountsView.useEffect"], 500);
-            }
-            if (instagramConnected === 'true') {
-                // Clear URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
-                // Reload connection status after a short delay
-                setTimeout({
-                    "ConnectedAccountsView.useEffect": ()=>{
-                        loadConnectionStatus();
-                        setVerifyingPlatform(null);
-                    }
-                }["ConnectedAccountsView.useEffect"], 500);
-            }
-            if (facebookConnected === 'true') {
-                // Clear URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
-                // Reload connection status after a short delay
-                setTimeout({
-                    "ConnectedAccountsView.useEffect": ()=>{
-                        loadConnectionStatus();
-                        setVerifyingPlatform(null);
-                    }
-                }["ConnectedAccountsView.useEffect"], 500);
-            }
+            // Handle error states - CLEAR IMMEDIATELY
             if (error) {
-                // Handle OAuth errors
+                console.error('OAuth error detected:', error, errorDetails);
                 const errorMessage = errorDetails ? `${error.replace(/_/g, ' ')}: ${decodeURIComponent(errorDetails)}` : error.replace(/_/g, ' ');
                 // Determine which platform had the error
                 if (error.includes('twitter')) {
@@ -6487,9 +6458,46 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                             })
                     }["ConnectedAccountsView.useEffect"]);
                 }
-                // Clear URL parameters
+                // Clear URL parameters and ALL cache immediately
                 window.history.replaceState({}, document.title, window.location.pathname);
+                sessionStorage.removeItem('verifying_platform');
+                localStorage.removeItem('oauth_state');
                 setVerifyingPlatform(null);
+                return;
+            }
+            // Handle OAuth timeout if page reload happens during flow
+            const savedVerifyingPlatform = sessionStorage.getItem('verifying_platform');
+            if (savedVerifyingPlatform) {
+                setVerifyingPlatform(savedVerifyingPlatform);
+                // Set a timeout to clear the loading state if OAuth doesn't complete
+                // REDUCED from 60 seconds to 15 seconds for faster recovery
+                const timeoutId = setTimeout({
+                    "ConnectedAccountsView.useEffect.timeoutId": ()=>{
+                        console.warn(`OAuth flow timeout for ${savedVerifyingPlatform} - clearing loading state after 15 seconds`);
+                        setVerifyingPlatform(null);
+                        sessionStorage.removeItem('verifying_platform');
+                        localStorage.removeItem('oauth_state');
+                        // Show timeout error to user
+                        setPlatformErrors({
+                            "ConnectedAccountsView.useEffect.timeoutId": (prev)=>({
+                                    ...prev,
+                                    [savedVerifyingPlatform]: 'OAuth authentication timed out. Please try again.'
+                                })
+                        }["ConnectedAccountsView.useEffect.timeoutId"]);
+                    }
+                }["ConnectedAccountsView.useEffect.timeoutId"], 15000); // 15 seconds timeout (was 60)
+                // Cleanup timeout on unmount or when component updates
+                return ({
+                    "ConnectedAccountsView.useEffect": ()=>clearTimeout(timeoutId)
+                })["ConnectedAccountsView.useEffect"];
+            }
+            // If no success or error parameter, but we have saved verifying state, clear it
+            // This handles the case when user presses back button from OAuth page
+            if (!twitterConnected && !linkedinConnected && !instagramConnected && !facebookConnected && !error && savedVerifyingPlatform) {
+                console.log('No OAuth callback detected - clearing loading state');
+                setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
+                localStorage.removeItem('oauth_state');
             }
         }
     }["ConnectedAccountsView.useEffect"], []);
@@ -6522,65 +6530,55 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
         setPlatformUsernames(usernames);
     };
     const handleConnect = async (platform)=>{
+        // Clear any previous errors first
         setPlatformErrors((prev)=>({
                 ...prev,
                 [platform]: undefined
             }));
-        // Twitter and LinkedIn use OAuth flow
-        if (platform === 'twitter') {
-            setVerifyingPlatform(platform);
-            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$twitterService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startTwitterAuth"])();
-            if (!result.success) {
+        // Clear all old cache/state before starting new OAuth flow
+        sessionStorage.removeItem('verifying_platform');
+        localStorage.removeItem('oauth_state');
+        // Set current platform as verifying
+        setVerifyingPlatform(platform);
+        sessionStorage.setItem('verifying_platform', platform);
+        try {
+            let result;
+            // Initiate OAuth flow based on platform
+            if (platform === 'twitter') {
+                result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$twitterService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startTwitterAuth"])();
+            } else if (platform === 'linkedin') {
+                result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$linkedinService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startLinkedInAuth"])();
+            } else if (platform === 'instagram') {
+                result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$instagramService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startInstagramAuth"])();
+            } else if (platform === 'facebook') {
+                result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$facebookService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startFacebookAuth"])();
+            }
+            // If OAuth initiation failed (not redirect), handle error
+            if (result && !result.success) {
+                console.error(`${platform} auth failed:`, result.error);
                 setPlatformErrors((prev)=>({
                         ...prev,
                         [platform]: result.error
                     }));
                 setVerifyingPlatform(null);
+                sessionStorage.removeItem('verifying_platform');
+                localStorage.removeItem('oauth_state');
+                return;
             }
-            // Will redirect to Twitter, so loading state will persist
-            return;
+        // If we reach here, OAuth redirect should happen
+        // (component will unmount or page will navigate)
+        } catch (err) {
+            // Handle unexpected errors
+            console.error(`Unexpected error during ${platform} auth:`, err);
+            const errorMsg = err instanceof Error ? err.message : 'Failed to start authentication';
+            setPlatformErrors((prev)=>({
+                    ...prev,
+                    [platform]: errorMsg
+                }));
+            setVerifyingPlatform(null);
+            sessionStorage.removeItem('verifying_platform');
+            localStorage.removeItem('oauth_state');
         }
-        if (platform === 'linkedin') {
-            setVerifyingPlatform(platform);
-            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$linkedinService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startLinkedInAuth"])();
-            if (!result.success) {
-                setPlatformErrors((prev)=>({
-                        ...prev,
-                        [platform]: result.error
-                    }));
-                setVerifyingPlatform(null);
-            }
-            // Will redirect to LinkedIn, so loading state will persist
-            return;
-        }
-        if (platform === 'instagram') {
-            setVerifyingPlatform(platform);
-            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$instagramService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startInstagramAuth"])();
-            if (!result.success) {
-                setPlatformErrors((prev)=>({
-                        ...prev,
-                        [platform]: result.error
-                    }));
-                setVerifyingPlatform(null);
-            }
-            // Will redirect to Instagram/Facebook, so loading state will persist
-            return;
-        }
-        if (platform === 'facebook') {
-            setVerifyingPlatform(platform);
-            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$platforms$2f$facebookService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["startFacebookAuth"])();
-            if (!result.success) {
-                setPlatformErrors((prev)=>({
-                        ...prev,
-                        [platform]: result.error
-                    }));
-                setVerifyingPlatform(null);
-            }
-            // Will redirect to Facebook, so loading state will persist
-            return;
-        }
-        // No manual credential entry needed anymore - all use OAuth!
-        setSelectedPlatform(platform);
     };
     const handleDisconnect = (platform)=>{
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$credentialService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["disconnectPlatform"])(platform);
@@ -6652,7 +6650,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                 children: "Connected Accounts"
             }, void 0, false, {
                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                lineNumber: 268,
+                lineNumber: 277,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6665,7 +6663,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                 className: "w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                lineNumber: 271,
+                                lineNumber: 280,
                                 columnNumber: 21
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6676,26 +6674,26 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                         children: "Production-Ready Integration"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                        lineNumber: 273,
+                                        lineNumber: 282,
                                         columnNumber: 25
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         children: "Connect your social media accounts by providing your API credentials. Once connected, you'll be able to publish posts directly from this app."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                        lineNumber: 274,
+                                        lineNumber: 283,
                                         columnNumber: 25
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                lineNumber: 272,
+                                lineNumber: 281,
                                 columnNumber: 21
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                        lineNumber: 270,
+                        lineNumber: 279,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6718,7 +6716,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                         className: "w-8 h-8 text-charcoal"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 292,
+                                                        lineNumber: 301,
                                                         columnNumber: 41
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6728,7 +6726,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                                 children: name
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                                lineNumber: 294,
+                                                                lineNumber: 303,
                                                                 columnNumber: 45
                                                             }, ("TURBOPACK compile-time value", void 0)),
                                                             isConnected && username && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -6739,19 +6737,19 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                                lineNumber: 296,
+                                                                lineNumber: 305,
                                                                 columnNumber: 49
                                                             }, ("TURBOPACK compile-time value", void 0))
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 293,
+                                                        lineNumber: 302,
                                                         columnNumber: 41
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                lineNumber: 291,
+                                                lineNumber: 300,
                                                 columnNumber: 37
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             isVerifying ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6761,7 +6759,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                         className: "w-5 h-5 animate-spin"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 302,
+                                                        lineNumber: 311,
                                                         columnNumber: 45
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -6769,13 +6767,13 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                         children: "Verifying..."
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 303,
+                                                        lineNumber: 312,
                                                         columnNumber: 45
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                lineNumber: 301,
+                                                lineNumber: 310,
                                                 columnNumber: 41
                                             }, ("TURBOPACK compile-time value", void 0)) : isConnected ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 className: "flex items-center gap-4",
@@ -6787,7 +6785,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                                 className: "w-5 h-5 mr-2"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                                lineNumber: 308,
+                                                                lineNumber: 317,
                                                                 columnNumber: 49
                                                             }, ("TURBOPACK compile-time value", void 0)),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -6795,13 +6793,13 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                                 children: "Connected"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                                lineNumber: 309,
+                                                                lineNumber: 318,
                                                                 columnNumber: 49
                                                             }, ("TURBOPACK compile-time value", void 0))
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 307,
+                                                        lineNumber: 316,
                                                         columnNumber: 45
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -6810,13 +6808,13 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                         children: "Disconnect"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 311,
+                                                        lineNumber: 320,
                                                         columnNumber: 45
                                                     }, ("TURBOPACK compile-time value", void 0))
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                lineNumber: 306,
+                                                lineNumber: 315,
                                                 columnNumber: 41
                                             }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                 onClick: ()=>handleConnect(id),
@@ -6826,20 +6824,20 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                         className: "w-4 h-4 mr-2"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                        lineNumber: 323,
+                                                        lineNumber: 332,
                                                         columnNumber: 45
                                                     }, ("TURBOPACK compile-time value", void 0)),
                                                     "Connect"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                lineNumber: 319,
+                                                lineNumber: 328,
                                                 columnNumber: 41
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                        lineNumber: 290,
+                                        lineNumber: 299,
                                         columnNumber: 33
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6851,7 +6849,7 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                     className: "w-5 h-5 text-red-600 flex-shrink-0"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                    lineNumber: 331,
+                                                    lineNumber: 340,
                                                     columnNumber: 45
                                                 }, ("TURBOPACK compile-time value", void 0)),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -6859,30 +6857,30 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                                     children: error
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                                    lineNumber: 332,
+                                                    lineNumber: 341,
                                                     columnNumber: 45
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                            lineNumber: 330,
+                                            lineNumber: 339,
                                             columnNumber: 41
                                         }, ("TURBOPACK compile-time value", void 0))
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                        lineNumber: 329,
+                                        lineNumber: 338,
                                         columnNumber: 37
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, id, true, {
                                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                lineNumber: 289,
+                                lineNumber: 298,
                                 columnNumber: 29
                             }, ("TURBOPACK compile-time value", void 0));
                         })
                     }, void 0, false, {
                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                        lineNumber: 281,
+                        lineNumber: 290,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -6894,25 +6892,25 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                                     children: "Note:"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                                    lineNumber: 343,
+                                    lineNumber: 352,
                                     columnNumber: 25
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 " Your credentials are stored locally in your browser. For production deployment, consider implementing a secure backend service to store and manage API credentials."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                            lineNumber: 342,
+                            lineNumber: 351,
                             columnNumber: 21
                         }, ("TURBOPACK compile-time value", void 0))
                     }, void 0, false, {
                         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                        lineNumber: 341,
+                        lineNumber: 350,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                lineNumber: 269,
+                lineNumber: 278,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0)),
             selectedPlatform && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$accounts$2f$CredentialModal$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -6922,13 +6920,13 @@ const ConnectedAccountsView = ({ connectedAccounts, onUpdateAccounts })=>{
                 onSave: handleSaveCredentials
             }, void 0, false, {
                 fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-                lineNumber: 350,
+                lineNumber: 359,
                 columnNumber: 17
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/accounts/ConnectedAccountsView.tsx",
-        lineNumber: 267,
+        lineNumber: 276,
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };

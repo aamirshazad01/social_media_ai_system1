@@ -56,6 +56,78 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/api/auth/oauth/[platform]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/oauth/[platform]">> = Specific
+  const handler = {} as typeof import("../../src/app/api/auth/oauth/[platform]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/auth/oauth/facebook/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/oauth/facebook/callback">> = Specific
+  const handler = {} as typeof import("../../src/app/api/auth/oauth/facebook/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/auth/oauth/instagram/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/oauth/instagram/callback">> = Specific
+  const handler = {} as typeof import("../../src/app/api/auth/oauth/instagram/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/auth/oauth/linkedin/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/oauth/linkedin/callback">> = Specific
+  const handler = {} as typeof import("../../src/app/api/auth/oauth/linkedin/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/auth/oauth/twitter/callback/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/oauth/twitter/callback">> = Specific
+  const handler = {} as typeof import("../../src/app/api/auth/oauth/twitter/callback/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/credentials/[platform]/disconnect/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/credentials/[platform]/disconnect">> = Specific
+  const handler = {} as typeof import("../../src/app/api/credentials/[platform]/disconnect/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/credentials/health-check/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/credentials/health-check">> = Specific
+  const handler = {} as typeof import("../../src/app/api/credentials/health-check/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/credentials/status/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/credentials/status">> = Specific
+  const handler = {} as typeof import("../../src/app/api/credentials/status/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/facebook/auth/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/facebook/auth">> = Specific

@@ -139,11 +139,14 @@ export async function GET(req: NextRequest) {
     return response
   } catch (error) {
     console.error('Instagram callback error:', error)
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(
         `/?error=instagram_auth_failed&details=${encodeURIComponent((error as Error).message)}`,
         req.url
       )
     )
+    // Clear the state cookie on error too
+    response.cookies.delete('instagram_oauth_state')
+    return response
   }
 }

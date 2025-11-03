@@ -202,11 +202,8 @@ export class MigrationService {
           if (!platformCredentials) continue
 
           // Check if credentials already exist
-          const existing = await CredentialService.isPlatformConnected(
-            platform as any,
-            workspaceId
-          )
-          if (existing) {
+          const status = await CredentialService.getConnectionStatus(workspaceId)
+          if ((status as any)[platform]?.isConnected) {
             console.log(`Credentials for ${platform} already exist, skipping`)
             continue
           }

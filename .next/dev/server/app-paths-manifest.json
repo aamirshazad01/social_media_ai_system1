@@ -1,4 +1,5 @@
 {
-  "/api/facebook/auth/route": "app/api/facebook/auth/route.js",
+  "/api/auth/oauth/[platform]/route": "app/api/auth/oauth/[platform]/route.js",
+  "/api/credentials/status/route": "app/api/credentials/status/route.js",
   "/page": "app/page.js"
 }

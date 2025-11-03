@@ -122,11 +122,14 @@ export async function GET(req: NextRequest) {
     return response
   } catch (error) {
     console.error('Facebook callback error:', error)
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(
         `/?error=facebook_auth_failed&details=${encodeURIComponent((error as Error).message)}`,
         req.url
       )
     )
+    // Clear the state cookie on error too
+    response.cookies.delete('facebook_oauth_state')
+    return response
   }
 }

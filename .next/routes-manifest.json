@@ -19,7 +19,24 @@
     "afterFiles": [],
     "fallback": []
   },
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/oauth/[platform]",
+      "regex": "^/api/auth/oauth/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPplatform": "nxtPplatform"
+      },
+      "namedRegex": "^/api/auth/oauth/(?<nxtPplatform>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/credentials/[platform]/disconnect",
+      "regex": "^/api/credentials/([^/]+?)/disconnect(?:/)?$",
+      "routeKeys": {
+        "nxtPplatform": "nxtPplatform"
+      },
+      "namedRegex": "^/api/credentials/(?<nxtPplatform>[^/]+?)/disconnect(?:/)?$"
+    }
+  ],
   "staticRoutes": [
     {
       "page": "/",
@@ -38,6 +55,42 @@
       "regex": "^/_not\\-found(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/facebook/callback",
+      "regex": "^/api/auth/oauth/facebook/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/facebook/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/instagram/callback",
+      "regex": "^/api/auth/oauth/instagram/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/instagram/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/linkedin/callback",
+      "regex": "^/api/auth/oauth/linkedin/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/linkedin/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/twitter/callback",
+      "regex": "^/api/auth/oauth/twitter/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/twitter/callback(?:/)?$"
+    },
+    {
+      "page": "/api/credentials/health-check",
+      "regex": "^/api/credentials/health\\-check(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/credentials/health\\-check(?:/)?$"
+    },
+    {
+      "page": "/api/credentials/status",
+      "regex": "^/api/credentials/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/credentials/status(?:/)?$"
     },
     {
       "page": "/api/facebook/auth",

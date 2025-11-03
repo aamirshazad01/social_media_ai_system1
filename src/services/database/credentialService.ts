@@ -1,77 +1,115 @@
 /**
- * Credential Service - Supabase Database Operations
- * Handles encrypted storage of social media credentials
+ * Server-side Credential Service
+ * Single source of truth for credentials (database-backed only)
+ * Proper encryption/decryption with workspace-specific keys
+ * Token refresh handling
  */
 
 import { supabase } from '@/lib/supabase'
-import { encrypt, decrypt, getUserEncryptionKey } from '@/lib/encryption'
 import {
-  Platform,
-  TwitterCredentials,
-  LinkedInCredentials,
-  FacebookCredentials,
-  InstagramCredentials,
-  PlatformCredentials,
-} from '@/types'
-
-type AnyCredentials = TwitterCredentials | LinkedInCredentials | FacebookCredentials | InstagramCredentials
+  encryptCredentials,
+  decryptCredentials,
+  getOrCreateWorkspaceEncryptionKey,
+} from '@/lib/auth/encryptionManager'
+import { logAuditEvent } from './auditLogService'
+import type { Platform } from '@/types'
 
 export class CredentialService {
   /**
-   * Save credentials for a platform
+   * Save platform credentials to database
+   * Encrypts using workspace-specific key
    */
   static async savePlatformCredentials(
     platform: Platform,
-    credentials: AnyCredentials,
+    credentials: any,
     userId: string,
-    workspaceId: string
+    workspaceId: string,
+    options: { pageId?: string; pageName?: string } = {}
   ): Promise<void> {
     try {
-      // Encrypt credentials
-      const encryptionKey = getUserEncryptionKey(userId)
-      const credentialsJson = JSON.stringify(credentials)
-      const encrypted = await encrypt(credentialsJson, encryptionKey)
+      // Get encryption key for this workspace
+      const encryptionKey = await getOrCreateWorkspaceEncryptionKey(workspaceId)
 
-      // Check if credentials already exist
-      const { data: existing } = await supabase
+      // Encrypt credentials
+      const encryptedData = await encryptCredentials(credentials, encryptionKey)
+
+      // Check if already exists
+      const { data: existing, error: checkError } = await supabase
         .from('social_accounts')
         .select('id')
         .eq('workspace_id', workspaceId)
         .eq('platform', platform)
-        .maybeSingle<{ id: string }>()
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      // Prepare common data
+      const commonData = {
+        credentials_encrypted: encryptedData,
+        is_connected: credentials.isConnected ?? true,
+        username: credentials.username || null,
+        expires_at: credentials.expiresAt || null,
+        last_refreshed_at: new Date().toISOString(),
+        refresh_token_encrypted: credentials.refreshToken
+          ? await encryptCredentials(
+              { token: credentials.refreshToken },
+              encryptionKey
+            )
+          : null,
+        page_id: options.pageId || null,
+        page_name: options.pageName || null,
+        connected_at: credentials.isConnected ? new Date().toISOString() : null,
+        refresh_error_count: 0,
+      }
 
       if (existing) {
         // Update existing
-        const usernameVal = 'username' in credentials ? (credentials as any).username ?? null : null
-        const { error } = await (supabase
+        const { error: updateError } = await (supabase
           .from('social_accounts') as any)
-          .update({
-            credentials_encrypted: encrypted,
-            is_connected: credentials.isConnected,
-            username: usernameVal,
-            connected_at: credentials.isConnected ? new Date().toISOString() : null,
-            last_verified_at: new Date().toISOString(),
-          })
-          .eq('id', existing.id)
+          .update(commonData)
+          .eq('id', (existing as any).id)
 
-        if (error) throw error
+        if (updateError) throw updateError
+
+        // Log audit
+        await logAuditEvent({
+          workspaceId,
+          userId,
+          platform,
+          action: 'credentials_updated',
+          status: 'success',
+        })
       } else {
         // Insert new
-        const usernameInsert = 'username' in credentials ? (credentials as any).username ?? null : null
-        const { error } = await (supabase.from('social_accounts') as any).insert({
+        const { error: insertError } = await (supabase.from('social_accounts') as any).insert({
           workspace_id: workspaceId,
           platform,
-          credentials_encrypted: encrypted,
-          is_connected: credentials.isConnected,
-          username: usernameInsert,
-          connected_at: credentials.isConnected ? new Date().toISOString() : null,
-          last_verified_at: new Date().toISOString(),
+          ...commonData,
         })
 
-        if (error) throw error
+        if (insertError) throw insertError
+
+        await logAuditEvent({
+          workspaceId,
+          userId,
+          platform,
+          action: 'platform_connected',
+          status: 'success',
+        })
       }
     } catch (error) {
       console.error('Error saving credentials:', error)
+
+      await logAuditEvent({
+        workspaceId,
+        userId,
+        platform,
+        action: 'credentials_save_failed',
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorCode: 'SAVE_ERROR',
+      }).catch(err => console.error('Failed to log error:', err))
+
       throw error
     }
   }
@@ -83,23 +121,43 @@ export class CredentialService {
     platform: Platform,
     userId: string,
     workspaceId: string
-  ): Promise<AnyCredentials | null> {
+  ): Promise<any | null> {
     try {
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('credentials_encrypted')
+      const { data, error } = await (supabase
+        .from('social_accounts') as any)
+        .select('*')
         .eq('workspace_id', workspaceId)
         .eq('platform', platform)
-        .maybeSingle<{ credentials_encrypted: string }>()
+        .maybeSingle()
 
       if (error || !data) return null
 
       // Decrypt credentials
-      const encryptionKey = getUserEncryptionKey(userId)
-      const decrypted = await decrypt(data.credentials_encrypted, encryptionKey)
-      const credentials = JSON.parse(decrypted)
+      const encryptionKey = await getOrCreateWorkspaceEncryptionKey(workspaceId)
+      const credentials = await decryptCredentials((data as any).credentials_encrypted, encryptionKey)
 
-      return credentials
+      // Decrypt refresh token if exists
+      let refreshToken = null
+      if ((data as any).refresh_token_encrypted) {
+        try {
+          const decryptedRefresh = await decryptCredentials(
+            (data as any).refresh_token_encrypted,
+            encryptionKey
+          )
+          refreshToken = decryptedRefresh.token
+        } catch (err) {
+          console.error('Failed to decrypt refresh token:', err)
+        }
+      }
+
+      return {
+        ...credentials,
+        refreshToken,
+        expiresAt: (data as any).expires_at,
+        pageId: (data as any).page_id,
+        pageName: (data as any).page_name,
+        isConnected: (data as any).is_connected,
+      }
     } catch (error) {
       console.error('Error getting credentials:', error)
       return null
@@ -107,96 +165,82 @@ export class CredentialService {
   }
 
   /**
-   * Get all platform credentials
+   * Verify and refresh token if needed
    */
-  static async getAllCredentials(
+  static async verifyAndRefreshToken(
+    platform: Platform,
     userId: string,
-    workspaceId: string
-  ): Promise<PlatformCredentials> {
+    workspaceId: string,
+    refreshFunction?: (credentials: any) => Promise<any>
+  ): Promise<any> {
     try {
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('platform, credentials_encrypted')
-        .eq('workspace_id', workspaceId)
+      const credentials = await this.getPlatformCredentials(platform, userId, workspaceId)
 
-      if (error) throw error
+      if (!credentials) {
+        throw new Error(`No credentials found for ${platform}`)
+      }
 
-      const credentials: PlatformCredentials = {}
-      const encryptionKey = getUserEncryptionKey(userId)
+      // Check if token is expired
+      if (credentials.expiresAt) {
+        const expiresAt = new Date(credentials.expiresAt).getTime()
+        const now = Date.now()
 
-      for (const account of (data || []) as Array<{ platform: string; credentials_encrypted: string }>) {
-        try {
-          const decrypted = await decrypt(account.credentials_encrypted, encryptionKey)
-          credentials[account.platform as Platform] = JSON.parse(decrypted)
-        } catch (error) {
-          console.error(`Error decrypting ${account.platform} credentials:`, error)
+        if (now > expiresAt) {
+          // Token expired, try to refresh
+          if (refreshFunction && credentials.refreshToken) {
+            try {
+              const newCredentials = await refreshFunction(credentials)
+
+              // Save refreshed credentials
+              await this.savePlatformCredentials(
+                platform,
+                newCredentials,
+                userId,
+                workspaceId
+              )
+
+              await logAuditEvent({
+                workspaceId,
+                userId,
+                platform,
+                action: 'token_refreshed',
+                status: 'success',
+              })
+
+              return newCredentials
+            } catch (refreshError) {
+              await logAuditEvent({
+                workspaceId,
+                userId,
+                platform,
+                action: 'token_refresh_failed',
+                status: 'failed',
+                errorMessage:
+                  refreshError instanceof Error ? refreshError.message : String(refreshError),
+                errorCode: 'REFRESH_ERROR',
+              })
+
+              throw new Error(
+                `Token refresh failed: ${
+                  refreshError instanceof Error ? refreshError.message : String(refreshError)
+                }`
+              )
+            }
+          } else {
+            throw new Error('Token expired and no refresh token available')
+          }
         }
       }
 
       return credentials
     } catch (error) {
-      console.error('Error getting all credentials:', error)
-      return {}
+      console.error('Token verification failed:', error)
+      throw error
     }
   }
 
   /**
-   * Check if a platform is connected
-   */
-  static async isPlatformConnected(platform: Platform, workspaceId: string): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('is_connected')
-        .eq('workspace_id', workspaceId)
-        .eq('platform', platform)
-        .maybeSingle<{ is_connected: boolean }>()
-
-      if (error || !data) return false
-
-      return data.is_connected
-    } catch (error) {
-      return false
-    }
-  }
-
-  /**
-   * Get connection summary for all platforms
-   */
-  static async getConnectionSummary(workspaceId: string): Promise<Record<Platform, boolean>> {
-    try {
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('platform, is_connected')
-        .eq('workspace_id', workspaceId)
-
-      if (error) throw error
-
-      const summary: Record<Platform, boolean> = {
-        twitter: false,
-        linkedin: false,
-        facebook: false,
-        instagram: false,
-      }
-
-      for (const account of (data || []) as Array<{ platform: Platform; is_connected: boolean }>) {
-        summary[account.platform] = account.is_connected
-      }
-
-      return summary
-    } catch (error) {
-      console.error('Error getting connection summary:', error)
-      return {
-        twitter: false,
-        linkedin: false,
-        facebook: false,
-        instagram: false,
-      }
-    }
-  }
-
-  /**
-   * Disconnect a platform
+   * Disconnect platform
    */
   static async disconnectPlatform(
     platform: Platform,
@@ -204,16 +248,91 @@ export class CredentialService {
     workspaceId: string
   ): Promise<void> {
     try {
-      // Get existing credentials
-      const credentials = await this.getPlatformCredentials(platform, userId, workspaceId)
-      if (!credentials) return
+      const { error } = await (supabase
+        .from('social_accounts') as any)
+        .update({
+          is_connected: false,
+          credentials_encrypted: null,
+          refresh_token_encrypted: null,
+          connected_at: null,
+        })
+        .eq('workspace_id', workspaceId)
+        .eq('platform', platform)
 
-      // Update to disconnected
-      credentials.isConnected = false
-      await this.savePlatformCredentials(platform, credentials, userId, workspaceId)
+      if (error) throw error
+
+      await logAuditEvent({
+        workspaceId,
+        userId,
+        platform,
+        action: 'platform_disconnected',
+        status: 'success',
+      })
     } catch (error) {
       console.error('Error disconnecting platform:', error)
+
+      await logAuditEvent({
+        workspaceId,
+        userId,
+        platform,
+        action: 'disconnect_failed',
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorCode: 'DISCONNECT_ERROR',
+      }).catch(err => console.error('Failed to log error:', err))
+
       throw error
+    }
+  }
+
+  /**
+   * Get connection status for all platforms
+   */
+  static async getConnectionStatus(
+    workspaceId: string
+  ): Promise<Record<Platform, any>> {
+    try {
+      const { data, error } = await (supabase
+        .from('social_accounts') as any)
+        .select('platform, is_connected, username, page_name, expires_at')
+        .eq('workspace_id', workspaceId)
+
+      if (error) throw error
+
+      const status: Record<string, any> = {
+        twitter: { isConnected: false },
+        linkedin: { isConnected: false },
+        facebook: { isConnected: false },
+        instagram: { isConnected: false },
+      }
+
+      const now = Date.now()
+      const oneDayMs = 1000 * 60 * 60 * 24
+
+      for (const account of data || []) {
+        const expiresAt: number | null = ((account as any).expires_at
+          ? new Date((account as any).expires_at).getTime()
+          : null) as number | null
+
+        (status as any)[(account as any).platform] = {
+          isConnected: (account as any).is_connected,
+          username: (account as any).username || (account as any).page_name,
+          expiresAt: (account as any).expires_at,
+          isExpiringSoon:
+            expiresAt && expiresAt - now < oneDayMs && expiresAt > now,
+          isExpired: expiresAt && expiresAt <= now,
+        }
+      }
+
+      return status
+    } catch (error) {
+      console.error('Error getting connection status:', error)
+      return {
+        twitter: { isConnected: false },
+        linkedin: { isConnected: false },
+        facebook: { isConnected: false },
+        instagram: { isConnected: false },
+      }
     }
   }
 
@@ -225,8 +344,8 @@ export class CredentialService {
     workspaceId: string
   ): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('social_accounts')
+      const { error } = await (supabase
+        .from('social_accounts') as any)
         .delete()
         .eq('workspace_id', workspaceId)
         .eq('platform', platform)
@@ -239,19 +358,27 @@ export class CredentialService {
   }
 
   /**
-   * Clear all credentials for workspace
+   * Get all connection statuses
    */
-  static async clearAllCredentials(workspaceId: string): Promise<void> {
+  static async getAllCredentialsStatus(
+    workspaceId: string
+  ): Promise<Array<{ platform: Platform; isConnected: boolean; username?: string }>> {
     try {
-      const { error } = await supabase
-        .from('social_accounts')
-        .delete()
+      const { data, error } = await (supabase
+        .from('social_accounts') as any)
+        .select('platform, is_connected, username, page_name')
         .eq('workspace_id', workspaceId)
 
       if (error) throw error
+
+      return (data || []).map((account: any) => ({
+        platform: account.platform as Platform,
+        isConnected: account.is_connected,
+        username: account.username || account.page_name,
+      }))
     } catch (error) {
-      console.error('Error clearing all credentials:', error)
-      throw error
+      console.error('Error getting all credentials status:', error)
+      return []
     }
   }
 }

@@ -38,8 +38,8 @@ export function generateFacebookAuthUrl(
     scope: FACEBOOK_SCOPES.join(','),
     response_type: 'code',
     auth_type: 'rerequest',
-    // Prefer full-page display to avoid cookie consent/popup blockers
-    display: 'page',
+    // Use popup display to avoid cookie consent page issues
+    display: 'popup',
   });
 
   return `${FACEBOOK_OAUTH_URL}?${params.toString()}`;
