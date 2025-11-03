@@ -4,7 +4,7 @@
  * Database-backed for security
  */
 
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase/server'
 import {
   generateRandomState,
   generatePKCE,
@@ -48,6 +48,9 @@ export async function createOAuthState(
     // Calculate expiration (5 minutes)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
 
+    // Get server-side Supabase client
+    const supabase = await createServerClient()
+
     // Store in database
     const { error } = await (supabase.from('oauth_states') as any).insert({
       workspace_id: workspaceId,
@@ -89,6 +92,9 @@ export async function verifyOAuthState(
   error?: string
 }> {
   try {
+    // Get server-side Supabase client
+    const supabase = await createServerClient()
+
     // Query database for state
     const { data, error } = await (supabase
       .from('oauth_states') as any)
@@ -154,6 +160,9 @@ export function verifyPKCECode(
  */
 export async function cleanupExpiredStates(): Promise<number> {
   try {
+    // Get server-side Supabase client
+    const supabase = await createServerClient()
+
     const { data, error } = await supabase
       .from('oauth_states')
       .delete()
@@ -180,6 +189,9 @@ export async function getStateInfo(
   state: string
 ): Promise<any | null> {
   try {
+    // Get server-side Supabase client
+    const supabase = await createServerClient()
+
     const { data, error } = await supabase
       .from('oauth_states')
       .select('*')
@@ -200,6 +212,9 @@ export async function getStateInfo(
  */
 export async function clearWorkspaceOAuthStates(workspaceId: string): Promise<number> {
   try {
+    // Get server-side Supabase client
+    const supabase = await createServerClient()
+
     const { data, error } = await supabase
       .from('oauth_states')
       .delete()
