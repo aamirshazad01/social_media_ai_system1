@@ -16,7 +16,7 @@ const OAUTH_URLS: Record<string, string> = {
   twitter: 'https://twitter.com/i/oauth2/authorize',
   linkedin: 'https://www.linkedin.com/oauth/v2/authorization',
   facebook: 'https://www.facebook.com/v18.0/dialog/oauth',
-  instagram: 'https://www.instagram.com/oauth/authorize',
+  instagram: 'https://www.facebook.com/v18.0/dialog/oauth', // Instagram uses Facebook OAuth
 }
 
 const SCOPES: Record<string, string[]> = {
@@ -114,7 +114,7 @@ export async function POST(
 
     // ✅ Step 6: Build OAuth authorization URL
     const params = new URLSearchParams({
-      client_id: clientId,
+      ...(platform === 'instagram' ? { app_id: clientId } : { client_id: clientId }),
       redirect_uri: callbackUrl,
       response_type: 'code',
       state: oauthState.state,

@@ -255,3 +255,28 @@ Built with:
 ---
 
 **Made with ❤️ for social media managers and content creators**
+
+1. Go to https://www.linkedin.com/developers
+  2. Select your app
+  3. Find "Authorized redirect URLs"
+  4. Add: https://social-medias-os.vercel.app/api/auth/oauth/linkedin/callback
+  5. Save
+
+  Twitter/X:
+
+  1. Go to https://developer.twitter.com/en/portal/dashboard
+  2. Select your app
+  3. Find "Callback URLs" or "Redirect URI"
+  4. Add: https://social-medias-os.vercel.app/api/auth/oauth/twitter/callback
+
+  Facebook:
+
+  1. Go to https://developers.facebook.com/apps
+  2. Select your app
+  3. Settings → Basic
+  4. Find "App Domains" and add: social-medias-os.vercel.app
+  5. Go to Settings → Advanced
+  6. Find "Valid OAuth Redirect URIs"
+  7. Add: https://social-medias-os.vercel.app/api/auth/oauth/facebook/callback
+
+  Instagram:
