@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,82579,e=>{"use strict";e.i(3905);var t=e.i(11795);e.s(["createBrowserClient",()=>t.createClient,"supabase",()=>t.supabase])}]);
