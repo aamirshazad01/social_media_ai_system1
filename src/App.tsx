@@ -18,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PostService, CredentialService } from '@/services/database';
 import { checkVideoOperationStatus, fetchVideo } from '@/services/api/geminiService';
 import { autoSaveAIMedia } from '@/services/mediaService';
-import { Edit3, LayoutGrid, BarChart3, Settings, History, Link as LinkIcon, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
+import { Edit3, LayoutGrid, BarChart3, History, Link as LinkIcon, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
 
 type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts' | 'media' | 'campaigns' | 'repurpose';
 
@@ -86,7 +86,6 @@ const AppContent: React.FC = () => {
         loadData();
     }, [user, workspaceId]);
 
-
     const [isApiKeyReady, setIsApiKeyReady] = useState(false);
 
     const checkAndSetApiKey = useCallback(async () => {
@@ -105,33 +104,8 @@ const AppContent: React.FC = () => {
         if(window.aistudio) {
             await window.aistudio.openSelectKey();
             // Assume success and optimistically update UI
-            setIsApiKeyReady(true); 
+            setIsApiKeyReady(true);
         }
-    }, []);
-
-    // Save to Supabase when posts change (with debounce)
-    useEffect(() => {
-        if (!user || !workspaceId || posts.length === 0) return;
-
-        // Also save to localStorage as backup
-        localStorage.setItem('socialMediaPosts', JSON.stringify(posts));
-    }, [posts, user, workspaceId]);
-
-    // Save connected accounts to localStorage as backup
-    useEffect(() => {
-        localStorage.setItem('connectedSocialAccounts', JSON.stringify(connectedAccounts));
-    }, [connectedAccounts]);
-
-
-    const checkScheduledPosts = useCallback(() => {
-        setPosts(prevPosts =>
-            prevPosts.map(post => {
-                if (post.status === 'scheduled' && post.scheduledAt && new Date(post.scheduledAt) <= new Date()) {
-                    return { ...post, status: 'published', publishedAt: new Date().toISOString() };
-                }
-                return post;
-            })
-        );
     }, []);
 
     const updatePost = useCallback(async (updatedPost: Post) => {
@@ -179,6 +153,31 @@ const AppContent: React.FC = () => {
             }
         });
     }, [posts, updatePost, addNotification]);
+
+    // Save to Supabase when posts change (with debounce)
+    useEffect(() => {
+        if (!user || !workspaceId || posts.length === 0) return;
+
+        // Also save to localStorage as backup
+        localStorage.setItem('socialMediaPosts', JSON.stringify(posts));
+    }, [posts, user, workspaceId]);
+
+    // Save connected accounts to localStorage as backup
+    useEffect(() => {
+        localStorage.setItem('connectedSocialAccounts', JSON.stringify(connectedAccounts));
+    }, [connectedAccounts]);
+
+
+    const checkScheduledPosts = useCallback(() => {
+        setPosts(prevPosts =>
+            prevPosts.map(post => {
+                if (post.status === 'scheduled' && post.scheduledAt && new Date(post.scheduledAt) <= new Date()) {
+                    return { ...post, status: 'published', publishedAt: new Date().toISOString() };
+                }
+                return post;
+            })
+        );
+    }, []);
 
     useEffect(() => {
         const scheduleInterval = setInterval(checkScheduledPosts, 60000);
@@ -316,15 +315,6 @@ const AppContent: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="text-xs p-3 bg-white border border-slate/30 rounded-lg">
-                        <p className="font-semibold text-charcoal-dark">Video API Key</p>
-                        <p className={`text-xs ${isApiKeyReady ? 'text-green-600' : 'text-yellow-600'}`}>
-                            {isApiKeyReady ? 'Ready' : 'Selection required'}
-                        </p>
-                        <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-charcoal hover:underline text-xs mt-1 block">
-                            Billing info
-                        </a>
-                    </div>
                     <Link
                         href="/settings?tab=members"
                         className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate hover:bg-slate/10 hover:text-charcoal-dark"
@@ -332,13 +322,6 @@ const AppContent: React.FC = () => {
                         <Cog className="w-5 h-5 mr-3" />
                         <span>Workspace Settings</span>
                     </Link>
-                    <button
-                        onClick={handleSelectKey}
-                        className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate hover:bg-slate/10 hover:text-charcoal-dark"
-                    >
-                        <Settings className="w-5 h-5 mr-3" />
-                        <span>Change API Key</span>
-                    </button>
                     <button
                         onClick={() => {
                             if (confirm('Are you sure you want to sign out?')) {
