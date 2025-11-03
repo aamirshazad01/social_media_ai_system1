@@ -41,14 +41,14 @@ export async function GET(req: NextRequest) {
         configured: !!process.env.LINKEDIN_CLIENT_ID,
       },
       facebook: {
-        appId: process.env.FACEBOOK_APP_ID ? '****' : '',
-        appSecret: process.env.FACEBOOK_APP_SECRET ? '****' : '',
-        configured: !!process.env.FACEBOOK_APP_ID,
+        appId: process.env.FACEBOOK_CLIENT_ID ? '****' : '',
+        appSecret: process.env.FACEBOOK_CLIENT_SECRET ? '****' : '',
+        configured: !!process.env.FACEBOOK_CLIENT_ID,
       },
       instagram: {
-        appId: process.env.FACEBOOK_APP_ID ? '****' : '',
-        appSecret: process.env.FACEBOOK_APP_SECRET ? '****' : '',
-        configured: !!process.env.FACEBOOK_APP_ID,
+        appId: process.env.FACEBOOK_CLIENT_ID ? '****' : '',
+        appSecret: process.env.FACEBOOK_CLIENT_SECRET ? '****' : '',
+        configured: !!process.env.FACEBOOK_CLIENT_ID,
       },
     }
 

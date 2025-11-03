@@ -103,8 +103,8 @@ export async function GET(req: NextRequest) {
     }
 
     // ✅ Step 6: Exchange code for token
-    const appId = process.env.FACEBOOK_APP_ID
-    const appSecret = process.env.FACEBOOK_APP_SECRET
+    const appId = process.env.FACEBOOK_CLIENT_ID
+    const appSecret = process.env.FACEBOOK_CLIENT_SECRET
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
     const callbackUrl = `${baseUrl}/api/auth/oauth/facebook/callback`
 

@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get Facebook credentials from environment
-    const appId = process.env.FACEBOOK_APP_ID
-    const appSecret = process.env.FACEBOOK_APP_SECRET
+    const appId = process.env.FACEBOOK_CLIENT_ID
+    const appSecret = process.env.FACEBOOK_CLIENT_SECRET
 
     if (!appId || !appSecret) {
       return NextResponse.json(

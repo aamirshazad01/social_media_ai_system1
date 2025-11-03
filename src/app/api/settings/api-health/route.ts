@@ -98,10 +98,10 @@ function checkLinkedInHealth(): PlatformHealth {
 }
 
 function checkFacebookHealth(): PlatformHealth {
-  const appId = process.env.FACEBOOK_APP_ID
-  const appSecret = process.env.FACEBOOK_APP_SECRET
+  const clientId = process.env.FACEBOOK_CLIENT_ID
+  const clientSecret = process.env.FACEBOOK_CLIENT_SECRET
 
-  if (!appId || !appSecret) {
+  if (!clientId || !clientSecret) {
     return {
       platform: 'facebook',
       status: 'error',
@@ -120,10 +120,10 @@ function checkFacebookHealth(): PlatformHealth {
 
 function checkInstagramHealth(): PlatformHealth {
   // Instagram uses Facebook's OAuth system
-  const appId = process.env.FACEBOOK_APP_ID
-  const appSecret = process.env.FACEBOOK_APP_SECRET
+  const clientId = process.env.FACEBOOK_CLIENT_ID
+  const clientSecret = process.env.FACEBOOK_CLIENT_SECRET
 
-  if (!appId || !appSecret) {
+  if (!clientId || !clientSecret) {
     return {
       platform: 'instagram',
       status: 'error',

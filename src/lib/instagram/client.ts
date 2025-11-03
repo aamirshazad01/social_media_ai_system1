@@ -16,13 +16,11 @@ export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v18.0';
  * Required OAuth scopes for Instagram
  * - instagram_basic: Basic access to Instagram business account data
  * - instagram_content_publish: Create posts (images, videos, carousels)
- * - instagram_manage_comments: Moderate and manage comments on posts
  * - instagram_manage_insights: Get analytics (reach, impressions, engagement)
  */
 export const INSTAGRAM_SCOPES = [
   'instagram_basic',
   'instagram_content_publish',
-  'instagram_manage_comments',
   'instagram_manage_insights',
 ];
 

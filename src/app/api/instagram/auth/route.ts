@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get Instagram/Facebook credentials from environment
-    const appId = process.env.INSTAGRAM_APP_ID || process.env.FACEBOOK_APP_ID
-    const appSecret = process.env.INSTAGRAM_APP_SECRET || process.env.FACEBOOK_APP_SECRET
+    const appId = process.env.INSTAGRAM_CLIENT_ID || process.env.FACEBOOK_CLIENT_ID
+    const appSecret = process.env.INSTAGRAM_CLIENT_SECRET || process.env.FACEBOOK_CLIENT_SECRET
 
     if (!appId || !appSecret) {
       return NextResponse.json(
