@@ -294,7 +294,7 @@ export class CredentialService {
     try {
       const { data, error } = await (supabase
         .from('social_accounts') as any)
-        .select('platform, is_connected, username, page_name, expires_at')
+        .select('platform, is_connected, username, page_name, expires_at, credentials_encrypted')
         .eq('workspace_id', workspaceId)
 
       if (error) throw error
@@ -314,14 +314,29 @@ export class CredentialService {
           ? new Date((account as any).expires_at).getTime()
           : null) as number | null
 
+        // ✅ Verify credentials actually exist (not just is_connected flag)
+        const hasCredentials = (account as any).credentials_encrypted &&
+                               (account as any).credentials_encrypted.length > 0
+
+        // ✅ Check if token has expired
+        const isExpired = expiresAt && expiresAt <= now
+
+        // ✅ Only mark as connected if:
+        // 1. is_connected flag is true
+        // 2. Credentials exist
+        // 3. Token hasn't expired
+        const isActuallyConnected = (account as any).is_connected &&
+                                    hasCredentials &&
+                                    !isExpired;
+
         (status as any)[(account as any).platform] = {
-          isConnected: (account as any).is_connected,
+          isConnected: isActuallyConnected,
           username: (account as any).username || (account as any).page_name,
           expiresAt: (account as any).expires_at,
           isExpiringSoon:
-            expiresAt && expiresAt - now < oneDayMs && expiresAt > now,
-          isExpired: expiresAt && expiresAt <= now,
-        }
+            expiresAt && expiresAt - now < oneDayMs && expiresAt > now && !isExpired,
+          isExpired: isExpired,
+        };
       }
 
       return status
@@ -358,6 +373,47 @@ export class CredentialService {
   }
 
   /**
+   * Clean up invalid credentials (marked connected but with no actual credentials or expired)
+   * Run this on startup or periodically to fix orphaned records
+   */
+  static async cleanupInvalidCredentials(workspaceId: string): Promise<void> {
+    try {
+      const { data, error } = await (supabase
+        .from('social_accounts') as any)
+        .select('id, is_connected, expires_at, credentials_encrypted')
+        .eq('workspace_id', workspaceId)
+
+      if (error) throw error
+
+      const now = Date.now()
+      const recordsToClean = (data || []).filter((record: any) => {
+        // Mark for cleanup if:
+        // 1. is_connected is true but no credentials exist
+        // 2. is_connected is true but token expired
+        const hasCredentials = record.credentials_encrypted && record.credentials_encrypted.length > 0
+        const isExpired = record.expires_at
+          ? new Date(record.expires_at).getTime() <= now
+          : false
+
+        return record.is_connected && (!hasCredentials || isExpired)
+      })
+
+      // Update invalid records to is_connected: false
+      for (const record of recordsToClean) {
+        await (supabase.from('social_accounts') as any)
+          .update({ is_connected: false })
+          .eq('id', record.id)
+      }
+
+      if (recordsToClean.length > 0) {
+        console.log(`✅ Cleaned up ${recordsToClean.length} invalid credential records for workspace ${workspaceId}`)
+      }
+    } catch (error) {
+      console.error('Error cleaning up invalid credentials:', error)
+    }
+  }
+
+  /**
    * Get all connection statuses
    */
   static async getAllCredentialsStatus(
@@ -366,16 +422,36 @@ export class CredentialService {
     try {
       const { data, error } = await (supabase
         .from('social_accounts') as any)
-        .select('platform, is_connected, username, page_name')
+        .select('platform, is_connected, username, page_name, expires_at, credentials_encrypted')
         .eq('workspace_id', workspaceId)
 
       if (error) throw error
 
-      return (data || []).map((account: any) => ({
-        platform: account.platform as Platform,
-        isConnected: account.is_connected,
-        username: account.username || account.page_name,
-      }))
+      const now = Date.now()
+
+      return (data || [])
+        .map((account: any) => {
+          // ✅ Verify credentials actually exist
+          const hasCredentials = account.credentials_encrypted &&
+                                 account.credentials_encrypted.length > 0
+
+          // ✅ Check if token has expired
+          const expiresAt = account.expires_at
+            ? new Date(account.expires_at).getTime()
+            : null
+          const isExpired = expiresAt && expiresAt <= now
+
+          // ✅ Only mark as connected if credentials exist and not expired
+          const isActuallyConnected = account.is_connected &&
+                                      hasCredentials &&
+                                      !isExpired
+
+          return {
+            platform: account.platform as Platform,
+            isConnected: isActuallyConnected,
+            username: account.username || account.page_name,
+          }
+        })
     } catch (error) {
       console.error('Error getting all credentials status:', error)
       return []

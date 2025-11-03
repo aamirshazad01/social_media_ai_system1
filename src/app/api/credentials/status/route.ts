@@ -36,8 +36,13 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    const workspaceId = (userRow as any).workspace_id
+
+    // ✅ Clean up any invalid credentials first (orphaned records)
+    await CredentialService.cleanupInvalidCredentials(workspaceId)
+
     // ✅ Get connection status
-    const status = await CredentialService.getConnectionStatus((userRow as any).workspace_id)
+    const status = await CredentialService.getConnectionStatus(workspaceId)
 
     return NextResponse.json(status)
   } catch (error) {
