@@ -10,20 +10,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { createOAuthState } from '@/services/database/oauthStateService'
 import { logAuditEvent } from '@/services/database/auditLogService'
+import { FACEBOOK_SCOPES } from '@/lib/facebook/client'
+import { INSTAGRAM_SCOPES } from '@/lib/instagram/client'
 import type { Platform } from '@/types'
 
 const OAUTH_URLS: Record<string, string> = {
   twitter: 'https://twitter.com/i/oauth2/authorize',
   linkedin: 'https://www.linkedin.com/oauth/v2/authorization',
-  facebook: 'https://www.facebook.com/v18.0/dialog/oauth',
-  instagram: 'https://www.facebook.com/v18.0/dialog/oauth', // Instagram uses Facebook OAuth
+  facebook: 'https://www.facebook.com/v21.0/dialog/oauth',
+  instagram: 'https://www.facebook.com/v21.0/dialog/oauth', // Instagram uses Facebook OAuth
 }
 
 const SCOPES: Record<string, string[]> = {
   twitter: ['tweet.write', 'tweet.read', 'users.read'],
   linkedin: ['r_basicprofile', 'w_member_social', 'r_emailaddress'],
-  facebook: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
-  instagram: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_insights', 'business_management'],
+  facebook: FACEBOOK_SCOPES,
+  instagram: INSTAGRAM_SCOPES,
 }
 
 export async function POST(

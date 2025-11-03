@@ -14,12 +14,20 @@ export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v18.0';
 
 /**
  * Required OAuth scopes for Instagram
+ * - instagram_basic: Basic access to Instagram business account data
+ * - instagram_content_publish: Create posts (images, videos, carousels)
+ * - instagram_manage_insights: Get analytics (reach, impressions, engagement)
+ * - instagram_manage_comments: Moderate and manage comments on posts
+ * - pages_show_list: List pages connected to account
+ * - business_management: Access business account management
  */
 export const INSTAGRAM_SCOPES = [
   'instagram_basic',
   'instagram_content_publish',
+  'instagram_manage_insights',
+  'instagram_manage_comments',
   'pages_show_list',
-  'pages_read_engagement',
+  'business_management',
 ];
 
 /**
