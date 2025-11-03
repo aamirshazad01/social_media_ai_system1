@@ -43,7 +43,6 @@ export const FACEBOOK_PRODUCTION_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
   'pages_manage_posts',
-  'pages_read_user_content',
 ];
 
 /**
@@ -54,7 +53,7 @@ export function getFacebookScopes(useAdvancedScopes?: boolean): string[] {
   // Allow explicit override via parameter or environment variable
   const forceAdvanced = useAdvancedScopes !== undefined
     ? useAdvancedScopes
-    : process.env.FACEBOOK_USE_ADVANCED_SCOPES === 'true' || process.env.NODE_ENV === 'production';
+    : process.env.FACEBOOK_USE_ADVANCED_SCOPES === 'false';
 
   return forceAdvanced ? FACEBOOK_PRODUCTION_SCOPES : FACEBOOK_DEVELOPMENT_SCOPES;
 }
