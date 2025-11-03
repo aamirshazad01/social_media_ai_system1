@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
     if (!user) {
       return NextResponse.redirect(
-        new URL('/login?error=oauth_unauthorized', req.nextUrl.origin)
+        new URL('/?error=oauth_unauthorized', req.nextUrl.origin)
       )
     }
 
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     if (!userRow) {
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=no_workspace', req.nextUrl.origin)
+        new URL('/settings?oauth_error=no_workspace', req.nextUrl.origin)
       )
     }
 
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=user_denied', req.nextUrl.origin)
+        new URL('/settings?oauth_error=user_denied', req.nextUrl.origin)
       )
     }
 
@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=missing_params', req.nextUrl.origin)
+        new URL('/settings?oauth_error=missing_params', req.nextUrl.origin)
       )
     }
 
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=csrf_check_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=csrf_check_failed', req.nextUrl.origin)
       )
     }
 
@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=config_missing', req.nextUrl.origin)
+        new URL('/settings?oauth_error=config_missing', req.nextUrl.origin)
       )
     }
 
@@ -165,7 +165,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=token_exchange_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=token_exchange_failed', req.nextUrl.origin)
       )
     }
 
@@ -258,13 +258,13 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/dashboard?oauth_error=save_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=save_failed', req.nextUrl.origin)
       )
     }
 
     // ✅ Step 11: Success
     const response = NextResponse.redirect(
-      new URL('/dashboard?oauth_success=linkedin', req.nextUrl.origin)
+      new URL('/settings?oauth_success=linkedin', req.nextUrl.origin)
     )
 
     await logAuditEvent({
@@ -312,7 +312,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.redirect(
-      new URL('/dashboard?oauth_error=callback_error', req.nextUrl.origin)
+      new URL('/settings?oauth_error=callback_error', req.nextUrl.origin)
     )
   }
 }

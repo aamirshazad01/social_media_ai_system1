@@ -22,7 +22,7 @@ import { verifyPKCECode } from '@/services/database/oauthStateService'
  */
 function createErrorRedirect(baseUrl: string): string {
   const url = new URL(baseUrl)
-  url.pathname = '/dashboard'
+  url.pathname = '/settings'
   return url.toString()
 }
 
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     if (!userRow) {
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=no_workspace', req.nextUrl.origin)
+        new URL('/settings?oauth_error=no_workspace', req.nextUrl.origin)
       )
       return response
     }
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=user_denied', req.nextUrl.origin)
+        new URL('/settings?oauth_error=user_denied', req.nextUrl.origin)
       )
       return response
     }
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=missing_params', req.nextUrl.origin)
+        new URL('/settings?oauth_error=missing_params', req.nextUrl.origin)
       )
       return response
     }
@@ -113,7 +113,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=csrf_check_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=csrf_check_failed', req.nextUrl.origin)
       )
       return response
     }
@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=missing_verifier', req.nextUrl.origin)
+        new URL('/settings?oauth_error=missing_verifier', req.nextUrl.origin)
       )
       response.cookies.delete('oauth_twitter_verifier')
       return response
@@ -177,7 +177,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=token_exchange_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=token_exchange_failed', req.nextUrl.origin)
       )
       response.cookies.delete('oauth_twitter_verifier')
       return response
@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=get_user_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=get_user_failed', req.nextUrl.origin)
       )
       response.cookies.delete('oauth_twitter_verifier')
       return response
@@ -253,7 +253,7 @@ export async function GET(req: NextRequest) {
       })
 
       const response = NextResponse.redirect(
-        new URL('/dashboard?oauth_error=save_failed', req.nextUrl.origin)
+        new URL('/settings?oauth_error=save_failed', req.nextUrl.origin)
       )
       response.cookies.delete('oauth_twitter_verifier')
       return response
@@ -261,7 +261,7 @@ export async function GET(req: NextRequest) {
 
     // ✅ Step 11: Success - redirect to dashboard
     const response = NextResponse.redirect(
-      new URL('/dashboard?oauth_success=twitter', req.nextUrl.origin)
+      new URL('/settings?oauth_success=twitter', req.nextUrl.origin)
     )
 
     // Clear the OAuth verifier cookie
@@ -310,7 +310,7 @@ export async function GET(req: NextRequest) {
     }
 
     const response = NextResponse.redirect(
-      new URL('/dashboard?oauth_error=callback_error', req.nextUrl.origin)
+      new URL('/settings?oauth_error=callback_error', req.nextUrl.origin)
     )
     response.cookies.delete('oauth_twitter_verifier')
     return response
