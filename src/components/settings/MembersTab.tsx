@@ -200,7 +200,7 @@ export default function MembersTab() {
               <MemberCard
                 key={member.id}
                 member={member}
-                currentUserRole={userRole}
+                currentUserRole={userRole || 'viewer'}
                 currentUserId={user?.id || ''}
                 onRemove={async (userId) => handleRemoveMember(userId)}
                 onRoleChange={async (userId, role) => handleRoleChange(userId, role)}
