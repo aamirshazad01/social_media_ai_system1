@@ -1,0 +1,295 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/oauth/[platform]",
+      "regex": "^/api/auth/oauth/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPplatform": "nxtPplatform"
+      },
+      "namedRegex": "^/api/auth/oauth/(?<nxtPplatform>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/credentials/[platform]/disconnect",
+      "regex": "^/api/credentials/([^/]+?)/disconnect(?:/)?$",
+      "routeKeys": {
+        "nxtPplatform": "nxtPplatform"
+      },
+      "namedRegex": "^/api/credentials/(?<nxtPplatform>[^/]+?)/disconnect(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/invites/[token]",
+      "regex": "^/api/workspace/invites/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPtoken": "nxtPtoken"
+      },
+      "namedRegex": "^/api/workspace/invites/(?<nxtPtoken>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/members/[userId]",
+      "regex": "^/api/workspace/members/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPuserId": "nxtPuserId"
+      },
+      "namedRegex": "^/api/workspace/members/(?<nxtPuserId>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/members/[userId]/role",
+      "regex": "^/api/workspace/members/([^/]+?)/role(?:/)?$",
+      "routeKeys": {
+        "nxtPuserId": "nxtPuserId"
+      },
+      "namedRegex": "^/api/workspace/members/(?<nxtPuserId>[^/]+?)/role(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/facebook/callback",
+      "regex": "^/api/auth/oauth/facebook/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/facebook/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/instagram/callback",
+      "regex": "^/api/auth/oauth/instagram/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/instagram/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/linkedin/callback",
+      "regex": "^/api/auth/oauth/linkedin/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/linkedin/callback(?:/)?$"
+    },
+    {
+      "page": "/api/auth/oauth/twitter/callback",
+      "regex": "^/api/auth/oauth/twitter/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/oauth/twitter/callback(?:/)?$"
+    },
+    {
+      "page": "/api/credentials/health-check",
+      "regex": "^/api/credentials/health\\-check(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/credentials/health\\-check(?:/)?$"
+    },
+    {
+      "page": "/api/credentials/status",
+      "regex": "^/api/credentials/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/credentials/status(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/auth",
+      "regex": "^/api/facebook/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/auth(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/callback",
+      "regex": "^/api/facebook/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/callback(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/post",
+      "regex": "^/api/facebook/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/post(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/upload-media",
+      "regex": "^/api/facebook/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/facebook/verify",
+      "regex": "^/api/facebook/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facebook/verify(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/auth",
+      "regex": "^/api/instagram/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/auth(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/callback",
+      "regex": "^/api/instagram/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/callback(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/post",
+      "regex": "^/api/instagram/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/post(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/upload-media",
+      "regex": "^/api/instagram/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/instagram/verify",
+      "regex": "^/api/instagram/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/instagram/verify(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/auth",
+      "regex": "^/api/linkedin/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/auth(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/callback",
+      "regex": "^/api/linkedin/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/callback(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/post",
+      "regex": "^/api/linkedin/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/post(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/upload-media",
+      "regex": "^/api/linkedin/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/linkedin/verify",
+      "regex": "^/api/linkedin/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/linkedin/verify(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/auth",
+      "regex": "^/api/twitter/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/auth(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/callback",
+      "regex": "^/api/twitter/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/callback(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/post",
+      "regex": "^/api/twitter/post(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/post(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/upload-media",
+      "regex": "^/api/twitter/upload\\-media(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/upload\\-media(?:/)?$"
+    },
+    {
+      "page": "/api/twitter/verify",
+      "regex": "^/api/twitter/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/twitter/verify(?:/)?$"
+    },
+    {
+      "page": "/api/workspace",
+      "regex": "^/api/workspace(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/workspace(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/activity",
+      "regex": "^/api/workspace/activity(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/workspace/activity(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/invites",
+      "regex": "^/api/workspace/invites(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/workspace/invites(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/invites/accept",
+      "regex": "^/api/workspace/invites/accept(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/workspace/invites/accept(?:/)?$"
+    },
+    {
+      "page": "/api/workspace/members",
+      "regex": "^/api/workspace/members(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/workspace/members(?:/)?$"
+    },
+    {
+      "page": "/settings",
+      "regex": "^/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
