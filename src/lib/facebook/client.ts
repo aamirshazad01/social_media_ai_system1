@@ -71,13 +71,17 @@ export const FACEBOOK_SCOPES = FACEBOOK_PRODUCTION_SCOPES;
 export function generateFacebookAuthUrl(
   appId: string,
   redirectUri: string,
-  state: string
+  state: string,
+  useAdvancedScopes?: boolean
 ): string {
+  // Get appropriate scopes based on environment
+  const scopes = getFacebookScopes(useAdvancedScopes);
+
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
     state: state,
-    scope: FACEBOOK_SCOPES.join(','),
+    scope: scopes.join(','),
     response_type: 'code',
     auth_type: 'rerequest',
     // Use popup display to avoid cookie consent page issues
