@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Only admins can view API credentials
-    if (userData.role !== 'admin') {
+    if ((userData as any).role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
@@ -81,14 +81,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Only admins can update API credentials
-    if (userData.role !== 'admin') {
+    if ((userData as any).role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
     const body = await req.json()
 
     // Log the attempt (don't log actual credentials)
-    console.log('API credentials update attempted for workspace:', userData.workspace_id)
+    console.log('API credentials update attempted for workspace:', (userData as any).workspace_id)
 
     // Note: In a production system, you would:
     // 1. Validate the credentials by testing them with the OAuth provider

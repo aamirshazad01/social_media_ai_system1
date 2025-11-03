@@ -272,6 +272,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/api/settings/api-credentials/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/settings/api-credentials">> = Specific
+  const handler = {} as typeof import("../../src/app/api/settings/api-credentials/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/settings/api-health/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/settings/api-health">> = Specific
+  const handler = {} as typeof import("../../src/app/api/settings/api-health/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/twitter/auth/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/twitter/auth">> = Specific

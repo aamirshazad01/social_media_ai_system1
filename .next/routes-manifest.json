@@ -207,6 +207,18 @@
       "namedRegex": "^/api/linkedin/verify(?:/)?$"
     },
     {
+      "page": "/api/settings/api-credentials",
+      "regex": "^/api/settings/api\\-credentials(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/settings/api\\-credentials(?:/)?$"
+    },
+    {
+      "page": "/api/settings/api-health",
+      "regex": "^/api/settings/api\\-health(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/settings/api\\-health(?:/)?$"
+    },
+    {
       "page": "/api/twitter/auth",
       "regex": "^/api/twitter/auth(?:/)?$",
       "routeKeys": {},

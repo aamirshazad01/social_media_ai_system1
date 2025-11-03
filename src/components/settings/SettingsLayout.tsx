@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useContext } from 'react'
+import React, { useState } from 'react'
 import { Users, Settings, Activity, ChevronLeft, Zap } from 'lucide-react'
 import Link from 'next/link'
-import { AuthContext } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 type Tab = 'members' | 'workspace' | 'activity' | 'accounts' | 'api'
 
@@ -44,7 +44,7 @@ const COMMON_TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
 ]
 
 export default function SettingsLayout({ children, activeTab }: SettingsLayoutProps) {
-  const { userRole } = useContext(AuthContext)
+  const { userRole } = useAuth()
 
   // Show admin tabs only to admins
   const visibleTabs = userRole === 'admin' ? [...ADMIN_TABS, ...COMMON_TABS] : COMMON_TABS

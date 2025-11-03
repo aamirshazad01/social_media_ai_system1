@@ -24,6 +24,8 @@
   "/api/linkedin/post/route": "app/api/linkedin/post/route.js",
   "/api/linkedin/upload-media/route": "app/api/linkedin/upload-media/route.js",
   "/api/linkedin/verify/route": "app/api/linkedin/verify/route.js",
+  "/api/settings/api-credentials/route": "app/api/settings/api-credentials/route.js",
+  "/api/settings/api-health/route": "app/api/settings/api-health/route.js",
   "/api/twitter/auth/route": "app/api/twitter/auth/route.js",
   "/api/twitter/callback/route": "app/api/twitter/callback/route.js",
   "/api/twitter/post/route": "app/api/twitter/post/route.js",

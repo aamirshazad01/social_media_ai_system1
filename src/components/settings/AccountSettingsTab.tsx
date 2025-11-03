@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CheckCircle,
   Link,
@@ -12,10 +12,10 @@ import {
 } from 'lucide-react'
 import { PLATFORMS } from '@/constants'
 import type { Platform } from '@/types'
-import { AuthContext } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 const AccountSettingsTab: React.FC = () => {
-  const { userRole } = useContext(AuthContext)
+  const { userRole } = useAuth()
   const [connectedAccounts, setConnectedAccounts] = useState<Record<Platform, boolean>>({
     twitter: false,
     linkedin: false,

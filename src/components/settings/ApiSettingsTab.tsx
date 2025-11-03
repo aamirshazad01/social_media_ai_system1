@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AlertCircle, Loader2, Save, Eye, EyeOff, CheckCircle } from 'lucide-react'
-import { AuthContext } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Platform } from '@/types'
 
 interface ApiCredential {
@@ -22,7 +22,7 @@ interface ApiHealth {
 }
 
 const ApiSettingsTab: React.FC = () => {
-  const { userRole } = useContext(AuthContext)
+  const { userRole } = useAuth()
   const [credentials, setCredentials] = useState<Record<Platform, any>>({
     twitter: {},
     linkedin: {},
@@ -254,7 +254,7 @@ const ApiSettingsTab: React.FC = () => {
                         <div className="flex gap-2">
                           <input
                             type={isSecret && !showValue ? 'password' : 'text'}
-                            value={value || ''}
+                            value={typeof value === 'string' ? value : ''}
                             onChange={e => handleCredentialChange(platform, field, e.target.value)}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                             placeholder={`Enter ${formatFieldName(field)}`}

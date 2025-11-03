@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Only admins can view API health
-    if (userData.role !== 'admin') {
+    if ((userData as any).role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
