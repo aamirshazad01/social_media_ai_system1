@@ -22,8 +22,8 @@ const OAUTH_URLS: Record<string, string> = {
 const SCOPES: Record<string, string[]> = {
   twitter: ['tweet.write', 'tweet.read', 'users.read'],
   linkedin: ['r_basicprofile', 'w_member_social', 'r_emailaddress'],
-  facebook: ['public_profile', 'email', 'pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
-  instagram: ['instagram_business_basic', 'instagram_business_content_publish'],
+  facebook: ['public_profile'],
+  instagram: ['public_profile'],
 }
 
 export async function POST(
