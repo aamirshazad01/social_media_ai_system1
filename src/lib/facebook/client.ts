@@ -17,7 +17,7 @@ export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
 export const FACEBOOK_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
-  'pages_manage_posts',
+  'pages_read_posts',
   'pages_manage_engagement',
   'public_profile',
   'email',
