@@ -12,15 +12,34 @@ export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v21.0/oauth/access
 export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
 
 /**
- * Required OAuth scopes for Facebook Pages
+ * Facebook OAuth Scopes Configuration
+ *
+ * DEVELOPMENT SCOPES (Available without App Review):
  * - pages_show_list: List pages managed by user
- * - pages_manage_posts: Create posts on pages
  * - pages_read_engagement: Read comments, reactions, and engagement data
+ * - public_profile: Basic profile access
+ *
+ * PRODUCTION SCOPES (Require App Review):
+ * - pages_manage_posts: Create posts on pages
  * - pages_read_user_content: Access user-generated content on pages
  * - read_insights: Get analytics (impressions, clicks, performance metrics)
- * - public_profile: Basic profile access
  */
-export const FACEBOOK_SCOPES = [
+
+/**
+ * Development scopes - Available in Development Mode
+ * Use for testing without Facebook App Review
+ */
+export const FACEBOOK_DEVELOPMENT_SCOPES = [
+  'pages_show_list',
+  'pages_read_engagement',
+  'public_profile',
+];
+
+/**
+ * Production scopes - Require Facebook App Review
+ * Use after app has been approved for advanced permissions
+ */
+export const FACEBOOK_PRODUCTION_SCOPES = [
   'pages_show_list',
   'pages_manage_posts',
   'pages_read_engagement',
@@ -28,6 +47,25 @@ export const FACEBOOK_SCOPES = [
   'read_insights',
   'public_profile',
 ];
+
+/**
+ * Get appropriate scopes based on environment and configuration
+ * @param useAdvancedScopes - Force use of production scopes (default: based on NODE_ENV)
+ */
+export function getFacebookScopes(useAdvancedScopes?: boolean): string[] {
+  // Allow explicit override via parameter or environment variable
+  const forceAdvanced = useAdvancedScopes !== undefined
+    ? useAdvancedScopes
+    : process.env.FACEBOOK_USE_ADVANCED_SCOPES === 'true' || process.env.NODE_ENV === 'production';
+
+  return forceAdvanced ? FACEBOOK_PRODUCTION_SCOPES : FACEBOOK_DEVELOPMENT_SCOPES;
+}
+
+/**
+ * Legacy export for backward compatibility
+ * @deprecated Use getFacebookScopes() instead
+ */
+export const FACEBOOK_SCOPES = FACEBOOK_PRODUCTION_SCOPES;
 
 /**
  * Generate Facebook OAuth authorization URL

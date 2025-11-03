@@ -1,6 +1,6 @@
 # 🚀 Social Media OS
 
-A comprehensive social media management platform that allows you to manage multiple social media accounts, schedule posts, generate AI content, and track analytics - all from one unified dashboard.
+A comprehensive social media management platform that allows you to manage multiple social media accounts, post picture , video,schedule posts, generate AI content, and track analytics - all from one unified dashboard.
 
 ## 🌐 Live Demo
 

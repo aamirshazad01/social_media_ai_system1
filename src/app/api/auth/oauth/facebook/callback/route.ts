@@ -194,8 +194,40 @@ export async function GET(req: NextRequest) {
         `https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`
       )
 
+      const pagesData = await pagesResponse.json()
+
+      // Check for invalid scopes error
+      if (pagesData.error) {
+        const errorMessage = pagesData.error.message || ''
+        const errorCode = pagesData.error.code || ''
+
+        if (errorMessage.includes('Invalid Scopes') || errorMessage.includes('Invalid OAuth')) {
+          console.error('Invalid Scopes error:', errorMessage)
+
+          await logAuditEvent({
+            workspaceId,
+            userId: user.id,
+            platform: 'facebook',
+            action: 'oauth_invalid_scopes',
+            status: 'failed',
+            errorMessage: errorMessage,
+            errorCode: 'INVALID_SCOPES',
+            metadata: {
+              suggestion: 'Submit app for Facebook App Review to use advanced permissions (pages_manage_posts, pages_read_user_content, read_insights)',
+              useDevScopes: 'Try setting FACEBOOK_USE_ADVANCED_SCOPES=false to use development scopes',
+            },
+            ipAddress: ipAddress || undefined,
+          })
+
+          return NextResponse.redirect(
+            new URL('/settings?tab=accounts&oauth_error=invalid_scopes&details=submit_for_app_review', req.nextUrl.origin)
+          )
+        }
+
+        throw new Error(`Facebook API error: ${errorMessage} (${errorCode})`)
+      }
+
       if (pagesResponse.ok) {
-        const pagesData = await pagesResponse.json()
         pages = pagesData.data || []
       }
     } catch (pagesError) {
