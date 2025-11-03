@@ -284,8 +284,12 @@ function generateRandomBytes(length = 32) {
     ()=>getAuditSummary,
     "getUserAuditLogs",
     ()=>getUserAuditLogs,
+    "getWorkspaceActivityLog",
+    ()=>getWorkspaceActivityLog,
     "logAuditEvent",
-    ()=>logAuditEvent
+    ()=>logAuditEvent,
+    "logWorkspaceAction",
+    ()=>logWorkspaceAction
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabase$2f$index$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/supabase/index.ts [app-route] (ecmascript)");
 ;
@@ -465,6 +469,87 @@ async function cleanupOldAuditLogs() {
     } catch (error) {
         console.error('Error cleaning up audit logs:', error);
         return 0;
+    }
+}
+async function logWorkspaceAction({ workspaceId, userId, action, entityType, entityId, details }) {
+    try {
+        const { error } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabase$2f$index$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabase"].from('audit_logs').insert({
+            workspace_id: workspaceId,
+            user_id: userId,
+            action,
+            entity_type: entityType,
+            entity_id: entityId,
+            details,
+            created_at: new Date().toISOString()
+        });
+        if (error) {
+            console.error(`Failed to log workspace action "${action}":`, error);
+        }
+    } catch (error) {
+        console.error('Workspace audit logging error:', error);
+    // Don't throw - logging failures shouldn't break the app
+    }
+}
+async function getWorkspaceActivityLog(workspaceId, filters) {
+    try {
+        // Build the query
+        let query = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$supabase$2f$index$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["supabase"].from('audit_logs').select(`
+        id,
+        workspace_id,
+        user_id,
+        action,
+        entity_type,
+        entity_id,
+        details,
+        created_at,
+        users:user_id (
+          email,
+          full_name
+        )
+      `, {
+            count: 'exact'
+        }).eq('workspace_id', workspaceId).order('created_at', {
+            ascending: false
+        });
+        // Apply filters
+        if (filters?.userId) {
+            query = query.eq('user_id', filters.userId);
+        }
+        if (filters?.action) {
+            query = query.eq('action', filters.action);
+        }
+        if (filters?.startDate) {
+            query = query.gte('created_at', filters.startDate.toISOString());
+        }
+        if (filters?.endDate) {
+            query = query.lte('created_at', filters.endDate.toISOString());
+        }
+        // Pagination
+        const limit = Math.min(filters?.limit || 50, 500) // Cap at 500
+        ;
+        const offset = filters?.offset || 0;
+        query = query.range(offset, offset + limit - 1);
+        const { data, error, count } = await query;
+        if (error) {
+            console.error('Error fetching workspace activity log:', error);
+            throw error;
+        }
+        return {
+            data: data || [],
+            total: count || 0,
+            limit,
+            offset,
+            hasMore: (count || 0) > offset + limit
+        };
+    } catch (error) {
+        console.error('Error getting workspace activity log:', error);
+        return {
+            data: [],
+            total: 0,
+            limit: filters?.limit || 50,
+            offset: filters?.offset || 0,
+            hasMore: false
+        };
     }
 }
 }),

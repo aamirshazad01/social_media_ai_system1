@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { Post, Platform } from '@/types';
 import ContentStrategistView from '@/components/content/ContentStrategistView';
 import ManagePosts from '@/components/posts/ManagePosts';
@@ -17,7 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PostService, CredentialService } from '@/services/database';
 import { checkVideoOperationStatus, fetchVideo } from '@/services/api/geminiService';
 import { autoSaveAIMedia } from '@/services/mediaService';
-import { Edit3, LayoutGrid, BarChart3, Settings, History, Link as LinkIcon, Image, Target, Sparkles, LogOut, User } from 'lucide-react';
+import { Edit3, LayoutGrid, BarChart3, Settings, History, Link as LinkIcon, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
 
 type View = 'create' | 'manage' | 'history' | 'analytics' | 'accounts' | 'media' | 'campaigns' | 'repurpose';
 
@@ -324,6 +325,13 @@ const AppContent: React.FC = () => {
                             Billing info
                         </a>
                     </div>
+                    <Link
+                        href="/settings?tab=members"
+                        className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate hover:bg-slate/10 hover:text-charcoal-dark"
+                    >
+                        <Cog className="w-5 h-5 mr-3" />
+                        <span>Workspace Settings</span>
+                    </Link>
                     <button
                         onClick={handleSelectKey}
                         className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate hover:bg-slate/10 hover:text-charcoal-dark"

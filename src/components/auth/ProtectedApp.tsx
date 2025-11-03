@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { NotificationProvider } from '@/contexts/NotificationContext'
 import AuthPage from './AuthPage'
 import { Loader2 } from 'lucide-react'
 
@@ -29,6 +30,10 @@ export default function ProtectedApp({ children }: ProtectedAppProps) {
     return <AuthPage />
   }
 
-  // Show protected content if authenticated
-  return <>{children}</>
+  // Show protected content if authenticated (wrapped with NotificationProvider for settings routes)
+  return (
+    <NotificationProvider>
+      {children}
+    </NotificationProvider>
+  )
 }

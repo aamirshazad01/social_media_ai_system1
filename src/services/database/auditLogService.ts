@@ -247,3 +247,155 @@ export async function cleanupOldAuditLogs(): Promise<number> {
     return 0
   }
 }
+
+// ============================================
+// WORKSPACE-SPECIFIC AUDIT LOGGING
+// ============================================
+
+export type WorkspaceAuditAction =
+  | 'member_invited'        // When someone sends an invite
+  | 'member_joined'         // When someone accepts invite
+  | 'member_removed'        // When admin removes a member
+  | 'member_role_changed'   // When admin changes member's role
+  | 'workspace_updated'     // When workspace settings change
+  | 'invite_revoked'        // When admin cancels an invite
+
+export interface WorkspaceAuditLogParams {
+  workspaceId: string
+  userId: string
+  action: WorkspaceAuditAction
+  entityType: string
+  entityId: string
+  details: Record<string, any>
+}
+
+/**
+ * Log workspace-related actions for audit trail
+ * Used for: member invitations, role changes, removals, etc.
+ *
+ * @param params - Audit log parameters
+ * @throws Errors are logged but not thrown to prevent breaking operations
+ */
+export async function logWorkspaceAction({
+  workspaceId,
+  userId,
+  action,
+  entityType,
+  entityId,
+  details,
+}: WorkspaceAuditLogParams): Promise<void> {
+  try {
+    const { error } = await (supabase.from('audit_logs') as any).insert({
+      workspace_id: workspaceId,
+      user_id: userId,
+      action,
+      entity_type: entityType,
+      entity_id: entityId,
+      details,
+      created_at: new Date().toISOString(),
+    })
+
+    if (error) {
+      console.error(`Failed to log workspace action "${action}":`, error)
+    }
+  } catch (error) {
+    console.error('Workspace audit logging error:', error)
+    // Don't throw - logging failures shouldn't break the app
+  }
+}
+
+/**
+ * Get workspace activity log with filters
+ *
+ * @param workspaceId - Workspace to get activity for
+ * @param filters - Optional filters for activity type, user, date range
+ * @returns Paginated activity logs with total count
+ */
+export async function getWorkspaceActivityLog(
+  workspaceId: string,
+  filters?: {
+    userId?: string
+    action?: WorkspaceAuditAction
+    startDate?: Date
+    endDate?: Date
+    limit?: number
+    offset?: number
+  }
+): Promise<{
+  data: any[]
+  total: number
+  limit: number
+  offset: number
+  hasMore: boolean
+}> {
+  try {
+    // Build the query
+    let query = supabase
+      .from('audit_logs')
+      .select(
+        `
+        id,
+        workspace_id,
+        user_id,
+        action,
+        entity_type,
+        entity_id,
+        details,
+        created_at,
+        users:user_id (
+          email,
+          full_name
+        )
+      `,
+        { count: 'exact' }
+      )
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false })
+
+    // Apply filters
+    if (filters?.userId) {
+      query = query.eq('user_id', filters.userId)
+    }
+
+    if (filters?.action) {
+      query = query.eq('action', filters.action)
+    }
+
+    if (filters?.startDate) {
+      query = query.gte('created_at', filters.startDate.toISOString())
+    }
+
+    if (filters?.endDate) {
+      query = query.lte('created_at', filters.endDate.toISOString())
+    }
+
+    // Pagination
+    const limit = Math.min(filters?.limit || 50, 500) // Cap at 500
+    const offset = filters?.offset || 0
+    query = query.range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
+
+    if (error) {
+      console.error('Error fetching workspace activity log:', error)
+      throw error
+    }
+
+    return {
+      data: data || [],
+      total: count || 0,
+      limit,
+      offset,
+      hasMore: (count || 0) > offset + limit,
+    }
+  } catch (error) {
+    console.error('Error getting workspace activity log:', error)
+    return {
+      data: [],
+      total: 0,
+      limit: filters?.limit || 50,
+      offset: filters?.offset || 0,
+      hasMore: false,
+    }
+  }
+}

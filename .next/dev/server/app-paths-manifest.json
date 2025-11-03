@@ -1,5 +1,9 @@
 {
-  "/api/auth/oauth/[platform]/route": "app/api/auth/oauth/[platform]/route.js",
   "/api/credentials/status/route": "app/api/credentials/status/route.js",
-  "/page": "app/page.js"
+  "/api/workspace/activity/route": "app/api/workspace/activity/route.js",
+  "/api/workspace/invites/route": "app/api/workspace/invites/route.js",
+  "/api/workspace/members/route": "app/api/workspace/members/route.js",
+  "/api/workspace/route": "app/api/workspace/route.js",
+  "/page": "app/page.js",
+  "/settings/page": "app/settings/page.js"
 }

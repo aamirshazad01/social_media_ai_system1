@@ -1,5 +1,5 @@
 var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/twitter/auth/route.js")
-R.c("server/chunks/[root-of-the-server]__390c4430._.js")
+R.c("server/chunks/[root-of-the-server]__2aded5ad._.js")
 R.c("server/chunks/node_modules_ae5569c2._.js")
 R.c("server/chunks/[root-of-the-server]__07445140._.js")
 R.c("server/chunks/[root-of-the-server]__dd1f500f._.js")

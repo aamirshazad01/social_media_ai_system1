@@ -1,0 +1,3 @@
+{
+  "/api/workspace/invites/[token]/route": "app/api/workspace/invites/[token]/route.js"
+}

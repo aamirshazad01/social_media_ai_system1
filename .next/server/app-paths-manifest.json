@@ -29,5 +29,14 @@
   "/api/twitter/post/route": "app/api/twitter/post/route.js",
   "/api/twitter/upload-media/route": "app/api/twitter/upload-media/route.js",
   "/api/twitter/verify/route": "app/api/twitter/verify/route.js",
-  "/page": "app/page.js"
+  "/api/workspace/activity/route": "app/api/workspace/activity/route.js",
+  "/api/workspace/invites/[token]/route": "app/api/workspace/invites/[token]/route.js",
+  "/api/workspace/invites/accept/route": "app/api/workspace/invites/accept/route.js",
+  "/api/workspace/invites/route": "app/api/workspace/invites/route.js",
+  "/api/workspace/members/[userId]/role/route": "app/api/workspace/members/[userId]/role/route.js",
+  "/api/workspace/members/[userId]/route": "app/api/workspace/members/[userId]/route.js",
+  "/api/workspace/members/route": "app/api/workspace/members/route.js",
+  "/api/workspace/route": "app/api/workspace/route.js",
+  "/page": "app/page.js",
+  "/settings/page": "app/settings/page.js"
 }

@@ -1,0 +1,73 @@
+/**
+ * API Route: /api/workspace/members
+ * Methods: GET
+ *
+ * GET: List all members in the workspace
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase/server'
+import { WorkspaceService } from '@/services/database/workspaceService'
+
+/**
+ * GET /api/workspace/members
+ * Get all members in the user's workspace
+ *
+ * Query params (optional):
+ *   - role: Filter by role (admin, editor, viewer)
+ *
+ * Response: { data: WorkspaceMember[] } or { error: string }
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Get user's workspace
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('workspace_id')
+      .eq('id', user.id)
+      .single()
+
+    if (userError || !userData || !('workspace_id' in userData)) {
+      return NextResponse.json(
+        { error: 'User profile not found' },
+        { status: 404 }
+      )
+    }
+
+    // Get all members
+    let members = await WorkspaceService.getWorkspaceMembers((userData as any).workspace_id)
+
+    // Optional: Filter by role if provided
+    const { searchParams } = new URL(request.url)
+    const roleFilter = searchParams.get('role')
+
+    if (roleFilter) {
+      const validRoles = ['admin', 'editor', 'viewer']
+      if (!validRoles.includes(roleFilter)) {
+        return NextResponse.json(
+          { error: 'Invalid role filter' },
+          { status: 400 }
+        )
+      }
+      members = members.filter(m => m.role === roleFilter)
+    }
+
+    return NextResponse.json({ data: members })
+  } catch (error) {
+    console.error('Error in GET /api/workspace/members:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
