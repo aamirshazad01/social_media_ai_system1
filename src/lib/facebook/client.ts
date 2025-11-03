@@ -44,7 +44,9 @@ export const FACEBOOK_PRODUCTION_SCOPES = [
   'pages_manage_posts',
   'pages_read_engagement',
   'pages_read_user_content',
+  'pages_manage_engagement',
   'read_insights',
+  'facebook_creator_marketplace_discovery',
   'public_profile',
 ];
 
