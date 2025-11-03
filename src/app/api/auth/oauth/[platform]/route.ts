@@ -128,7 +128,8 @@ export async function POST(
       params.append('code_challenge_method', 'S256')
       params.append('scope', SCOPES[platform].join(' '))
     } else if (platform === 'linkedin') {
-      params.append('scope', SCOPES[platform].join('%20'))
+      // LinkedIn requires scopes separated by spaces (URLSearchParams will handle encoding)
+      params.append('scope', SCOPES[platform].join(' '))
     } else if (platform === 'facebook' || platform === 'instagram') {
       params.append('scope', SCOPES[platform].join(','))
       params.append('display', 'popup')

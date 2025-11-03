@@ -1,68 +1,38 @@
 /**
  * Instagram OAuth - Start Authentication Flow
  * POST /api/instagram/auth
+ *
+ * DEPRECATED: This endpoint is maintained for backward compatibility.
+ * New implementations should use /api/auth/oauth/instagram instead.
+ * This endpoint now redirects to the new implementation.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
-import { generateInstagramAuthUrl } from '@/lib/instagram/client'
-import { randomBytes } from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication
-    const supabase = await createServerClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // Redirect to new OAuth endpoint
+    const newEndpointUrl = new URL(req.url)
+    newEndpointUrl.pathname = '/api/auth/oauth/instagram'
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get Instagram/Facebook credentials from environment
-    const appId = process.env.INSTAGRAM_CLIENT_ID || process.env.FACEBOOK_CLIENT_ID
-    const appSecret = process.env.INSTAGRAM_CLIENT_SECRET || process.env.FACEBOOK_CLIENT_SECRET
-
-    if (!appId || !appSecret) {
-      return NextResponse.json(
-        { error: 'Instagram/Facebook API credentials not configured in environment' },
-        { status: 500 }
-      )
-    }
-
-    // Generate callback URL (ensure no double slash)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || ''
-    const callbackURL = `${baseUrl}/api/instagram/callback`
-
-    // Generate random state for CSRF protection
-    const state = randomBytes(32).toString('hex')
-
-    // Generate Instagram OAuth URL (via Facebook)
-    const authUrl = generateInstagramAuthUrl(appId, callbackURL, state)
-
-    // Create response with auth URL
-    const response = NextResponse.json({
-      url: authUrl,
-      state: state,
+    const response = await fetch(newEndpointUrl, {
+      method: 'POST',
+      headers: req.headers,
+      body: req.body,
     })
 
-    // Store state in secure cookie for verification
-    response.cookies.set('instagram_oauth_state', state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 600, // 10 minutes
-      path: '/',
+    // Return the response from the new endpoint
+    return new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
     })
-
-    return response
   } catch (error) {
     console.error('Instagram OAuth error:', error)
     return NextResponse.json(
-      { 
-        error: 'Failed to initiate Instagram authentication', 
-        details: (error as Error).message 
+      {
+        error: 'Failed to initiate Instagram authentication',
+        details: (error as Error).message
       },
       { status: 500 }
     )
