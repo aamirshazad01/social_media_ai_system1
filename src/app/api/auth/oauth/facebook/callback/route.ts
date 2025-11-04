@@ -14,6 +14,17 @@ import { createServerClient } from '@/lib/supabase/server'
 import { verifyOAuthState } from '@/services/database/oauthStateService'
 import { CredentialService } from '@/services/database/credentialService'
 import { logAuditEvent } from '@/services/database/auditLogService'
+import { createHmac } from 'crypto'
+
+/**
+ * Generate appsecret_proof for Facebook server-to-server calls
+ * Required for secure API calls from the backend
+ */
+function generateAppSecretProof(accessToken: string, appSecret: string): string {
+  return createHmac('sha256', appSecret)
+    .update(accessToken)
+    .digest('hex')
+}
 
 export async function GET(req: NextRequest) {
   console.log('🚀 Facebook OAuth Callback started')
@@ -236,13 +247,11 @@ export async function GET(req: NextRequest) {
     try {
       console.log('📱 Step 8: Fetching pages with token:', longLivedToken.substring(0, 20) + '...')
 
+      // Generate appsecret_proof for secure server-to-server calls
+      const appSecretProof = generateAppSecretProof(longLivedToken, appSecret)
+
       const pagesResponse = await fetch(
-        `https://graph.facebook.com/v24.0/me/accounts`,
-        {
-          headers: {
-            'Authorization': `Bearer ${longLivedToken}`,
-          },
-        }
+        `https://graph.facebook.com/v24.0/me/accounts?access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
       )
 
       console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)

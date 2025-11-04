@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { getPageInfo } from '@/lib/facebook/client'
+import { getPageInfo, generateAppSecretProof } from '@/lib/facebook/client'
 import { CredentialService } from '@/services/database'
 import type { FacebookCredentials } from '@/types'
 
@@ -61,9 +61,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify by fetching page info
+    const appSecret = process.env.FACEBOOK_CLIENT_SECRET
+    if (!appSecret) {
+      throw new Error('Facebook app secret not configured')
+    }
+
+    const appSecretProof = generateAppSecretProof(facebookCreds.accessToken, appSecret)
     const pageInfo = await getPageInfo(
       facebookCreds.pageId!,
-      facebookCreds.accessToken
+      facebookCreds.accessToken,
+      appSecretProof
     )
 
     return NextResponse.json({

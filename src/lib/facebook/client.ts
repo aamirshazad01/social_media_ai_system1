@@ -3,6 +3,8 @@
  * Handles Facebook Graph API OAuth 2.0 and content publishing
  */
 
+import { createHmac } from 'crypto'
+
 /**
  * Facebook OAuth 2.0 URLs
  */
@@ -10,6 +12,16 @@
 export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
 export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v24.0/oauth/access_token';
 export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v24.0';
+
+/**
+ * Generate appsecret_proof for Facebook server-to-server calls
+ * This is required when making API calls from the backend with an app secret
+ */
+export function generateAppSecretProof(accessToken: string, appSecret: string): string {
+  return createHmac('sha256', appSecret)
+    .update(accessToken)
+    .digest('hex')
+}
 
 /**
  * Facebook OAuth Scopes Configuration
@@ -162,8 +174,10 @@ export async function getLongLivedToken(
 
 /**
  * Get Facebook Pages managed by the user
+ * @param accessToken The access token
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
-export async function getFacebookPages(accessToken: string): Promise<{
+export async function getFacebookPages(accessToken: string, appSecretProof?: string): Promise<{
   data: Array<{
     id: string;
     name: string;
@@ -171,14 +185,12 @@ export async function getFacebookPages(accessToken: string): Promise<{
     category: string;
   }>;
 }> {
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/me/accounts`,
-    {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    }
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/me/accounts?access_token=${accessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch Facebook pages');
@@ -189,24 +201,24 @@ export async function getFacebookPages(accessToken: string): Promise<{
 
 /**
  * Get Facebook Page info
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function getPageInfo(
   pageId: string,
-  pageAccessToken: string
+  pageAccessToken: string,
+  appSecretProof?: string
 ): Promise<{
   id: string;
   name: string;
   category: string;
   fan_count?: number;
 }> {
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${pageId}?fields=id,name,category,fan_count`,
-    {
-      headers: {
-        'Authorization': `Bearer ${pageAccessToken}`,
-      },
-    }
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/${pageId}?fields=id,name,category,fan_count&access_token=${pageAccessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch page info');
@@ -217,12 +229,14 @@ export async function getPageInfo(
 
 /**
  * Post to Facebook Page
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function postToFacebookPage(
   pageId: string,
   pageAccessToken: string,
   message: string,
-  link?: string
+  link?: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const params = new URLSearchParams({
     message: message,
@@ -231,6 +245,10 @@ export async function postToFacebookPage(
 
   if (link) {
     params.append('link', link);
+  }
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
   }
 
   const response = await fetch(
@@ -251,18 +269,24 @@ export async function postToFacebookPage(
 
 /**
  * Post photo to Facebook Page
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function postPhotoToFacebookPage(
   pageId: string,
   pageAccessToken: string,
   imageUrl: string,
-  message: string
+  message: string,
+  appSecretProof?: string
 ): Promise<{ id: string; post_id: string }> {
   const params = new URLSearchParams({
     url: imageUrl,
     caption: message,
     access_token: pageAccessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${pageId}/photos`,
@@ -282,17 +306,23 @@ export async function postPhotoToFacebookPage(
 
 /**
  * Upload photo and get photo ID (for multi-photo posts)
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function uploadPhotoToFacebook(
   pageId: string,
   pageAccessToken: string,
-  imageUrl: string
+  imageUrl: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const params = new URLSearchParams({
     url: imageUrl,
     published: 'false', // Don't publish yet
     access_token: pageAccessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${pageId}/photos`,
@@ -312,12 +342,14 @@ export async function uploadPhotoToFacebook(
 
 /**
  * Create multi-photo post
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function createMultiPhotoPost(
   pageId: string,
   pageAccessToken: string,
   photoIds: string[],
-  message: string
+  message: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const attachedMedia = photoIds.map(id => ({ media_fbid: id }));
 
@@ -326,6 +358,10 @@ export async function createMultiPhotoPost(
     attached_media: JSON.stringify(attachedMedia),
     access_token: pageAccessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${pageId}/feed`,
@@ -345,10 +381,12 @@ export async function createMultiPhotoPost(
 
 /**
  * Get post insights (analytics)
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function getPostInsights(
   postId: string,
-  pageAccessToken: string
+  pageAccessToken: string,
+  appSecretProof?: string
 ): Promise<{
   data: Array<{
     name: string;
@@ -364,14 +402,12 @@ export async function getPostInsights(
     'post_reactions_love_total',
   ];
 
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${postId}/insights?metric=${metrics.join(',')}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${pageAccessToken}`,
-      },
-    }
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/${postId}/insights?metric=${metrics.join(',')}&access_token=${pageAccessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch post insights');
@@ -382,12 +418,14 @@ export async function getPostInsights(
 
 /**
  * Get Page insights (analytics)
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function getPageInsights(
   pageId: string,
   pageAccessToken: string,
   since: string,
-  until: string
+  until: string,
+  appSecretProof?: string
 ): Promise<{
   data: Array<{
     name: string;
@@ -402,14 +440,12 @@ export async function getPageInsights(
     'page_fans',
   ];
 
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${pageId}/insights?metric=${metrics.join(',')}&since=${since}&until=${until}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${pageAccessToken}`,
-      },
-    }
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/${pageId}/insights?metric=${metrics.join(',')}&since=${since}&until=${until}&access_token=${pageAccessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch page insights');
@@ -420,18 +456,24 @@ export async function getPageInsights(
 
 /**
  * Upload video to Facebook Page
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function uploadVideoToFacebookPage(
   pageId: string,
   pageAccessToken: string,
   videoUrl: string,
-  description: string
+  description: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const params = new URLSearchParams({
     file_url: videoUrl,
     description: description,
     access_token: pageAccessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${pageId}/videos`,
@@ -451,20 +493,21 @@ export async function uploadVideoToFacebookPage(
 
 /**
  * Delete post
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function deletePost(
   postId: string,
-  pageAccessToken: string
+  pageAccessToken: string,
+  appSecretProof?: string
 ): Promise<{ success: boolean }> {
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${postId}`,
-    {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${pageAccessToken}`,
-      },
-    }
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/${postId}?access_token=${pageAccessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+  });
 
   if (!response.ok) {
     throw new Error('Failed to delete post');
