@@ -16,6 +16,7 @@ import { CredentialService } from '@/services/database/credentialService'
 import { logAuditEvent } from '@/services/database/auditLogService'
 
 export async function GET(req: NextRequest) {
+  console.log('🚀 Facebook OAuth Callback started')
   const supabase = await createServerClient()
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
@@ -23,17 +24,27 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error')
   const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip')
 
+  console.log('📥 Callback params:', {
+    code: code?.substring(0, 20) + '...',
+    state: state?.substring(0, 20) + '...',
+    error,
+  })
+
   try {
     // ✅ Step 1: Check authentication
+    console.log('✅ Step 1: Checking authentication')
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log('❌ No authenticated user found')
       return NextResponse.redirect(
         new URL('/login?error=oauth_unauthorized', req.nextUrl.origin)
       )
     }
+    console.log('✅ User authenticated:', user.id)
 
     // ✅ Step 2: Get workspace and verify admin role
+    console.log('✅ Step 2: Getting workspace and verifying admin role')
     const { data: userRow } = await supabase
       .from('users')
       .select('workspace_id, role')
@@ -41,6 +52,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle()
 
     if (!userRow) {
+      console.log('❌ No user row found')
       return NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
       )
@@ -48,9 +60,11 @@ export async function GET(req: NextRequest) {
 
     const workspaceId = (userRow as any).workspace_id
     const userRole = (userRow as any).role
+    console.log('✅ User workspace:', workspaceId, 'Role:', userRole)
 
     // Check if user is admin (required for OAuth connections)
     if (userRole !== 'admin') {
+      console.log('❌ User is not admin, role is:', userRole)
       await logAuditEvent({
         workspaceId,
         userId: user.id,
@@ -65,6 +79,7 @@ export async function GET(req: NextRequest) {
         new URL('/settings?tab=accounts&oauth_error=insufficient_permissions', req.nextUrl.origin)
       )
     }
+    console.log('✅ User is admin, proceeding with OAuth')
 
     // ✅ Step 3: Check for OAuth denial
     if (error) {
@@ -144,6 +159,7 @@ export async function GET(req: NextRequest) {
 
     let accessToken: string
     try {
+      console.log('🔐 Step 6: Exchanging auth code for access token')
       const tokenResponse = await fetch('https://graph.facebook.com/v18.0/oauth/access_token', {
         method: 'POST',
         body: new URLSearchParams({
@@ -154,11 +170,14 @@ export async function GET(req: NextRequest) {
         }),
       })
 
+      console.log('🔐 Token response status:', tokenResponse.status, tokenResponse.statusText)
+
       if (!tokenResponse.ok) {
         throw new Error(`Token exchange failed: ${tokenResponse.statusText}`)
       }
 
       const tokenData = await tokenResponse.json()
+      console.log('🔐 Token exchange successful, token:', tokenData.access_token?.substring(0, 20) + '...', 'expires in:', tokenData.expires_in)
 
       if (!tokenData.access_token) {
         throw new Error('No access token in response')
@@ -166,7 +185,7 @@ export async function GET(req: NextRequest) {
 
       accessToken = tokenData.access_token
     } catch (exchangeError) {
-      console.error('Token exchange error:', exchangeError)
+      console.error('❌ Token exchange error:', exchangeError)
 
       await logAuditEvent({
         workspaceId,
@@ -187,6 +206,7 @@ export async function GET(req: NextRequest) {
     // ✅ Step 7: Get long-lived token
     let longLivedToken = accessToken
     try {
+      console.log('⏳ Step 7: Exchanging short-lived token for long-lived token')
       const refreshResponse = await fetch(
         `https://graph.facebook.com/v18.0/oauth/access_token?${new URLSearchParams({
           grant_type: 'fb_exchange_token',
@@ -196,27 +216,38 @@ export async function GET(req: NextRequest) {
         })}`
       )
 
+      console.log('⏳ Long-lived token response status:', refreshResponse.status)
+
       if (refreshResponse.ok) {
         const refreshData = await refreshResponse.json()
+        console.log('⏳ Successfully exchanged for long-lived token, expires in:', refreshData.expires_in, 'seconds')
         longLivedToken = refreshData.access_token || accessToken
+      } else {
+        const errorText = await refreshResponse.text()
+        console.warn('⚠️ Failed to get long-lived token (status', refreshResponse.status + '):', errorText)
       }
     } catch (refreshError) {
-      console.warn('Failed to get long-lived token, using short-lived:', refreshError)
+      console.warn('⚠️ Failed to get long-lived token, using short-lived:', refreshError)
       // Continue with short-lived token
     }
 
     // ✅ Step 8: Get user's Facebook pages
     let pages: any[] = []
     try {
+      console.log('📱 Step 8: Fetching pages with token:', longLivedToken.substring(0, 20) + '...')
+
       const pagesResponse = await fetch(
         `https://graph.facebook.com/v18.0/me/accounts?access_token=${longLivedToken}`
       )
+
+      console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)
 
       if (!pagesResponse.ok) {
         throw new Error(`Facebook API returned ${pagesResponse.status}: ${pagesResponse.statusText}`)
       }
 
       const pagesData = await pagesResponse.json()
+      console.log('📱 Pages API response data:', JSON.stringify(pagesData, null, 2))
 
       // Check for API errors in response body
       if (pagesData.error) {
@@ -224,7 +255,7 @@ export async function GET(req: NextRequest) {
         const errorCode = pagesData.error.code || pagesData.error.error_code || ''
         const errorType = pagesData.error.type || pagesData.error.error || ''
 
-        console.error('Facebook API error when fetching pages:', { errorMessage, errorCode, errorType })
+        console.error('❌ Facebook API error when fetching pages:', { errorMessage, errorCode, errorType })
 
         // Log detailed error for debugging
         await logAuditEvent({
@@ -238,6 +269,7 @@ export async function GET(req: NextRequest) {
           metadata: {
             errorType,
             fullError: JSON.stringify(pagesData.error),
+            tokenPrefix: longLivedToken.substring(0, 20),
           },
           ipAddress: ipAddress || undefined,
         })
@@ -271,11 +303,12 @@ export async function GET(req: NextRequest) {
       // Check if data exists and is an array
       if (pagesData.data && Array.isArray(pagesData.data)) {
         pages = pagesData.data
+        console.log('✅ Found', pages.length, 'Facebook pages')
       } else if (pagesData.data === undefined) {
         throw new Error('No data in Facebook API response')
       }
     } catch (pagesError) {
-      console.error('Failed to get pages:', pagesError)
+      console.error('❌ Failed to get pages:', pagesError)
 
       await logAuditEvent({
         workspaceId,
