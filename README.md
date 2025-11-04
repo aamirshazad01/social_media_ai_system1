@@ -284,7 +284,7 @@ Built with:
   5. Go to Settings → Advanced
   6. Find "Valid OAuth Redirect URIs"
   7. Add: https://social-medias-os.vercel.app/api/auth/oauth/facebook/callback
-         - https://social-medias-os.vercel.app/api/auth/oauth/instagram/callback
+         - https://social-medias-os.vercel.app/api/auth/oauth/instagram/callback/
               
 
   Instagram:

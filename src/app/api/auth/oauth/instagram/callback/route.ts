@@ -157,7 +157,8 @@ export async function GET(req: NextRequest) {
     let accessToken: string
     try {
       console.log('🔐 Step 6: Exchanging Instagram auth code for access token')
-      const tokenResponse = await fetch('https://graph.instagram.com/v18.0/oauth/access_token', {
+      // Instagram uses Facebook's OAuth endpoint for token exchange
+      const tokenResponse = await fetch('https://graph.facebook.com/v24.0/oauth/access_token', {
         method: 'POST',
         body: new URLSearchParams({
           client_id: appId,
@@ -206,10 +207,13 @@ export async function GET(req: NextRequest) {
     let longLivedToken = accessToken
     try {
       console.log('⏳ Step 7: Exchanging short-lived token for long-lived token')
+      // Instagram uses Facebook's Graph API for long-lived token exchange
       const refreshResponse = await fetch(
-        `https://graph.instagram.com/v18.0/access_token?${new URLSearchParams({
-          grant_type: 'ig_exchange_user_access_token',
-          access_token: accessToken,
+        `https://graph.facebook.com/v24.0/oauth/access_token?${new URLSearchParams({
+          grant_type: 'fb_exchange_token',
+          client_id: appId,
+          client_secret: appSecret,
+          fb_exchange_token: accessToken,
         })}`
       )
 
