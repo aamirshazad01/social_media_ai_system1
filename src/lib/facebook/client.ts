@@ -172,7 +172,12 @@ export async function getFacebookPages(accessToken: string): Promise<{
   }>;
 }> {
   const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/me/accounts?access_token=${accessToken}`
+    `${FACEBOOK_GRAPH_BASE}/me/accounts`,
+    {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    }
   );
 
   if (!response.ok) {
@@ -195,7 +200,12 @@ export async function getPageInfo(
   fan_count?: number;
 }> {
   const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${pageId}?fields=id,name,category,fan_count&access_token=${pageAccessToken}`
+    `${FACEBOOK_GRAPH_BASE}/${pageId}?fields=id,name,category,fan_count`,
+    {
+      headers: {
+        'Authorization': `Bearer ${pageAccessToken}`,
+      },
+    }
   );
 
   if (!response.ok) {
@@ -355,7 +365,12 @@ export async function getPostInsights(
   ];
 
   const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${postId}/insights?metric=${metrics.join(',')}&access_token=${pageAccessToken}`
+    `${FACEBOOK_GRAPH_BASE}/${postId}/insights?metric=${metrics.join(',')}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${pageAccessToken}`,
+      },
+    }
   );
 
   if (!response.ok) {
@@ -388,7 +403,12 @@ export async function getPageInsights(
   ];
 
   const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${pageId}/insights?metric=${metrics.join(',')}&since=${since}&until=${until}&access_token=${pageAccessToken}`
+    `${FACEBOOK_GRAPH_BASE}/${pageId}/insights?metric=${metrics.join(',')}&since=${since}&until=${until}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${pageAccessToken}`,
+      },
+    }
   );
 
   if (!response.ok) {
@@ -437,9 +457,12 @@ export async function deletePost(
   pageAccessToken: string
 ): Promise<{ success: boolean }> {
   const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${postId}?access_token=${pageAccessToken}`,
+    `${FACEBOOK_GRAPH_BASE}/${postId}`,
     {
       method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${pageAccessToken}`,
+      },
     }
   );
 

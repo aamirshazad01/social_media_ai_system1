@@ -237,7 +237,12 @@ export async function GET(req: NextRequest) {
       console.log('📱 Step 8: Fetching pages with token:', longLivedToken.substring(0, 20) + '...')
 
       const pagesResponse = await fetch(
-        `https://graph.facebook.com/v24.0/me/accounts?access_token=${longLivedToken}`
+        `https://graph.facebook.com/v24.0/me/accounts`,
+        {
+          headers: {
+            'Authorization': `Bearer ${longLivedToken}`,
+          },
+        }
       )
 
       console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)
