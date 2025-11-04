@@ -46,10 +46,10 @@ export async function GET(req: NextRequest) {
       return response
     }
 
-    // ✅ Step 2: Get workspace
+    // ✅ Step 2: Get workspace and verify admin role
     const { data: userRow } = await supabase
       .from('users')
-      .select('workspace_id')
+      .select('workspace_id, role')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -61,6 +61,25 @@ export async function GET(req: NextRequest) {
     }
 
     const workspaceId = (userRow as any).workspace_id
+    const userRole = (userRow as any).role
+
+    // Check if user is admin (required for OAuth connections)
+    if (userRole !== 'admin') {
+      await logAuditEvent({
+        workspaceId,
+        userId: user.id,
+        platform: 'twitter',
+        action: 'oauth_callback_unauthorized',
+        status: 'failed',
+        errorCode: 'INSUFFICIENT_PERMISSIONS',
+        ipAddress: ipAddress || undefined,
+      })
+
+      const response = NextResponse.redirect(
+        new URL('/settings?tab=accounts&oauth_error=insufficient_permissions', req.nextUrl.origin)
+      )
+      return response
+    }
 
     // ✅ Step 3: Check for OAuth denial from Twitter
     if (error) {

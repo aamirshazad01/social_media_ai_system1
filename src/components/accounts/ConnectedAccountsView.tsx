@@ -394,6 +394,7 @@ function mapErrorCode(errorCode: string): string {
     no_account_found: 'No account found. Please try again.',
     save_failed: 'Failed to save credentials. Please try again.',
     config_missing: 'Platform is not configured. Please contact support.',
+    insufficient_permissions: 'Access denied. Only workspace admins can connect social media accounts.',
   }
   return messages[errorCode] || 'Connection failed. Please try again.'
 }

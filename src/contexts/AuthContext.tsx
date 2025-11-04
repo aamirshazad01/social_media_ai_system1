@@ -27,25 +27,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null)
   const fetchInProgressRef = React.useRef(false)
 
+  // Log role changes for debugging
+  React.useEffect(() => {
+    if (userRole !== null) {
+      console.log(`[AuthContext] 🔐 User role updated to: ${userRole}`)
+    }
+  }, [userRole])
+
+  React.useEffect(() => {
+    if (workspaceId !== null) {
+      console.log(`[AuthContext] 🏢 Workspace ID updated to: ${workspaceId}`)
+    }
+  }, [workspaceId])
+
   // Fetch user profile data (workspace_id and role)
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retryCount = 0) => {
     // Prevent concurrent profile fetches to avoid race conditions
     if (fetchInProgressRef.current) {
+      console.log('[AuthContext] Profile fetch already in progress, skipping')
       return
     }
 
     fetchInProgressRef.current = true
+    const maxRetries = 3
 
     try {
+      console.log(`[AuthContext] Fetching profile for user ${userId} (attempt ${retryCount + 1})`)
+
       // Try RPC first to avoid users RLS recursion
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
       if (!rpcError && rpcData) {
         const d: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
-        if (d) {
+        if (d && d.workspace_id && d.role) {
+          console.log(`[AuthContext] ✅ Profile loaded via RPC - Role: ${d.role}, Workspace: ${d.workspace_id}`)
           setWorkspaceId(d.workspace_id as string)
           setUserRole(d.role as 'admin' | 'editor' | 'viewer')
           return
+        } else {
+          console.warn('[AuthContext] RPC returned incomplete data:', d)
         }
+      } else if (rpcError) {
+        console.warn('[AuthContext] RPC error:', rpcError)
       }
 
       // Fallback: direct select (requires non-recursive users RLS policy)
@@ -55,22 +77,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .maybeSingle()
 
-      if (error) throw error
+      if (error) {
+        console.error('[AuthContext] Direct query error:', error)
+        throw error
+      }
 
       if (!data) {
+        console.warn('[AuthContext] No user data found for userId:', userId)
+        
+        // Retry if we haven't exceeded max retries
+        if (retryCount < maxRetries) {
+          fetchInProgressRef.current = false
+          console.log(`[AuthContext] Retrying profile fetch in 1 second...`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          return fetchUserProfile(userId, retryCount + 1)
+        }
+        
         setWorkspaceId(null)
         setUserRole(null)
         return
       }
 
-      setWorkspaceId((data as any).workspace_id as string)
-      setUserRole((data as any).role as 'admin' | 'editor' | 'viewer')
+      const workspace = (data as any).workspace_id as string
+      const role = (data as any).role as 'admin' | 'editor' | 'viewer'
+
+      if (!workspace || !role) {
+        console.error('[AuthContext] Incomplete profile data:', { workspace, role })
+        
+        // Retry if we haven't exceeded max retries
+        if (retryCount < maxRetries) {
+          fetchInProgressRef.current = false
+          console.log(`[AuthContext] Retrying profile fetch in 1 second...`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          return fetchUserProfile(userId, retryCount + 1)
+        }
+        
+        setWorkspaceId(null)
+        setUserRole(null)
+        return
+      }
+
+      console.log(`[AuthContext] ✅ Profile loaded via direct query - Role: ${role}, Workspace: ${workspace}`)
+      setWorkspaceId(workspace)
+      setUserRole(role)
     } catch (error) {
       const e = error as any
       console.error(
-        'Error fetching user profile:',
+        '[AuthContext] Error fetching user profile:',
         (e && (e.message || e.code || e.status || e.details)) ?? (typeof e === 'string' ? e : JSON.stringify(e))
       )
+      
+      // Retry if we haven't exceeded max retries
+      if (retryCount < maxRetries) {
+        fetchInProgressRef.current = false
+        console.log(`[AuthContext] Retrying profile fetch after error in 1 second...`)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return fetchUserProfile(userId, retryCount + 1)
+      }
+      
       setWorkspaceId(null)
       setUserRole(null)
     } finally {
@@ -112,14 +176,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('Auth state changed:', event)
+      console.log('[AuthContext] Auth state changed:', event, 'User ID:', currentSession?.user?.id)
 
       setSession(currentSession)
       setUser(currentSession?.user ?? null)
 
       if (currentSession?.user) {
+        console.log('[AuthContext] User session active, fetching profile...')
         await fetchUserProfile(currentSession.user.id)
       } else {
+        console.log('[AuthContext] No user session, clearing workspace and role')
         setWorkspaceId(null)
         setUserRole(null)
       }
