@@ -7,9 +7,9 @@
  * Facebook OAuth 2.0 URLs
  */
 // Use versioned OAuth endpoints to align with latest login experience
-export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
-export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v21.0/oauth/access_token';
-export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
+export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
+export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v24.0/oauth/access_token';
+export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v24.0';
 
 /**
  * Facebook OAuth Scopes Configuration

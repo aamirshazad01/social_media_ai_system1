@@ -5,7 +5,7 @@ import { FacebookCredentials } from '@/types';
  * Now uses real backend API endpoints for Facebook integration
  */
 
-const FACEBOOK_API_BASE = 'https://graph.facebook.com/v18.0';
+const FACEBOOK_API_BASE = 'https://graph.facebook.com/v24.0';
 
 export interface FacebookPostOptions {
   message: string;

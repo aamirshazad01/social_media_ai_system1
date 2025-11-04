@@ -7,10 +7,10 @@
 /**
  * Instagram OAuth 2.0 URLs (via Facebook)
  */
-export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
-export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v21.0/oauth/access_token';
-export const INSTAGRAM_API_BASE = 'https://graph.instagram.com';
-export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v21.0';
+export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
+export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v24.0/oauth/access_token';
+export const INSTAGRAM_API_BASE = 'https://graph.instagram.com/v24.0';
+export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v24.0';
 
 /**
  * Required OAuth scopes for Instagram
