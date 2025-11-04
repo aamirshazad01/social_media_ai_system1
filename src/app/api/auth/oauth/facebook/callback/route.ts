@@ -248,7 +248,9 @@ export async function GET(req: NextRequest) {
       console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)
 
       if (!pagesResponse.ok) {
-        throw new Error(`Facebook API returned ${pagesResponse.status}: ${pagesResponse.statusText}`)
+        const errorText = await pagesResponse.text()
+        console.error('📱 Pages API error response:', errorText)
+        throw new Error(`Facebook API returned ${pagesResponse.status}: ${pagesResponse.statusText} - ${errorText}`)
       }
 
       const pagesData = await pagesResponse.json()
