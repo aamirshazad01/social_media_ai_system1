@@ -2,11 +2,27 @@
  * LinkedIn OAuth Callback
  * GET /api/auth/oauth/linkedin/callback?code=xxx&state=xxx
  *
- * Handles OAuth callback from LinkedIn
- * - Supports refresh tokens for token renewal
- * - Gets user profile info
+ * Handles OAuth callback from LinkedIn using OpenID Connect
+ *
+ * IMPORTANT SETUP REQUIREMENTS in LinkedIn Developer Portal:
+ * 1. Ensure "Sign in with LinkedIn using OpenID Connect" product is enabled
+ * 2. To enable posting to LinkedIn, also enable "Share on LinkedIn" product
+ * 3. Verify these scopes are authorized:
+ *    - openid (required for OIDC)
+ *    - profile (user profile info)
+ *    - email (email address)
+ *    - w_member_social (only if ShareOnLinkedIn product is enabled)
+ * 4. Error "Bummer, something went wrong" usually means:
+ *    - Wrong scopes configured in code vs Developer Portal
+ *    - ShareOnLinkedIn product enabled but w_member_social scope not setup
+ *    - App permissions not properly configured
+ *
+ * Flow:
+ * - Verifies CSRF state
+ * - Exchanges code for token
+ * - Gets user profile via OpenID Connect userinfo endpoint
  * - Saves credentials securely
- * - NEVER stores API secrets
+ * - NEVER stores API secrets or Client Secret
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -144,6 +160,13 @@ export async function GET(req: NextRequest) {
 
     let tokenData: any
     try {
+      console.log('🔐 Step 6: Exchanging LinkedIn auth code for access token')
+      console.log('Parameters:', {
+        code: code?.substring(0, 20) + '...',
+        clientId: clientId?.substring(0, 10) + '...',
+        callbackUrl,
+      })
+
       const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
         method: 'POST',
         headers: {
@@ -158,18 +181,31 @@ export async function GET(req: NextRequest) {
         }),
       })
 
+      console.log('🔐 Token exchange response status:', tokenResponse.status, tokenResponse.statusText)
+
       if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json()
-        throw new Error(`Token exchange failed: ${errorData.error_description || tokenResponse.statusText}`)
+        const errorText = await tokenResponse.text()
+        console.error('🔐 Token exchange error response:', errorText)
+
+        let errorMessage = tokenResponse.statusText
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.error_description || errorData.error || tokenResponse.statusText
+        } catch (e) {
+          errorMessage = errorText || tokenResponse.statusText
+        }
+
+        throw new Error(`Token exchange failed: ${errorMessage}`)
       }
 
       tokenData = await tokenResponse.json()
+      console.log('🔐 Token exchange successful')
 
       if (!tokenData.access_token) {
-        throw new Error('No access token in response')
+        throw new Error(`No access token in response. Keys: ${Object.keys(tokenData).join(', ')}`)
       }
     } catch (exchangeError) {
-      console.error('Token exchange error:', exchangeError)
+      console.error('❌ Token exchange error:', exchangeError)
 
       await logAuditEvent({
         workspaceId,
@@ -187,13 +223,18 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // ✅ Step 7: Get user profile
+    // ✅ Step 7: Get user profile using OpenID Connect userinfo endpoint
+    // LinkedIn now uses userinfo endpoint for OpenID Connect
     let profileName = 'LinkedIn User'
     let profileId = null
+    let userEmail = null
 
     try {
+      console.log('👤 Step 7: Getting LinkedIn user profile via OpenID Connect userinfo endpoint')
+
+      // Use the OpenID Connect userinfo endpoint (recommended for new apps)
       const profileResponse = await fetch(
-        'https://api.linkedin.com/v2/me?projection=(id,firstName,lastName)',
+        'https://api.linkedin.com/v2/userinfo',
         {
           headers: {
             'Authorization': `Bearer ${tokenData.access_token}`,
@@ -203,31 +244,54 @@ export async function GET(req: NextRequest) {
 
       if (profileResponse.ok) {
         const profileData = await profileResponse.json()
-        const firstName = profileData.firstName?.localized?.[Object.keys(profileData.firstName.localized)[0]] || ''
-        const lastName = profileData.lastName?.localized?.[Object.keys(profileData.lastName.localized)[0]] || ''
-        profileName = `${firstName} ${lastName}`.trim() || 'LinkedIn User'
-        profileId = profileData.id
+        console.log('👤 LinkedIn userinfo response:', JSON.stringify(profileData, null, 2))
+
+        // Extract user info from OpenID Connect response
+        profileName = profileData.name || `${profileData.given_name || ''} ${profileData.family_name || ''}`.trim() || 'LinkedIn User'
+        profileId = profileData.sub // sub is the user identifier in OIDC
+        userEmail = profileData.email
+
+        console.log('👤 LinkedIn profile retrieved:', { profileName, profileId, userEmail })
+      } else {
+        const errorText = await profileResponse.text()
+        console.warn('⚠️ Failed to get profile via userinfo endpoint:', profileResponse.status, errorText)
+
+        // Fallback to older v2 endpoint if userinfo fails
+        console.log('⚠️ Falling back to v2/me endpoint...')
+        const fallbackResponse = await fetch(
+          'https://api.linkedin.com/v2/me?projection=(id,firstName,lastName)',
+          {
+            headers: {
+              'Authorization': `Bearer ${tokenData.access_token}`,
+            },
+          }
+        )
+
+        if (fallbackResponse.ok) {
+          const profileData = await fallbackResponse.json()
+          const firstName = profileData.firstName?.localized?.[Object.keys(profileData.firstName.localized)[0]] || ''
+          const lastName = profileData.lastName?.localized?.[Object.keys(profileData.lastName.localized)[0]] || ''
+          profileName = `${firstName} ${lastName}`.trim() || 'LinkedIn User'
+          profileId = profileData.id
+          console.log('✅ Profile retrieved via fallback endpoint')
+        }
       }
     } catch (profileError) {
-      console.warn('Failed to get profile:', profileError)
+      console.warn('❌ Failed to get profile:', profileError)
       // Continue with default profile name
     }
 
     // ✅ Step 8: Get user URN for posting
     let userUrn = null
     try {
-      const urnResponse = await fetch('https://api.linkedin.com/v2/me?projection=(id)', {
-        headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
-        },
-      })
-
-      if (urnResponse.ok) {
-        const urnData = await urnResponse.json()
-        userUrn = `urn:li:person:${urnData.id}`
+      if (profileId) {
+        // If we have profileId from userinfo (OIDC format like "ACoAA...")
+        // It's already in the correct format to create URN
+        userUrn = `urn:li:person:${profileId}`
+        console.log('✅ User URN created:', userUrn)
       }
     } catch (urnError) {
-      console.warn('Failed to get user URN:', urnError)
+      console.warn('⚠️ Failed to create user URN:', urnError)
     }
 
     // ✅ Step 9: Build credentials object

@@ -11,13 +11,22 @@ export const LINKEDIN_TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken
 export const LINKEDIN_API_BASE = 'https://api.linkedin.com/v2';
 
 /**
- * Required OAuth scopes for LinkedIn
+ * Required OAuth scopes for LinkedIn (OpenID Connect)
+ * LinkedIn has migrated to OpenID Connect and requires these scopes:
+ * - openid: Required for OpenID Connect
+ * - profile: User profile information
+ * - email: User email address
+ * - w_member_social: Share on LinkedIn (optional, requires ShareOnLinkedIn product enabled)
+ *
+ * NOTE: Scopes available depend on which products are enabled in the LinkedIn Developer Portal
+ * For basic OAuth, use: openid profile email
+ * For posting, ensure ShareOnLinkedIn product is enabled and w_member_social is configured
  */
 export const LINKEDIN_SCOPES = [
   'openid',
   'profile',
   'email',
-  'w_member_social', // Share content
+  'w_member_social', // Share content - only works if ShareOnLinkedIn product is enabled
 ];
 
 /**
@@ -78,7 +87,16 @@ export async function exchangeCodeForToken(
 }
 
 /**
- * Get LinkedIn user profile
+ * Get LinkedIn user profile via OpenID Connect userinfo endpoint
+ * This is the recommended endpoint for new LinkedIn apps using OpenID Connect
+ *
+ * Response includes:
+ * - sub: User identifier (format: ACoAA...)
+ * - name: Full name
+ * - given_name: First name
+ * - family_name: Last name
+ * - picture: Profile picture URL
+ * - email: Email address
  */
 export async function getLinkedInProfile(accessToken: string): Promise<{
   sub: string;
@@ -95,7 +113,8 @@ export async function getLinkedInProfile(accessToken: string): Promise<{
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch LinkedIn profile');
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch LinkedIn profile: ${response.status} - ${errorText}`);
   }
 
   return response.json();
