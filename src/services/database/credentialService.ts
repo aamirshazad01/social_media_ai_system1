@@ -306,36 +306,17 @@ export class CredentialService {
         instagram: { isConnected: false },
       }
 
-      const now = Date.now()
-      const oneDayMs = 1000 * 60 * 60 * 24
-
       for (const account of data || []) {
-        const expiresAt: number | null = ((account as any).expires_at
-          ? new Date((account as any).expires_at).getTime()
-          : null) as number | null
+        // ✅ Simple logic: Only check if credentials exist
+        const hasCredentials =
+          (account as any).credentials_encrypted &&
+          (account as any).credentials_encrypted.length > 0;
 
-        // ✅ Verify credentials actually exist (not just is_connected flag)
-        const hasCredentials = (account as any).credentials_encrypted &&
-                               (account as any).credentials_encrypted.length > 0
-
-        // ✅ Check if token has expired
-        const isExpired = expiresAt && expiresAt <= now
-
-        // ✅ Only mark as connected if:
-        // 1. is_connected flag is true
-        // 2. Credentials exist
-        // 3. Token hasn't expired
-        const isActuallyConnected = (account as any).is_connected &&
-                                    hasCredentials &&
-                                    !isExpired;
-
-        (status as any)[(account as any).platform] = {
-          isConnected: isActuallyConnected,
+        const platform = (account as any).platform;
+        (status as any)[platform] = {
+          isConnected: hasCredentials,
           username: (account as any).username || (account as any).page_name,
           expiresAt: (account as any).expires_at,
-          isExpiringSoon:
-            expiresAt && expiresAt - now < oneDayMs && expiresAt > now && !isExpired,
-          isExpired: isExpired,
         };
       }
 

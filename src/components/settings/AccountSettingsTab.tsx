@@ -68,11 +68,10 @@ const AccountSettingsTab: React.FC = () => {
     const errorCode = urlParams.get('oauth_error')
 
     if (successPlatform) {
-      // Success - reload status
-      setTimeout(() => {
-        loadConnectionStatus()
+      // Success - reload status to show connected state
+      loadConnectionStatus().then(() => {
         setConnectingPlatform(null)
-      }, 1000)
+      })
       window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
       return
     }

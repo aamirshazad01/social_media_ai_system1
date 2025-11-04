@@ -5,7 +5,7 @@ import { Users, Settings, Activity, ChevronLeft, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 
-type Tab = 'members' | 'workspace' | 'activity' | 'accounts' | 'api'
+type Tab = 'members' | 'workspace' | 'activity' | 'accounts'
 
 interface SettingsLayoutProps {
   children: React.ReactNode
@@ -17,11 +17,6 @@ const ADMIN_TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
     id: 'accounts',
     label: 'Connected Accounts',
     icon: <Zap size={20} />,
-  },
-  {
-    id: 'api',
-    label: 'API Settings',
-    icon: <Settings size={20} />,
   },
   {
     id: 'workspace',
