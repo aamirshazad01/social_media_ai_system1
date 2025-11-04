@@ -170,6 +170,13 @@ export async function GET(req: NextRequest) {
     let tokenData: any
     try {
       console.log('🔐 Step 7: Exchanging Twitter auth code for access token')
+      console.log('Parameters:', {
+        code: code?.substring(0, 20) + '...',
+        codeVerifierLength: codeVerifier?.length,
+        clientId: process.env.TWITTER_CLIENT_ID?.substring(0, 10) + '...',
+        callbackUrl,
+      })
+
       // Use the OAuth2 flow to exchange code for token
       const clientId = process.env.TWITTER_CLIENT_ID
       if (!clientId) {
@@ -177,15 +184,27 @@ export async function GET(req: NextRequest) {
       }
 
       // twitter-api-v2 uses different method name for OAuth2 token exchange
-      tokenData = await (twitterClient as any).oAuth2.accessToken(
-        code,
-        codeVerifier,
-        clientId,
-        callbackUrl
-      )
+      console.log('Calling twitterClient.oAuth2.accessToken()...')
+      try {
+        tokenData = await (twitterClient as any).oAuth2.accessToken(
+          code,
+          codeVerifier,
+          clientId,
+          callbackUrl
+        )
+      } catch (libError: any) {
+        console.error('Library error details:', {
+          message: libError?.message,
+          stack: libError?.stack,
+          code: libError?.code,
+        })
+        throw libError
+      }
+
       console.log('🔐 Token exchange response:', JSON.stringify(tokenData, null, 2))
     } catch (exchangeError) {
       console.error('❌ Token exchange error:', exchangeError)
+      console.error('Full error:', JSON.stringify(exchangeError, null, 2))
 
       await logAuditEvent({
         workspaceId,
