@@ -53,7 +53,7 @@ export function getFacebookScopes(useAdvancedScopes?: boolean): string[] {
   // Allow explicit override via parameter or environment variable
   const forceAdvanced = useAdvancedScopes !== undefined
     ? useAdvancedScopes
-    : process.env.FACEBOOK_USE_ADVANCED_SCOPES === 'false';
+    : process.env.FACEBOOK_USE_ADVANCED_SCOPES === 'true';
 
   return forceAdvanced ? FACEBOOK_PRODUCTION_SCOPES : FACEBOOK_DEVELOPMENT_SCOPES;
 }

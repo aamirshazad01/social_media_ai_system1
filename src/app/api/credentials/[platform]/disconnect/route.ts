@@ -30,10 +30,10 @@ export async function DELETE(
       )
     }
 
-    // ✅ Get workspace
+    // ✅ Get workspace and verify admin role
     const { data: userRow, error: userError } = await supabase
       .from('users')
-      .select('workspace_id')
+      .select('workspace_id, role')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -41,6 +41,16 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Workspace not found' },
         { status: 400 }
+      )
+    }
+
+    const userRole = (userRow as any).role
+
+    // Check if user is admin (required for disconnecting accounts)
+    if (userRole !== 'admin') {
+      return NextResponse.json(
+        { error: 'Only workspace admins can manage account connections' },
+        { status: 403 }
       )
     }
 

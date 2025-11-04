@@ -15,7 +15,7 @@ import type { Platform } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 
 const AccountSettingsTab: React.FC = () => {
-  const { userRole } = useAuth()
+  const { userRole, loading: authLoading } = useAuth()
   const [connectedAccounts, setConnectedAccounts] = useState<Record<Platform, boolean>>({
     twitter: false,
     linkedin: false,
@@ -44,6 +44,16 @@ const AccountSettingsTab: React.FC = () => {
     linkedin: 60000, // 60 seconds
     facebook: 90000, // 90 seconds
     instagram: 90000, // 90 seconds
+  }
+
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-slate mr-2" />
+        <span className="text-slate">Loading settings...</span>
+      </div>
+    )
   }
 
   // Check role - only admins can manage account settings

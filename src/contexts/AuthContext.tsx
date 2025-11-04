@@ -25,48 +25,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null)
+  const fetchInProgressRef = React.useRef(false)
 
   // Fetch user profile data (workspace_id and role)
   const fetchUserProfile = async (userId: string) => {
-  try {
-    // Try RPC first to avoid users RLS recursion
-    const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
-    if (!rpcError && rpcData) {
-      const d: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
-      if (d) {
-        setWorkspaceId(d.workspace_id as string)
-        setUserRole(d.role as 'admin' | 'editor' | 'viewer')
-        return
-      }
-    }
-
-    // Fallback: direct select (requires non-recursive users RLS policy)
-    const { data, error } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', userId)
-      .maybeSingle()
-
-    if (error) throw error
-
-    if (!data) {
-      setWorkspaceId(null)
-      setUserRole(null)
+    // Prevent concurrent profile fetches to avoid race conditions
+    if (fetchInProgressRef.current) {
       return
     }
 
-    setWorkspaceId((data as any).workspace_id as string)
-    setUserRole((data as any).role as 'admin' | 'editor' | 'viewer')
-  } catch (error) {
-    const e = error as any
-    console.error(
-      'Error fetching user profile:',
-      (e && (e.message || e.code || e.status || e.details)) ?? (typeof e === 'string' ? e : JSON.stringify(e))
-    )
-    setWorkspaceId(null)
-    setUserRole(null)
+    fetchInProgressRef.current = true
+
+    try {
+      // Try RPC first to avoid users RLS recursion
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+      if (!rpcError && rpcData) {
+        const d: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        if (d) {
+          setWorkspaceId(d.workspace_id as string)
+          setUserRole(d.role as 'admin' | 'editor' | 'viewer')
+          return
+        }
+      }
+
+      // Fallback: direct select (requires non-recursive users RLS policy)
+      const { data, error } = await supabase
+        .from('users')
+        .select('workspace_id, role')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (!data) {
+        setWorkspaceId(null)
+        setUserRole(null)
+        return
+      }
+
+      setWorkspaceId((data as any).workspace_id as string)
+      setUserRole((data as any).role as 'admin' | 'editor' | 'viewer')
+    } catch (error) {
+      const e = error as any
+      console.error(
+        'Error fetching user profile:',
+        (e && (e.message || e.code || e.status || e.details)) ?? (typeof e === 'string' ? e : JSON.stringify(e))
+      )
+      setWorkspaceId(null)
+      setUserRole(null)
+    } finally {
+      fetchInProgressRef.current = false
+    }
   }
-}
 // Initialize session
   useEffect(() => {
     const initializeAuth = async () => {

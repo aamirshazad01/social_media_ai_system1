@@ -49,10 +49,10 @@ export async function POST(
       )
     }
 
-    // ✅ Step 2: Get workspace
+    // ✅ Step 2: Get workspace and verify admin role
     const { data: userRow, error: userError } = await supabase
       .from('users')
-      .select('workspace_id')
+      .select('workspace_id, role')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -64,6 +64,25 @@ export async function POST(
     }
 
     const workspaceId = (userRow as any).workspace_id
+    const userRole = (userRow as any).role
+
+    // Check if user is admin (required for OAuth connections)
+    if (userRole !== 'admin') {
+      await logAuditEvent({
+        workspaceId,
+        userId: user.id,
+        platform,
+        action: 'oauth_initiation_unauthorized',
+        status: 'failed',
+        errorCode: 'INSUFFICIENT_PERMISSIONS',
+        ipAddress: ipAddress || undefined,
+      })
+
+      return NextResponse.json(
+        { error: 'Only workspace admins can manage account connections', code: 'INSUFFICIENT_PERMISSIONS' },
+        { status: 403 }
+      )
+    }
 
     // ✅ Step 3: Validate platform
     if (!Object.keys(OAUTH_URLS).includes(platform)) {
