@@ -156,9 +156,7 @@ export async function GET(req: NextRequest) {
 
     let accessToken: string
     try {
-      console.log('🔄 Exchanging Instagram auth code for token...')
-      console.log('Callback URL:', callbackUrl)
-
+      console.log('🔐 Step 6: Exchanging Instagram auth code for access token')
       const tokenResponse = await fetch('https://graph.instagram.com/v18.0/oauth/access_token', {
         method: 'POST',
         body: new URLSearchParams({
@@ -169,29 +167,22 @@ export async function GET(req: NextRequest) {
         }),
       })
 
-      console.log('📝 Token response status:', tokenResponse.status)
-
-      const tokenData = await tokenResponse.json()
-      console.log('📋 Token response data:', {
-        hasToken: !!tokenData.access_token,
-        error: tokenData.error,
-        errorDescription: tokenData.error_description,
-      })
+      console.log('🔐 Token response status:', tokenResponse.status, tokenResponse.statusText)
 
       if (!tokenResponse.ok) {
-        throw new Error(
-          `Token exchange failed (${tokenResponse.status}): ${
-            tokenData.error_description || tokenData.error || tokenResponse.statusText
-          }`
-        )
+        const errorText = await tokenResponse.text()
+        console.error('🔐 Token response error body:', errorText)
+        throw new Error(`Token exchange failed: ${tokenResponse.statusText}`)
       }
+
+      const tokenData = await tokenResponse.json()
+      console.log('🔐 Token exchange successful, token:', tokenData.access_token?.substring(0, 20) + '...', 'expires in:', tokenData.expires_in)
 
       if (!tokenData.access_token) {
         throw new Error('No access token in response')
       }
 
       accessToken = tokenData.access_token
-      console.log('✅ Got access token')
     } catch (exchangeError) {
       console.error('❌ Token exchange error:', exchangeError)
 
@@ -214,6 +205,7 @@ export async function GET(req: NextRequest) {
     // ✅ Step 7: Get long-lived token
     let longLivedToken = accessToken
     try {
+      console.log('⏳ Step 7: Exchanging short-lived token for long-lived token')
       const refreshResponse = await fetch(
         `https://graph.instagram.com/v18.0/access_token?${new URLSearchParams({
           grant_type: 'ig_exchange_user_access_token',
@@ -221,12 +213,18 @@ export async function GET(req: NextRequest) {
         })}`
       )
 
+      console.log('⏳ Long-lived token response status:', refreshResponse.status)
+
       if (refreshResponse.ok) {
         const refreshData = await refreshResponse.json()
+        console.log('⏳ Successfully exchanged for long-lived token, expires in:', refreshData.expires_in, 'seconds')
         longLivedToken = refreshData.access_token || accessToken
+      } else {
+        const errorText = await refreshResponse.text()
+        console.warn('⚠️ Failed to get long-lived token (status', refreshResponse.status + '):', errorText)
       }
     } catch (refreshError) {
-      console.warn('Failed to get long-lived token:', refreshError)
+      console.warn('⚠️ Failed to get long-lived token, using short-lived:', refreshError)
       // Continue with short-lived token
     }
 
