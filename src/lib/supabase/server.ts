@@ -8,11 +8,22 @@ import { cookies } from 'next/headers'
 import type { Database } from './types'
 
 export async function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Missing Supabase environment variables:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+    })
+    throw new Error('Supabase environment variables are not configured')
+  }
+
   const cookieStore = await cookies()
 
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  const client = createServerClient<Database>(
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {
@@ -35,6 +46,14 @@ export async function createClient() {
       },
     }
   )
+
+  // Validate the client has the expected methods
+  if (!client.from || typeof client.from !== 'function') {
+    console.error('❌ Supabase client is missing .from method')
+    throw new Error('Supabase client initialization failed')
+  }
+
+  return client
 }
 
 // Alias to match existing imports in API routes

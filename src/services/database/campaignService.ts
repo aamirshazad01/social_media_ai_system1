@@ -3,9 +3,18 @@
  * Handles all CRUD operations for campaigns
  */
 
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase/server'
 import { Campaign } from '@/types'
 import type { Database } from '@/lib/supabase/types'
+
+let supabaseInstance: any = null
+
+async function getSupabase() {
+  if (!supabaseInstance) {
+    supabaseInstance = await createServerClient()
+  }
+  return supabaseInstance
+}
 
 export class CampaignService {
   /**
@@ -13,6 +22,7 @@ export class CampaignService {
    */
   static async getAllCampaigns(workspaceId: string): Promise<Campaign[]> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await supabase
         .from('campaigns')
         .select('*')

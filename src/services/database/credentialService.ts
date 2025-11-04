@@ -5,7 +5,7 @@
  * Token refresh handling
  */
 
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase/server'
 import {
   encryptCredentials,
   decryptCredentials,
@@ -13,6 +13,15 @@ import {
 } from '@/lib/auth/encryptionManager'
 import { logAuditEvent } from './auditLogService'
 import type { Platform } from '@/types'
+
+let supabaseInstance: any = null
+
+async function getSupabase() {
+  if (!supabaseInstance) {
+    supabaseInstance = await createServerClient()
+  }
+  return supabaseInstance
+}
 
 export class CredentialService {
   /**
@@ -27,6 +36,8 @@ export class CredentialService {
     options: { pageId?: string; pageName?: string } = {}
   ): Promise<void> {
     try {
+      const supabase = await getSupabase()
+
       // Get encryption key for this workspace
       const encryptionKey = await getOrCreateWorkspaceEncryptionKey(workspaceId)
 
@@ -123,6 +134,7 @@ export class CredentialService {
     workspaceId: string
   ): Promise<any | null> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await (supabase
         .from('social_accounts') as any)
         .select('*')
@@ -359,6 +371,7 @@ export class CredentialService {
    */
   static async cleanupInvalidCredentials(workspaceId: string): Promise<void> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await (supabase
         .from('social_accounts') as any)
         .select('id, is_connected, expires_at, credentials_encrypted')

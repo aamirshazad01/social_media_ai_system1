@@ -3,8 +3,17 @@
  * Handles all CRUD operations for posts
  */
 
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase/server'
 import { Post, PostStatus, Platform } from '@/types'
+
+let supabaseInstance: any = null
+
+async function getSupabase() {
+  if (!supabaseInstance) {
+    supabaseInstance = await createServerClient()
+  }
+  return supabaseInstance
+}
 
 export class PostService {
   /**
@@ -12,6 +21,7 @@ export class PostService {
    */
   static async getAllPosts(workspaceId: string): Promise<Post[]> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await supabase
         .from('posts')
         .select('*')

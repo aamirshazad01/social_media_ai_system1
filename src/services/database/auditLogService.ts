@@ -3,8 +3,18 @@
  * Logs all credential-related events for compliance and debugging
  */
 
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase/server'
 import type { Platform } from '@/types'
+
+// Cache the Supabase client
+let supabaseInstance: any = null
+
+async function getSupabase() {
+  if (!supabaseInstance) {
+    supabaseInstance = await createServerClient()
+  }
+  return supabaseInstance
+}
 
 export interface AuditEventParams {
   workspaceId: string
@@ -37,6 +47,7 @@ export async function logAuditEvent({
   metadata,
 }: AuditEventParams): Promise<void> {
   try {
+    const supabase = await getSupabase()
     const { error } = await supabase.from('credential_audit_log').insert({
       workspace_id: workspaceId,
       user_id: userId,
@@ -76,6 +87,7 @@ export async function getAuditLogs(
   }
 ): Promise<any[]> {
   try {
+    const supabase = await getSupabase()
     let query = supabase
       .from('credential_audit_log')
       .select('*')
@@ -129,6 +141,7 @@ export async function getUserAuditLogs(
   }
 ): Promise<any[]> {
   try {
+    const supabase = await getSupabase()
     let query = supabase
       .from('credential_audit_log')
       .select('*')
@@ -230,6 +243,7 @@ export async function getAuditSummary(
  */
 export async function cleanupOldAuditLogs(): Promise<number> {
   try {
+    const supabase = await getSupabase()
     const ninetyDaysAgo = new Date()
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
@@ -285,6 +299,7 @@ export async function logWorkspaceAction({
   details,
 }: WorkspaceAuditLogParams): Promise<void> {
   try {
+    const supabase = await getSupabase()
     const { error } = await (supabase.from('audit_logs') as any).insert({
       workspace_id: workspaceId,
       user_id: userId,
@@ -330,6 +345,7 @@ export async function getWorkspaceActivityLog(
 }> {
   try {
     // Build the query
+    const supabase = await getSupabase()
     let query = supabase
       .from('audit_logs')
       .select(
