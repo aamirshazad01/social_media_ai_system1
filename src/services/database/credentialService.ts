@@ -260,6 +260,7 @@ export class CredentialService {
     workspaceId: string
   ): Promise<void> {
     try {
+      const supabase = await getSupabase()
       const { error } = await (supabase
         .from('social_accounts') as any)
         .update({
@@ -304,6 +305,7 @@ export class CredentialService {
     workspaceId: string
   ): Promise<Record<Platform, any>> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await (supabase
         .from('social_accounts') as any)
         .select('platform, is_connected, username, page_name, expires_at, credentials_encrypted')
@@ -352,6 +354,7 @@ export class CredentialService {
     workspaceId: string
   ): Promise<void> {
     try {
+      const supabase = await getSupabase()
       const { error } = await (supabase
         .from('social_accounts') as any)
         .delete()
@@ -414,6 +417,7 @@ export class CredentialService {
     workspaceId: string
   ): Promise<Array<{ platform: Platform; isConnected: boolean; username?: string }>> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await (supabase
         .from('social_accounts') as any)
         .select('platform, is_connected, username, page_name, expires_at, credentials_encrypted')

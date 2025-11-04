@@ -43,6 +43,7 @@ export class PostService {
    */
   static async getPostById(postId: string, workspaceId: string): Promise<Post | null> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await supabase
         .from('posts')
         .select('*')
@@ -64,13 +65,14 @@ export class PostService {
    */
   static async createPost(post: Post, userId: string, workspaceId: string): Promise<Post> {
     try {
+      const supabase = await getSupabase()
       const dbPost = this.transformToDB(post, userId, workspaceId)
 
       const { data, error } = await supabase
         .from('posts')
         .insert(dbPost)
         .select()
-        .maybeSingle<{ id: string }>()
+        .maybeSingle()
 
       if (error) throw error
 
@@ -89,6 +91,7 @@ export class PostService {
    */
   static async updatePost(post: Post, userId: string, workspaceId: string): Promise<Post> {
     try {
+      const supabase = await getSupabase()
       const dbPost = this.transformToDB(post, userId, workspaceId)
 
       const { data, error } = await (supabase.from('posts') as any)
@@ -115,6 +118,7 @@ export class PostService {
    */
   static async deletePost(postId: string, userId: string, workspaceId: string): Promise<void> {
     try {
+      const supabase = await getSupabase()
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -136,6 +140,7 @@ export class PostService {
    */
   static async getPostsByStatus(status: PostStatus, workspaceId: string): Promise<Post[]> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await supabase
         .from('posts')
         .select('*')
@@ -157,6 +162,7 @@ export class PostService {
    */
   static async getPostsByCampaign(campaignId: string, workspaceId: string): Promise<Post[]> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await supabase
         .from('posts')
         .select('*')
@@ -178,6 +184,7 @@ export class PostService {
    */
   static async getScheduledPosts(workspaceId: string): Promise<Post[]> {
     try {
+      const supabase = await getSupabase()
       const now = new Date().toISOString()
 
       const { data, error } = await supabase
@@ -213,6 +220,7 @@ export class PostService {
         updateData.published_at = new Date().toISOString()
       }
 
+      const supabase = await getSupabase()
       const { error } = await (supabase.from('posts') as any)
         .update(updateData)
         .eq('id', postId)
@@ -297,6 +305,7 @@ export class PostService {
     details: any = {}
   ): Promise<void> {
     try {
+      const supabase = await getSupabase()
       await (supabase.from('activity_logs') as any).insert({
         workspace_id: workspaceId,
         user_id: userId,

@@ -43,6 +43,7 @@ export class CampaignService {
    */
   static async getCampaignById(campaignId: string, workspaceId: string): Promise<Campaign | null> {
     try {
+      const supabase = await getSupabase()
       const { data, error } = await supabase
         .from('campaigns')
         .select('*')
@@ -71,6 +72,7 @@ export class CampaignService {
     goals?: string[]
   ): Promise<Campaign> {
     try {
+      const supabase = await getSupabase()
       const campaign: Database['public']['Tables']['campaigns']['Insert'] = {
         workspace_id: workspaceId,
         name,
@@ -100,6 +102,7 @@ export class CampaignService {
    */
   static async updateCampaign(campaign: Campaign, workspaceId: string): Promise<Campaign> {
     try {
+      const supabase = await getSupabase()
       const dbCampaign = {
         name: campaign.name,
         goal: campaign.description || null,
@@ -130,6 +133,7 @@ export class CampaignService {
    */
   static async deleteCampaign(campaignId: string, workspaceId: string): Promise<void> {
     try {
+      const supabase = await getSupabase()
       const { error } = await supabase
         .from('campaigns')
         .delete()
@@ -148,6 +152,7 @@ export class CampaignService {
    */
   static async getCampaignPostsCount(campaignId: string, workspaceId: string): Promise<number> {
     try {
+      const supabase = await getSupabase()
       const { count, error } = await supabase
         .from('posts')
         .select('*', { count: 'exact', head: true })

@@ -1,12 +1,18 @@
 /**
  * Supabase Server Client
  * Use this client in server components, API routes, and server actions
+ * NOTE: This module uses server-only imports (next/headers)
+ * It should only be imported from API routes and server actions
  */
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from './types'
 
+/**
+ * Create a server-side Supabase client
+ * Only call this from API routes, server actions, or server components
+ */
 export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

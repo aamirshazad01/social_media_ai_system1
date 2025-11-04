@@ -14,7 +14,6 @@ import NotificationBell from '@/components/ui/NotificationBell';
 import MigrationBanner from '@/components/migration/MigrationBanner';
 import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { PostService, CredentialService } from '@/services/database';
 import { checkVideoOperationStatus, fetchVideo } from '@/services/api/geminiService';
 import { autoSaveAIMedia } from '@/services/mediaService';
 import { Edit3, LayoutGrid, BarChart3, History, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
@@ -47,12 +46,10 @@ const AppContent: React.FC = () => {
             try {
                 setLoading(true);
 
-                // Load posts from Supabase
-                const supabasePosts = await PostService.getAllPosts(workspaceId);
-                setPosts(supabasePosts);
-
-                // Load connected accounts from Supabase
-                const accountsStatus = await CredentialService.getConnectionStatus(workspaceId);
+                // Load connected accounts from API
+                const credStatusRes = await fetch('/api/credentials/status');
+                if (!credStatusRes.ok) throw new Error('Failed to load credentials status');
+                const accountsStatus = await credStatusRes.json();
                 const accountsSummary: Record<Platform, boolean> = {
                     twitter: accountsStatus.twitter?.isConnected ?? false,
                     linkedin: accountsStatus.linkedin?.isConnected ?? false,
@@ -111,10 +108,11 @@ const AppContent: React.FC = () => {
         // Update local state immediately
         setPosts(prevPosts => prevPosts.map(post => post.id === updatedPost.id ? updatedPost : post));
 
-        // Save to Supabase in background
+        // TODO: Save to Supabase in background via API endpoint
         if (user && workspaceId) {
             try {
-                await PostService.updatePost(updatedPost, user.id, workspaceId);
+                // await PostService.updatePost(updatedPost, user.id, workspaceId);
+                // Temporarily disabled - use API endpoint instead
             } catch (error) {
                 console.error('Error updating post in Supabase:', error);
             }
@@ -194,10 +192,11 @@ const AppContent: React.FC = () => {
         setActiveView('manage');
         addNotification('post_scheduled', 'New Post Created', `Post "${post.topic}" has been added to drafts.`, post.id);
 
-        // Save to Supabase in background
+        // TODO: Save to Supabase in background via API endpoint
         if (user && workspaceId) {
             try {
-                await PostService.createPost(post, user.id, workspaceId);
+                // await PostService.createPost(post, user.id, workspaceId);
+                // Temporarily disabled - use API endpoint instead
             } catch (error) {
                 console.error('Error saving post to Supabase:', error);
                 addNotification('error', 'Save Error', 'Failed to save post to database. It will be saved locally.');
@@ -215,10 +214,11 @@ const AppContent: React.FC = () => {
         // Delete from local state immediately
         setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
 
-        // Delete from Supabase in background
+        // TODO: Delete from Supabase in background via API endpoint
         if (user && workspaceId) {
             try {
-                await PostService.deletePost(postId, user.id, workspaceId);
+                // await PostService.deletePost(postId, user.id, workspaceId);
+                // Temporarily disabled - use API endpoint instead
             } catch (error) {
                 console.error('Error deleting post from Supabase:', error);
             }

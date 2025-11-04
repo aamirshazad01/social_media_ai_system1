@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { MigrationService } from '@/services/database'
+// TODO: MigrationService needs to be called from an API endpoint, not directly from client
+// import { MigrationService } from '@/services/database'
 import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react'
 
 export default function MigrationBanner() {
@@ -13,9 +14,11 @@ export default function MigrationBanner() {
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    // Check if migration is needed
+    // Check if migration is needed - disabled for now
     const checkMigration = () => {
-      const needs = MigrationService.needsMigration()
+      // TODO: Call API endpoint instead of direct service
+      // const needs = MigrationService.needsMigration()
+      const needs = false
       setNeedsMigration(needs)
 
       // Check if user dismissed the banner in this session
@@ -33,12 +36,14 @@ export default function MigrationBanner() {
 
     setMigrating(true)
     try {
-      const result = await MigrationService.migrateAllData(user.id, workspaceId)
+      // TODO: Call migration API endpoint instead of direct service
+      // const result = await MigrationService.migrateAllData(user.id, workspaceId)
+      const result = { success: false, postsCount: 0, campaignsCount: 0, credentialsCount: 0 }
       setMigrationResult(result)
 
       if (result.success) {
         // Clear localStorage data after successful migration
-        MigrationService.clearLocalStorageData()
+        // MigrationService.clearLocalStorageData()
         setNeedsMigration(false)
 
         // Reload the page to refresh all data from database
