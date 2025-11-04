@@ -242,44 +242,59 @@ export async function GET(req: NextRequest) {
 
       console.log('📱 Step 8: Fetching Instagram Business Account with token:', longLivedToken.substring(0, 20) + '...')
 
-      // Get the Instagram Business Account from the user's Facebook account
-      const igResponse = await fetch(
-        `https://graph.facebook.com/v24.0/me?fields=id,instagram_business_account&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+      // Step 8a: Get user's Facebook Pages (Instagram is linked to Pages)
+      const pagesResponse = await fetch(
+        `https://graph.facebook.com/v24.0/me/accounts?access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
       )
 
-      console.log('📱 Instagram API response status:', igResponse.status, igResponse.statusText)
+      console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)
 
-      if (!igResponse.ok) {
-        const errorText = await igResponse.text()
-        console.error('📱 Instagram API error response:', errorText)
-        throw new Error(`Instagram API returned ${igResponse.status}: ${igResponse.statusText} - ${errorText}`)
+      if (!pagesResponse.ok) {
+        const errorText = await pagesResponse.text()
+        console.error('📱 Pages API error response:', errorText)
+        throw new Error(`Failed to get pages: ${errorText}`)
       }
 
-      const igData = await igResponse.json()
-      console.log('📱 Instagram API response data:', JSON.stringify(igData, null, 2))
+      const pagesData = await pagesResponse.json()
+      console.log('📱 Pages data:', JSON.stringify(pagesData, null, 2))
 
-      // Get the Instagram Business Account ID
-      const igBusinessAccountId = igData.instagram_business_account?.id
-      if (!igBusinessAccountId) {
-        throw new Error('No Instagram Business Account found. Make sure your account is a Business Account.')
+      if (!pagesData.data || pagesData.data.length === 0) {
+        throw new Error('No Facebook Pages found. Link a Facebook Page to your Instagram Business Account first.')
       }
 
-      // Now get the Instagram Business Account details including username
-      const igAccountResponse = await fetch(
-        `https://graph.facebook.com/v24.0/${igBusinessAccountId}?fields=id,name,username&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
-      )
+      // Step 8b: For each page, get the Instagram Business Account
+      for (const page of pagesData.data) {
+        const pageResponse = await fetch(
+          `https://graph.facebook.com/v24.0/${page.id}?fields=id,name,instagram_business_account&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+        )
 
-      if (!igAccountResponse.ok) {
-        const errorText = await igAccountResponse.text()
-        console.error('📱 Instagram Account details error:', errorText)
-        throw new Error(`Failed to get Instagram account details: ${errorText}`)
+        if (!pageResponse.ok) {
+          console.warn(`⚠️ Could not fetch Instagram account for page ${page.id}`)
+          continue
+        }
+
+        const pageData = await pageResponse.json()
+        console.log(`📱 Page ${page.id} data:`, JSON.stringify(pageData, null, 2))
+
+        if (pageData.instagram_business_account?.id) {
+          const igAccountResponse = await fetch(
+            `https://graph.facebook.com/v24.0/${pageData.instagram_business_account.id}?fields=id,name,username&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+          )
+
+          if (igAccountResponse.ok) {
+            const igAccountData = await igAccountResponse.json()
+            console.log('📱 Instagram Account details:', JSON.stringify(igAccountData, null, 2))
+            instagramUserId = igAccountData.id
+            instagramUsername = igAccountData.username || igAccountData.name
+            console.log('✅ Found Instagram account:', instagramUsername)
+            break
+          }
+        }
       }
 
-      const igAccountData = await igAccountResponse.json()
-      console.log('📱 Instagram Account details:', JSON.stringify(igAccountData, null, 2))
-      instagramUserId = igAccountData.id
-      instagramUsername = igAccountData.username
-      console.log('✅ Found Instagram account:', instagramUsername)
+      if (!instagramUserId || !instagramUsername) {
+        throw new Error('No Instagram Business Account found linked to any of your Facebook Pages.')
+      }
     } catch (igError) {
       console.error('Failed to get Instagram account:', igError)
 
