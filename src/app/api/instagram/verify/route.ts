@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { getInstagramAccountInfo } from '@/lib/instagram/client'
+import { getInstagramAccountInfo, generateAppSecretProof } from '@/lib/instagram/client'
 import { CredentialService } from '@/services/database'
 import type { InstagramCredentials } from '@/types'
 
@@ -61,9 +61,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify by fetching account info
+    const appSecret = process.env.FACEBOOK_CLIENT_SECRET
+    if (!appSecret) {
+      throw new Error('Facebook app secret not configured')
+    }
+
+    const appSecretProof = generateAppSecretProof(instagramCreds.accessToken, appSecret)
     const accountInfo = await getInstagramAccountInfo(
       instagramCreds.userId!,
-      instagramCreds.accessToken
+      instagramCreds.accessToken,
+      appSecretProof
     )
 
     return NextResponse.json({

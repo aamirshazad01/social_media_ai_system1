@@ -4,6 +4,8 @@
  * Note: Instagram API requires a Facebook Business account
  */
 
+import { createHmac } from 'crypto'
+
 /**
  * Instagram OAuth 2.0 URLs (via Facebook)
  */
@@ -11,6 +13,16 @@ export const FACEBOOK_OAUTH_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
 export const FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v24.0/oauth/access_token';
 export const INSTAGRAM_API_BASE = 'https://graph.instagram.com/v24.0';
 export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v24.0';
+
+/**
+ * Generate appsecret_proof for Instagram server-to-server calls
+ * This is required when making API calls from the backend with an app secret
+ */
+export function generateAppSecretProof(accessToken: string, appSecret: string): string {
+  return createHmac('sha256', appSecret)
+    .update(accessToken)
+    .digest('hex')
+}
 
 /**
  * Required OAuth scopes for Instagram
@@ -103,17 +115,21 @@ export async function getLongLivedToken(
 
 /**
  * Get Facebook Pages connected to the account
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
-export async function getFacebookPages(accessToken: string): Promise<{
+export async function getFacebookPages(accessToken: string, appSecretProof?: string): Promise<{
   data: Array<{
     id: string;
     name: string;
     access_token: string;
   }>;
 }> {
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/me/accounts?access_token=${accessToken}`
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/me/accounts?access_token=${accessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch Facebook pages');
@@ -124,14 +140,19 @@ export async function getFacebookPages(accessToken: string): Promise<{
 
 /**
  * Get Instagram Business Account ID from Facebook Page
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function getInstagramBusinessAccount(
   pageId: string,
-  pageAccessToken: string
+  pageAccessToken: string,
+  appSecretProof?: string
 ): Promise<string | null> {
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch Instagram business account');
@@ -143,19 +164,24 @@ export async function getInstagramBusinessAccount(
 
 /**
  * Get Instagram account info
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function getInstagramAccountInfo(
   igUserId: string,
-  accessToken: string
+  accessToken: string,
+  appSecretProof?: string
 ): Promise<{
   id: string;
   username: string;
   name?: string;
   profile_picture_url?: string;
 }> {
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`
-  );
+  let url = `${FACEBOOK_GRAPH_BASE}/${igUserId}?fields=id,username,name,profile_picture_url&access_token=${accessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch Instagram account info');
@@ -166,18 +192,24 @@ export async function getInstagramAccountInfo(
 
 /**
  * Create Instagram media container (Step 1 of posting)
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function createMediaContainer(
   igUserId: string,
   accessToken: string,
   imageUrl: string,
-  caption: string
+  caption: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const params = new URLSearchParams({
     image_url: imageUrl,
     caption: caption,
     access_token: accessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${igUserId}/media`,
@@ -197,22 +229,28 @@ export async function createMediaContainer(
 
 /**
  * Create Instagram carousel container (for multiple images)
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function createCarouselContainer(
   igUserId: string,
   accessToken: string,
   imageUrls: string[],
-  caption: string
+  caption: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   // First, create containers for each image
   const childrenIds: string[] = [];
-  
+
   for (const imageUrl of imageUrls) {
     const params = new URLSearchParams({
       image_url: imageUrl,
       is_carousel_item: 'true',
       access_token: accessToken,
     });
+
+    if (appSecretProof) {
+      params.append('appsecret_proof', appSecretProof);
+    }
 
     const response = await fetch(
       `${FACEBOOK_GRAPH_BASE}/${igUserId}/media`,
@@ -238,6 +276,10 @@ export async function createCarouselContainer(
     access_token: accessToken,
   });
 
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
+
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${igUserId}/media`,
     {
@@ -256,12 +298,14 @@ export async function createCarouselContainer(
 
 /**
  * Create Instagram video container
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function createVideoContainer(
   igUserId: string,
   accessToken: string,
   videoUrl: string,
-  caption: string
+  caption: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const params = new URLSearchParams({
     media_type: 'VIDEO',
@@ -269,6 +313,10 @@ export async function createVideoContainer(
     caption: caption,
     access_token: accessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${igUserId}/media`,
@@ -288,16 +336,22 @@ export async function createVideoContainer(
 
 /**
  * Publish media container to Instagram
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function publishMediaContainer(
   igUserId: string,
   accessToken: string,
-  creationId: string
+  creationId: string,
+  appSecretProof?: string
 ): Promise<{ id: string }> {
   const params = new URLSearchParams({
     creation_id: creationId,
     access_token: accessToken,
   });
+
+  if (appSecretProof) {
+    params.append('appsecret_proof', appSecretProof);
+  }
 
   const response = await fetch(
     `${FACEBOOK_GRAPH_BASE}/${igUserId}/media_publish`,
@@ -352,10 +406,12 @@ export async function uploadImageToStorage(
 
 /**
  * Get Instagram media insights (analytics)
+ * @param appSecretProof Optional app secret proof for server-to-server calls
  */
 export async function getMediaInsights(
   mediaId: string,
-  accessToken: string
+  accessToken: string,
+  appSecretProof?: string
 ): Promise<{
   data: Array<{
     name: string;
@@ -363,10 +419,13 @@ export async function getMediaInsights(
   }>;
 }> {
   const metrics = ['engagement', 'impressions', 'reach', 'saved'];
-  
-  const response = await fetch(
-    `${FACEBOOK_GRAPH_BASE}/${mediaId}/insights?metric=${metrics.join(',')}&access_token=${accessToken}`
-  );
+
+  let url = `${FACEBOOK_GRAPH_BASE}/${mediaId}/insights?metric=${metrics.join(',')}&access_token=${accessToken}`
+  if (appSecretProof) {
+    url += `&appsecret_proof=${appSecretProof}`
+  }
+
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error('Failed to fetch media insights');
