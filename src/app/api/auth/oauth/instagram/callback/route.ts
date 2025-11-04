@@ -127,6 +127,9 @@ export async function GET(req: NextRequest) {
 
     let accessToken: string
     try {
+      console.log('🔄 Exchanging Instagram auth code for token...')
+      console.log('Callback URL:', callbackUrl)
+
       const tokenResponse = await fetch('https://graph.instagram.com/v18.0/oauth/access_token', {
         method: 'POST',
         body: new URLSearchParams({
@@ -137,19 +140,31 @@ export async function GET(req: NextRequest) {
         }),
       })
 
-      if (!tokenResponse.ok) {
-        throw new Error(`Token exchange failed: ${tokenResponse.statusText}`)
-      }
+      console.log('📝 Token response status:', tokenResponse.status)
 
       const tokenData = await tokenResponse.json()
+      console.log('📋 Token response data:', {
+        hasToken: !!tokenData.access_token,
+        error: tokenData.error,
+        errorDescription: tokenData.error_description,
+      })
+
+      if (!tokenResponse.ok) {
+        throw new Error(
+          `Token exchange failed (${tokenResponse.status}): ${
+            tokenData.error_description || tokenData.error || tokenResponse.statusText
+          }`
+        )
+      }
 
       if (!tokenData.access_token) {
         throw new Error('No access token in response')
       }
 
       accessToken = tokenData.access_token
+      console.log('✅ Got access token')
     } catch (exchangeError) {
-      console.error('Token exchange error:', exchangeError)
+      console.error('❌ Token exchange error:', exchangeError)
 
       await logAuditEvent({
         workspaceId,

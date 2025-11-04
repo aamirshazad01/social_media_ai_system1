@@ -63,10 +63,15 @@ export async function logAuditEvent({
     } as any)
 
     if (error) {
-      console.error('Failed to insert audit log:', error)
+      // Only log non-RLS errors to reduce noise
+      if (error.code !== '42501') {
+        console.error(`Failed to insert audit log for ${platform}/${action}:`, error)
+      } else {
+        console.debug(`Audit log RLS policy blocked insert for ${platform}/${action}`)
+      }
     }
   } catch (error) {
-    console.error('Audit logging error:', error)
+    console.debug('Audit logging error (non-blocking):', error)
     // Don't throw - logging failures shouldn't break the app
   }
 }

@@ -147,12 +147,33 @@ const AccountSettingsTab: React.FC = () => {
 
     if (errorCode) {
       // Error - show to user
-      const platform = detectPlatformFromError(errorCode)
+      console.error('OAuth error:', errorCode)
+
+      // Try to detect platform from URL or error code
+      let platform = detectPlatformFromError(errorCode)
+
+      // If we can't detect from error code, check if there's a platform in the URL path
+      if (!platform) {
+        // Check if this was a callback from a specific platform
+        const pathMatch = window.location.pathname.match(/\/settings/)
+        if (pathMatch) {
+          // For generic errors without platform info, check session storage for which platform was being connected
+          const attemptedPlatform = sessionStorage.getItem('attempted_oauth_platform')
+          if (attemptedPlatform && ['twitter', 'linkedin', 'facebook', 'instagram'].includes(attemptedPlatform)) {
+            platform = attemptedPlatform as Platform
+          }
+        }
+      }
+
       if (platform) {
+        const errorMessage = mapErrorCode(errorCode)
+        console.error(`Error for ${platform}:`, errorMessage)
         setErrors(prev => ({
           ...prev,
-          [platform]: mapErrorCode(errorCode),
+          [platform]: errorMessage,
         }))
+      } else {
+        console.warn('Could not detect platform from error:', errorCode)
       }
       setConnectingPlatform(null)
       window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
@@ -187,6 +208,9 @@ const AccountSettingsTab: React.FC = () => {
     setErrors(prev => ({ ...prev, [platform]: undefined }))
     setConnectingPlatform(platform)
     setTimeoutWarnings(new Set())
+
+    // Store which platform is being attempted so we can track errors
+    sessionStorage.setItem('attempted_oauth_platform', platform)
 
     try {
       // POST to initiate OAuth
