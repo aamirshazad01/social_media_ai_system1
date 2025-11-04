@@ -55,11 +55,69 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
     const errorCode = urlParams.get('oauth_error')
 
     if (successPlatform) {
-      // Success - reload status
-      setTimeout(() => {
-        loadConnectionStatus()
-        setConnectingPlatform(null)
-      }, 1000)
+      // Success - reload status with retry mechanism
+      // Database transaction might still be in progress, so retry multiple times
+      const retryLoadStatus = async () => {
+        const maxRetries = 4
+        const retryDelays = [1500, 1000, 2000, 3000] // milliseconds between retries
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+          if (attempt > 0) {
+            // Wait before retry (with exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, retryDelays[attempt - 1]))
+          }
+
+          try {
+            setIsLoading(true)
+            const response = await fetch('/api/credentials/status')
+            if (!response.ok) throw new Error('Failed to load status')
+
+            const status = await response.json()
+
+            // Check if the platform we're looking for is now connected
+            const platformConnected = status[successPlatform]?.isConnected
+
+            if (platformConnected) {
+              // Found credentials! Update state and we're done
+              setStatusInfo(status)
+              onUpdateAccounts(
+                Object.fromEntries(
+                  Object.entries(status).map(([platform, info]: [string, any]) => [
+                    platform,
+                    info.isConnected,
+                  ])
+                ) as Record<Platform, boolean>
+              )
+              setConnectingPlatform(null)
+              console.log(`✅ Successfully connected ${successPlatform}`)
+              break // Exit retry loop
+            } else if (attempt === maxRetries - 1) {
+              // Last attempt failed - show what we got
+              setStatusInfo(status)
+              onUpdateAccounts(
+                Object.fromEntries(
+                  Object.entries(status).map(([platform, info]: [string, any]) => [
+                    platform,
+                    info.isConnected,
+                  ])
+                ) as Record<Platform, boolean>
+              )
+              setConnectingPlatform(null)
+              console.warn(`⚠️ ${successPlatform} credentials not found after ${maxRetries} attempts`)
+            }
+          } catch (err) {
+            console.error(`Retry attempt ${attempt + 1} failed:`, err)
+            if (attempt === maxRetries - 1) {
+              // All retries failed
+              setConnectingPlatform(null)
+            }
+          } finally {
+            setIsLoading(false)
+          }
+        }
+      }
+
+      retryLoadStatus()
       window.history.replaceState({}, document.title, window.location.pathname)
       return
     }
