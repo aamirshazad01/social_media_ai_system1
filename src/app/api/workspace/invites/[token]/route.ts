@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { InviteService } from '@/services/database/inviteService'
+import { createServerClient } from '@/lib/supabase/server'
 
 /**
  * GET /api/workspace/invites/[token]
@@ -35,17 +36,24 @@ export async function GET(
       )
     }
 
+    // Get workspace name
+    const supabase = await createServerClient()
+    const { data: workspaceData } = await supabase
+      .from('workspaces')
+      .select('name')
+      .eq('id', invite.workspace_id)
+      .single()
+
     // Return invite details (without sensitive info like invited_by, used_by)
     // Only return information needed for the frontend
     return NextResponse.json({
-      data: {
-        workspace_id: invite.workspace_id,
-        role: invite.role,
-        email: invite.email,
-        expires_at: invite.expires_at,
-        is_expired: InviteService.isInviteExpired(invite.expires_at),
-        time_remaining: InviteService.getTimeRemaining(invite.expires_at),
-      },
+      workspace_id: invite.workspace_id,
+      workspace_name: (workspaceData as any)?.name || 'Workspace',
+      role: invite.role,
+      email: invite.email,
+      expires_at: invite.expires_at,
+      is_expired: InviteService.isInviteExpired(invite.expires_at),
+      time_remaining: InviteService.getTimeRemaining(invite.expires_at),
     })
   } catch (error) {
     console.error('Error in GET /api/workspace/invites/[token]:', error)

@@ -7,6 +7,7 @@
 import { createServerClient } from '@/lib/supabase/server'
 import type { WorkspaceInvite, CreateInviteInput } from '@/types/workspace'
 import { logWorkspaceAction } from './auditLogService'
+import { EmailService } from '@/services/emailService'
 import crypto from 'crypto'
 
 /**
@@ -111,6 +112,46 @@ export class InviteService {
           expires_at: expiresAt,
         },
       })
+
+      // Send email invitation if email provided
+      if (input.email && data.token) {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+          const invitationUrl = `${baseUrl}/invite/${data.token}`
+
+          // Get inviter name
+          const { data: inviterData } = await supabase
+            .from('users')
+            .select('full_name, email')
+            .eq('id', invitedBy)
+            .single()
+
+          const inviterName = (inviterData as any)?.full_name || 'Your colleague'
+
+          // Get workspace name
+          const { data: workspaceData } = await supabase
+            .from('workspaces')
+            .select('name')
+            .eq('id', workspaceId)
+            .single()
+
+          const workspaceName = (workspaceData as any)?.name || 'the workspace'
+
+          await EmailService.sendInvitationEmail({
+            to: input.email,
+            workspaceName,
+            role: input.role,
+            invitationUrl,
+            expiresAt,
+            inviterName,
+          })
+
+          console.log('Invitation email sent to:', input.email)
+        } catch (emailError) {
+          // Don't fail the invite creation if email fails
+          console.error('Failed to send invitation email:', emailError)
+        }
+      }
 
       return data as WorkspaceInvite
     } catch (error) {

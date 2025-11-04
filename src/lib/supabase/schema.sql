@@ -36,7 +36,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email TEXT NOT NULL UNIQUE,
     full_name TEXT,
-    role user_role DEFAULT 'editor',
+    role user_role NOT NULL,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     avatar_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
