@@ -169,6 +169,7 @@ export async function GET(req: NextRequest) {
 
     let tokenData: any
     try {
+      console.log('🔐 Step 7: Exchanging Twitter auth code for access token')
       // Use the OAuth2 flow to exchange code for token
       const clientId = process.env.TWITTER_CLIENT_ID
       if (!clientId) {
@@ -182,8 +183,9 @@ export async function GET(req: NextRequest) {
         clientId,
         callbackUrl
       )
+      console.log('🔐 Token exchange response:', JSON.stringify(tokenData, null, 2))
     } catch (exchangeError) {
-      console.error('Token exchange error:', exchangeError)
+      console.error('❌ Token exchange error:', exchangeError)
 
       await logAuditEvent({
         workspaceId,
@@ -206,12 +208,24 @@ export async function GET(req: NextRequest) {
     // ✅ Step 8: Get user info to verify credentials
     let twitterUser: any
     try {
+      console.log('👤 Step 8: Getting Twitter user info')
+      console.log('Token data structure:', Object.keys(tokenData))
+
+      // The token response might be nested, try different approaches
+      const accessToken = tokenData.access_token || tokenData.token?.access_token || tokenData
+      console.log('Access token extracted:', accessToken?.substring(0, 20) + '...')
+
+      if (!accessToken) {
+        throw new Error(`No access token found in token response. Response keys: ${Object.keys(tokenData).join(', ')}`)
+      }
+
       // Create authenticated client with the access token
-      const userClient = new (await import('twitter-api-v2')).TwitterApi(tokenData.access_token)
+      const userClient = new (await import('twitter-api-v2')).TwitterApi(accessToken)
       const userMe = userClient.readOnly.v2
       twitterUser = await userMe.me()
+      console.log('👤 Twitter user info retrieved:', twitterUser)
     } catch (userError) {
-      console.error('Failed to get user info:', userError)
+      console.error('❌ Failed to get user info:', userError)
 
       await logAuditEvent({
         workspaceId,
@@ -234,9 +248,12 @@ export async function GET(req: NextRequest) {
     // ✅ Step 9: Build credentials object
     // IMPORTANT: DO NOT store API keys here!
     // Only store user-specific tokens
+    const accessToken = tokenData.access_token || tokenData.token?.access_token || tokenData
+    const refreshToken = tokenData.refresh_token || tokenData.token?.refresh_token || null
+
     const credentials: any = {
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token || null,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       username: twitterUser.data?.username || twitterUser.username,
       userId: twitterUser.data?.id || twitterUser.id,
       isConnected: true,
@@ -244,11 +261,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Add expiration if provided
-    if (tokenData.expires_in) {
+    const expiresIn = tokenData.expires_in || tokenData.token?.expires_in
+    if (expiresIn) {
       credentials.expiresAt = new Date(
-        Date.now() + tokenData.expires_in * 1000
+        Date.now() + expiresIn * 1000
       ).toISOString()
     }
+
+    console.log('✅ Step 9: Credentials prepared for user:', credentials.username)
 
     // ✅ Step 10: Save credentials to database (encrypted)
     try {
