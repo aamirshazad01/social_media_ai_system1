@@ -209,44 +209,70 @@ export async function GET(req: NextRequest) {
     let pages: any[] = []
     try {
       const pagesResponse = await fetch(
-        `https://graph.facebook.com/me/accounts?access_token=${longLivedToken}`
+        `https://graph.facebook.com/v18.0/me/accounts?access_token=${longLivedToken}`
       )
+
+      if (!pagesResponse.ok) {
+        throw new Error(`Facebook API returned ${pagesResponse.status}: ${pagesResponse.statusText}`)
+      }
 
       const pagesData = await pagesResponse.json()
 
-      // Check for invalid scopes error
+      // Check for API errors in response body
       if (pagesData.error) {
-        const errorMessage = pagesData.error.message || ''
-        const errorCode = pagesData.error.code || ''
+        const errorMessage = pagesData.error.message || pagesData.error.error_description || 'Unknown error'
+        const errorCode = pagesData.error.code || pagesData.error.error_code || ''
+        const errorType = pagesData.error.type || pagesData.error.error || ''
 
-        if (errorMessage.includes('Invalid Scopes') || errorMessage.includes('Invalid OAuth')) {
-          console.error('Invalid Scopes error:', errorMessage)
+        console.error('Facebook API error when fetching pages:', { errorMessage, errorCode, errorType })
 
-          await logAuditEvent({
-            workspaceId,
-            userId: user.id,
-            platform: 'facebook',
-            action: 'oauth_invalid_scopes',
-            status: 'failed',
-            errorMessage: errorMessage,
-            errorCode: 'INVALID_SCOPES',
-            metadata: {
-              suggestion: 'Submit app for Facebook App Review to use advanced permissions (pages_manage_posts, pages_read_user_content, read_insights)',
-              useDevScopes: 'Try setting FACEBOOK_USE_ADVANCED_SCOPES=false to use development scopes',
-            },
-            ipAddress: ipAddress || undefined,
-          })
+        // Log detailed error for debugging
+        await logAuditEvent({
+          workspaceId,
+          userId: user.id,
+          platform: 'facebook',
+          action: 'oauth_get_pages_error',
+          status: 'failed',
+          errorMessage: errorMessage,
+          errorCode: errorCode,
+          metadata: {
+            errorType,
+            fullError: JSON.stringify(pagesData.error),
+          },
+          ipAddress: ipAddress || undefined,
+        })
 
+        // Check for specific permission errors
+        if (
+          errorMessage.includes('Invalid Scopes') ||
+          errorMessage.includes('Invalid OAuth') ||
+          errorMessage.includes('permission denied')
+        ) {
           return NextResponse.redirect(
-            new URL('/settings?tab=accounts&oauth_error=invalid_scopes&details=submit_for_app_review', req.nextUrl.origin)
+            new URL('/settings?tab=accounts&oauth_error=facebook_invalid_scopes&details=submit_for_app_review', req.nextUrl.origin)
           )
         }
 
-        throw new Error(`Facebook API error: ${errorMessage} (${errorCode})`)
+        // Check for "no pages" error
+        if (
+          errorMessage.includes('No pages') ||
+          errorMessage.includes('not manage') ||
+          errorCode === 100
+        ) {
+          return NextResponse.redirect(
+            new URL('/settings?tab=accounts&oauth_error=facebook_no_pages_found', req.nextUrl.origin)
+          )
+        }
+
+        // Generic error
+        throw new Error(`Facebook API error: ${errorMessage}`)
       }
 
-      if (pagesResponse.ok) {
-        pages = pagesData.data || []
+      // Check if data exists and is an array
+      if (pagesData.data && Array.isArray(pagesData.data)) {
+        pages = pagesData.data
+      } else if (pagesData.data === undefined) {
+        throw new Error('No data in Facebook API response')
       }
     } catch (pagesError) {
       console.error('Failed to get pages:', pagesError)
@@ -263,7 +289,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/settings?tab=accounts&oauth_error=get_pages_failed', req.nextUrl.origin)
+        new URL('/settings?tab=accounts&oauth_error=facebook_get_pages_failed', req.nextUrl.origin)
       )
     }
 
@@ -280,7 +306,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/settings?tab=accounts&oauth_error=no_pages_found', req.nextUrl.origin)
+        new URL('/settings?tab=accounts&oauth_error=facebook_no_pages_found', req.nextUrl.origin)
       )
     }
 
@@ -331,7 +357,7 @@ export async function GET(req: NextRequest) {
       })
 
       return NextResponse.redirect(
-        new URL('/settings?tab=accounts&oauth_error=save_failed', req.nextUrl.origin)
+        new URL('/settings?tab=accounts&oauth_error=facebook_save_failed', req.nextUrl.origin)
       )
     }
 
@@ -385,7 +411,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.redirect(
-      new URL('/settings?tab=accounts&oauth_error=callback_error', req.nextUrl.origin)
+      new URL('/settings?tab=accounts&oauth_error=facebook_callback_error', req.nextUrl.origin)
     )
   }
 }
