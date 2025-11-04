@@ -17,11 +17,15 @@ export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v24.0';
  * DEVELOPMENT SCOPES (Available without App Review):
  * - pages_show_list: List pages managed by user
  * - pages_read_engagement: Read comments, reactions, and engagement data
+ * - pages_manage_metadata: Manage page metadata
+ * - pages_read_user_content: Access user-generated content on pages
+ * - instagram_basic: Basic Instagram access
+ * - instagram_manage_insights: Instagram analytics
+ * - business_management: Business account management
  * - public_profile: Basic profile access
  *
  * PRODUCTION SCOPES (Require App Review):
  * - pages_manage_posts: Create posts on pages
- * - pages_read_user_content: Access user-generated content on pages
  * - read_insights: Get analytics (impressions, clicks, performance metrics)
  */
 
@@ -32,6 +36,11 @@ export const FACEBOOK_GRAPH_BASE = 'https://graph.facebook.com/v24.0';
 export const FACEBOOK_DEVELOPMENT_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
+  'pages_manage_metadata',
+  'pages_read_user_content',
+  'instagram_basic',
+  'instagram_manage_insights',
+  'business_management',
   'public_profile',
 ];
 
@@ -43,6 +52,12 @@ export const FACEBOOK_PRODUCTION_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
   'pages_manage_posts',
+  'pages_manage_metadata',
+  'pages_read_user_content',
+  'instagram_basic',
+  'instagram_manage_insights',
+  'business_management',
+  'public_profile',
 ];
 
 /**

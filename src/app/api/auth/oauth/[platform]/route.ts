@@ -17,8 +17,8 @@ import type { Platform } from '@/types'
 const OAUTH_URLS: Record<string, string> = {
   twitter: 'https://twitter.com/i/oauth2/authorize',
   linkedin: 'https://www.linkedin.com/oauth/v2/authorization',
-  facebook: 'https://www.facebook.com/v21.0/dialog/oauth',
-  instagram: 'https://www.facebook.com/v21.0/dialog/oauth', // Instagram uses Facebook OAuth
+  facebook: 'https://www.facebook.com/v24.0/dialog/oauth',
+  instagram: 'https://www.facebook.com/v24.0/dialog/oauth', // Instagram uses Facebook OAuth
 }
 
 const SCOPES: Record<string, string[]> = {

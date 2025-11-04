@@ -160,7 +160,7 @@ export async function GET(req: NextRequest) {
     let accessToken: string
     try {
       console.log('🔐 Step 6: Exchanging auth code for access token')
-      const tokenResponse = await fetch('https://graph.facebook.com/v18.0/oauth/access_token', {
+      const tokenResponse = await fetch('https://graph.facebook.com/v24.0/oauth/access_token', {
         method: 'POST',
         body: new URLSearchParams({
           client_id: appId,
@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
     try {
       console.log('⏳ Step 7: Exchanging short-lived token for long-lived token')
       const refreshResponse = await fetch(
-        `https://graph.facebook.com/v18.0/oauth/access_token?${new URLSearchParams({
+        `https://graph.facebook.com/v24.0/oauth/access_token?${new URLSearchParams({
           grant_type: 'fb_exchange_token',
           client_id: appId,
           client_secret: appSecret,
@@ -237,7 +237,7 @@ export async function GET(req: NextRequest) {
       console.log('📱 Step 8: Fetching pages with token:', longLivedToken.substring(0, 20) + '...')
 
       const pagesResponse = await fetch(
-        `https://graph.facebook.com/v18.0/me/accounts?access_token=${longLivedToken}`
+        `https://graph.facebook.com/v24.0/me/accounts?access_token=${longLivedToken}`
       )
 
       console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)
