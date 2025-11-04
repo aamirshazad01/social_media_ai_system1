@@ -159,11 +159,7 @@ export async function GET(req: NextRequest) {
       return response
     }
 
-    // ✅ Step 7: Exchange code for token
-    // Import Twitter client
-    const { createTwitterClient } = await import('@/lib/twitter/client')
-    const twitterClient = createTwitterClient()
-
+    // ✅ Step 7: Exchange code for token using direct HTTP call
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '')
     const callbackUrl = `${baseUrl}/api/auth/oauth/twitter/callback`
 
@@ -177,34 +173,40 @@ export async function GET(req: NextRequest) {
         callbackUrl,
       })
 
-      // Use the OAuth2 flow to exchange code for token
       const clientId = process.env.TWITTER_CLIENT_ID
+
       if (!clientId) {
         throw new Error('Twitter Client ID not configured')
       }
 
-      // twitter-api-v2 uses different method name for OAuth2 token exchange
-      console.log('Calling twitterClient.oAuth2.accessToken()...')
-      try {
-        tokenData = await (twitterClient as any).oAuth2.accessToken(
-          code,
-          codeVerifier,
-          clientId,
-          callbackUrl
-        )
-      } catch (libError: any) {
-        console.error('Library error details:', {
-          message: libError?.message,
-          stack: libError?.stack,
-          code: libError?.code,
-        })
-        throw libError
+      // Make direct HTTP call to X API OAuth2 token endpoint (correct endpoint)
+      console.log('🔐 Making HTTP call to X API OAuth2 token endpoint...')
+      const tokenResponse = await fetch('https://api.x.com/2/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code!,
+          redirect_uri: callbackUrl,
+          client_id: clientId,
+          code_verifier: codeVerifier!,
+        }).toString(),
+      })
+
+      console.log('🔐 Token response status:', tokenResponse.status, tokenResponse.statusText)
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text()
+        console.error('🔐 Token endpoint error:', errorText)
+        throw new Error(`Token exchange failed: ${tokenResponse.statusText} - ${errorText}`)
       }
 
-      console.log('🔐 Token exchange response:', JSON.stringify(tokenData, null, 2))
+      tokenData = await tokenResponse.json()
+      console.log('🔐 Token exchange successful, token:', tokenData.access_token?.substring(0, 20) + '...')
     } catch (exchangeError) {
       console.error('❌ Token exchange error:', exchangeError)
-      console.error('Full error:', JSON.stringify(exchangeError, null, 2))
 
       await logAuditEvent({
         workspaceId,
@@ -228,21 +230,20 @@ export async function GET(req: NextRequest) {
     let twitterUser: any
     try {
       console.log('👤 Step 8: Getting Twitter user info')
-      console.log('Token data structure:', Object.keys(tokenData))
-
-      // The token response might be nested, try different approaches
-      const accessToken = tokenData.access_token || tokenData.token?.access_token || tokenData
-      console.log('Access token extracted:', accessToken?.substring(0, 20) + '...')
+      const accessToken = tokenData.access_token
 
       if (!accessToken) {
-        throw new Error(`No access token found in token response. Response keys: ${Object.keys(tokenData).join(', ')}`)
+        throw new Error(`No access token in token response. Keys: ${Object.keys(tokenData).join(', ')}`)
       }
 
-      // Create authenticated client with the access token
-      const userClient = new (await import('twitter-api-v2')).TwitterApi(accessToken)
+      console.log('👤 Access token:', accessToken.substring(0, 20) + '...')
+
+      // Create authenticated client with the bearer token
+      const { TwitterApi } = await import('twitter-api-v2')
+      const userClient = new TwitterApi(accessToken)
       const userMe = userClient.readOnly.v2
       twitterUser = await userMe.me()
-      console.log('👤 Twitter user info retrieved:', twitterUser)
+      console.log('👤 Twitter user info retrieved:', JSON.stringify(twitterUser, null, 2))
     } catch (userError) {
       console.error('❌ Failed to get user info:', userError)
 
@@ -267,23 +268,19 @@ export async function GET(req: NextRequest) {
     // ✅ Step 9: Build credentials object
     // IMPORTANT: DO NOT store API keys here!
     // Only store user-specific tokens
-    const accessToken = tokenData.access_token || tokenData.token?.access_token || tokenData
-    const refreshToken = tokenData.refresh_token || tokenData.token?.refresh_token || null
-
     const credentials: any = {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      username: twitterUser.data?.username || twitterUser.username,
-      userId: twitterUser.data?.id || twitterUser.id,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token || null,
+      username: twitterUser.data?.username,
+      userId: twitterUser.data?.id,
       isConnected: true,
       connectedAt: new Date().toISOString(),
     }
 
-    // Add expiration if provided
-    const expiresIn = tokenData.expires_in || tokenData.token?.expires_in
-    if (expiresIn) {
+    // Twitter OAuth2 tokens typically expire in 2 hours (7200 seconds)
+    if (tokenData.expires_in) {
       credentials.expiresAt = new Date(
-        Date.now() + expiresIn * 1000
+        Date.now() + tokenData.expires_in * 1000
       ).toISOString()
     }
 

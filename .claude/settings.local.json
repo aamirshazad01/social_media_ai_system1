@@ -13,7 +13,8 @@
       "Bash(curl:*)",
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:oauth-scopes.netlify.app)",
-      "WebFetch(domain:developers.facebook.com)"
+      "WebFetch(domain:developers.facebook.com)",
+      "WebFetch(domain:developer.x.com)"
     ],
     "deny": [],
     "ask": []
