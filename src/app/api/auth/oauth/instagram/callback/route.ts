@@ -264,12 +264,14 @@ export async function GET(req: NextRequest) {
 
       // Step 8b: For each page, get the Instagram Business Account
       for (const page of pagesData.data) {
+        console.log(`📱 Checking page: ${page.name} (${page.id})`)
+
         const pageResponse = await fetch(
           `https://graph.facebook.com/v24.0/${page.id}?fields=id,name,instagram_business_account&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
         )
 
         if (!pageResponse.ok) {
-          console.warn(`⚠️ Could not fetch Instagram account for page ${page.id}`)
+          console.warn(`⚠️ Could not fetch page details for page ${page.id}`)
           continue
         }
 
@@ -277,6 +279,8 @@ export async function GET(req: NextRequest) {
         console.log(`📱 Page ${page.id} data:`, JSON.stringify(pageData, null, 2))
 
         if (pageData.instagram_business_account?.id) {
+          console.log(`✅ Found Instagram Business Account: ${pageData.instagram_business_account.id}`)
+
           const igAccountResponse = await fetch(
             `https://graph.facebook.com/v24.0/${pageData.instagram_business_account.id}?fields=id,name,username&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
           )
@@ -288,12 +292,17 @@ export async function GET(req: NextRequest) {
             instagramUsername = igAccountData.username || igAccountData.name
             console.log('✅ Found Instagram account:', instagramUsername)
             break
+          } else {
+            const errorText = await igAccountResponse.text()
+            console.error(`❌ Failed to get Instagram account details:`, errorText)
           }
+        } else {
+          console.warn(`⚠️ Page "${page.name}" has no Instagram Business Account linked. Link one in Instagram settings.`)
         }
       }
 
       if (!instagramUserId || !instagramUsername) {
-        throw new Error('No Instagram Business Account found linked to any of your Facebook Pages.')
+        throw new Error('No Instagram Business Account found. Please link your Instagram Business Account to one of your Facebook Pages through Instagram Settings → Account → Links → Connect an Account.')
       }
     } catch (igError) {
       console.error('Failed to get Instagram account:', igError)
