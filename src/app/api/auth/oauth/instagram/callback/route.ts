@@ -240,11 +240,11 @@ export async function GET(req: NextRequest) {
       // Generate appsecret_proof for secure server-to-server calls
       const appSecretProof = generateAppSecretProof(longLivedToken, appSecret)
 
-      console.log('📱 Step 8: Fetching Instagram account info with token:', longLivedToken.substring(0, 20) + '...')
+      console.log('📱 Step 8: Fetching Instagram Business Account with token:', longLivedToken.substring(0, 20) + '...')
 
-      // Use Facebook Graph API to get user info (not Instagram endpoint)
+      // Get the Instagram Business Account from the user's Facebook account
       const igResponse = await fetch(
-        `https://graph.facebook.com/v24.0/me?fields=id,username,name&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+        `https://graph.facebook.com/v24.0/me?fields=id,instagram_business_account&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
       )
 
       console.log('📱 Instagram API response status:', igResponse.status, igResponse.statusText)
@@ -257,8 +257,28 @@ export async function GET(req: NextRequest) {
 
       const igData = await igResponse.json()
       console.log('📱 Instagram API response data:', JSON.stringify(igData, null, 2))
-      instagramUserId = igData.id
-      instagramUsername = igData.username
+
+      // Get the Instagram Business Account ID
+      const igBusinessAccountId = igData.instagram_business_account?.id
+      if (!igBusinessAccountId) {
+        throw new Error('No Instagram Business Account found. Make sure your account is a Business Account.')
+      }
+
+      // Now get the Instagram Business Account details including username
+      const igAccountResponse = await fetch(
+        `https://graph.facebook.com/v24.0/${igBusinessAccountId}?fields=id,name,username&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+      )
+
+      if (!igAccountResponse.ok) {
+        const errorText = await igAccountResponse.text()
+        console.error('📱 Instagram Account details error:', errorText)
+        throw new Error(`Failed to get Instagram account details: ${errorText}`)
+      }
+
+      const igAccountData = await igAccountResponse.json()
+      console.log('📱 Instagram Account details:', JSON.stringify(igAccountData, null, 2))
+      instagramUserId = igAccountData.id
+      instagramUsername = igAccountData.username
       console.log('✅ Found Instagram account:', instagramUsername)
     } catch (igError) {
       console.error('Failed to get Instagram account:', igError)
