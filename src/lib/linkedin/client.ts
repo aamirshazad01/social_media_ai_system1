@@ -12,21 +12,31 @@ export const LINKEDIN_API_BASE = 'https://api.linkedin.com/v2';
 
 /**
  * Required OAuth scopes for LinkedIn (OpenID Connect)
- * LinkedIn has migrated to OpenID Connect and requires these scopes:
+ *
+ * IMPORTANT: LinkedIn has migrated to OpenID Connect (OIDC)
+ * Scopes available depend on which products are enabled in your LinkedIn Developer Portal
+ *
+ * Basic scopes (always use these):
  * - openid: Required for OpenID Connect
  * - profile: User profile information
  * - email: User email address
- * - w_member_social: Share on LinkedIn (optional, requires ShareOnLinkedIn product enabled)
  *
- * NOTE: Scopes available depend on which products are enabled in the LinkedIn Developer Portal
- * For basic OAuth, use: openid profile email
- * For posting, ensure ShareOnLinkedIn product is enabled and w_member_social is configured
+ * Optional scopes (only use if product is enabled):
+ * - w_member_social: Allows posting to LinkedIn (requires "Share on LinkedIn" product enabled)
+ *
+ * If you get "invalid_scope_error", it means a scope is not authorized:
+ * 1. Remove the problematic scope from this array, OR
+ * 2. Enable the corresponding product in LinkedIn Developer Portal
+ *
+ * For posting capability, you must:
+ * 1. Enable "Share on LinkedIn" product in Developer Portal
+ * 2. Then add 'w_member_social' to this array
  */
 export const LINKEDIN_SCOPES = [
-  'openid',
-  'profile',
-  'email',
-  'w_member_social', // Share content - only works if ShareOnLinkedIn product is enabled
+  'openid',      // Required for OpenID Connect
+  'profile',     // Get user profile info
+  'email',       // Get user email
+  // 'w_member_social', // UNCOMMENT THIS ONLY IF "Share on LinkedIn" product is enabled in Developer Portal
 ];
 
 /**
