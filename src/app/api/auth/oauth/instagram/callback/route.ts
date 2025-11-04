@@ -242,8 +242,9 @@ export async function GET(req: NextRequest) {
 
       console.log('📱 Step 8: Fetching Instagram account info with token:', longLivedToken.substring(0, 20) + '...')
 
+      // Use Facebook Graph API to get user info (not Instagram endpoint)
       const igResponse = await fetch(
-        `https://graph.instagram.com/me?fields=id,username,name&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+        `https://graph.facebook.com/v24.0/me?fields=id,username,name&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
       )
 
       console.log('📱 Instagram API response status:', igResponse.status, igResponse.statusText)
