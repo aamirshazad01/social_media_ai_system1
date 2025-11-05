@@ -1,11 +1,12 @@
 /**
  * Campaign Service - Supabase Database Operations
- * Handles all CRUD operations for campaigns
+ * Handles all CRUD operations for campaigns with validation
  */
 
 import { createServerClient } from '@/lib/supabase/server'
 import { Campaign } from '@/types'
 import type { Database } from '@/lib/supabase/types'
+import { CampaignValidator } from '../campaign/campaignValidation'
 
 let supabaseInstance: any = null
 
@@ -61,29 +62,42 @@ export class CampaignService {
   }
 
   /**
-   * Create a new campaign
+   * Create a new campaign with validation
    */
   static async createCampaign(
     workspaceId: string,
-    name: string,
-    description?: string,
-    startDate?: string,
-    endDate?: string,
-    goals?: string[]
+    campaignData: Partial<Campaign>
   ): Promise<Campaign> {
     try {
-      const supabase = await getSupabase()
-      const campaign: Database['public']['Tables']['campaigns']['Insert'] = {
-        workspace_id: workspaceId,
-        name,
-        goal: description || null,
-        color: this.getRandomCampaignColor(),
-        start_date: startDate || new Date().toISOString(),
-        end_date: endDate || null,
+      // Validate input
+      const validation = CampaignValidator.validateCreate(campaignData)
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.map(e => e.message).join(', ')}`)
       }
 
-      const { data, error } = await (supabase
-        .from('campaigns') as any)
+      const sanitized = validation.sanitized!
+
+      const supabase = await getSupabase()
+      const campaign: any = {
+        workspace_id: workspaceId,
+        name: sanitized.name,
+        goal: sanitized.description || null,
+        color: sanitized.color || this.getRandomCampaignColor(),
+        start_date: sanitized.startDate || new Date().toISOString(),
+        end_date: sanitized.endDate || null,
+        goals: sanitized.goals || [],
+        status: sanitized.status || 'planning',
+        campaign_type: sanitized.campaignType || null,
+        content_themes: sanitized.contentThemes || [],
+        target_audience: sanitized.targetAudience || {},
+        performance_targets: sanitized.performanceTargets || {},
+        budget_hours: sanitized.budgetHours || null,
+        assigned_to: sanitized.assignedTo || [],
+        tags: sanitized.tags || [],
+      }
+
+      const { data, error } = await supabase
+        .from('campaigns')
         .insert(campaign)
         .select()
         .single()
@@ -98,23 +112,45 @@ export class CampaignService {
   }
 
   /**
-   * Update a campaign
+   * Update a campaign with validation
    */
-  static async updateCampaign(campaign: Campaign, workspaceId: string): Promise<Campaign> {
+  static async updateCampaign(
+    campaignId: string,
+    workspaceId: string,
+    updates: Partial<Campaign>
+  ): Promise<Campaign> {
     try {
-      const supabase = await getSupabase()
-      const dbCampaign = {
-        name: campaign.name,
-        goal: campaign.description || null,
-        color: campaign.color,
-        start_date: campaign.startDate,
-        end_date: campaign.endDate ?? null,
+      // Validate input
+      const validation = CampaignValidator.validateUpdate(updates)
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.map(e => e.message).join(', ')}`)
       }
 
-      const { data, error } = await (supabase
-        .from('campaigns') as any)
-        .update(dbCampaign)
-        .eq('id', campaign.id)
+      const sanitized = validation.sanitized!
+
+      const supabase = await getSupabase()
+      const dbUpdates: any = {}
+
+      if (sanitized.name !== undefined) dbUpdates.name = sanitized.name
+      if (sanitized.description !== undefined) dbUpdates.goal = sanitized.description
+      if (sanitized.color !== undefined) dbUpdates.color = sanitized.color
+      if (sanitized.startDate !== undefined) dbUpdates.start_date = sanitized.startDate
+      if (sanitized.endDate !== undefined) dbUpdates.end_date = sanitized.endDate
+      if (sanitized.goals !== undefined) dbUpdates.goals = sanitized.goals
+      if (sanitized.status !== undefined) dbUpdates.status = sanitized.status
+      if (sanitized.campaignType !== undefined) dbUpdates.campaign_type = sanitized.campaignType
+      if (sanitized.contentThemes !== undefined) dbUpdates.content_themes = sanitized.contentThemes
+      if (sanitized.targetAudience !== undefined) dbUpdates.target_audience = sanitized.targetAudience
+      if (sanitized.performanceTargets !== undefined) dbUpdates.performance_targets = sanitized.performanceTargets
+      if (sanitized.budgetHours !== undefined) dbUpdates.budget_hours = sanitized.budgetHours
+      if (sanitized.assignedTo !== undefined) dbUpdates.assigned_to = sanitized.assignedTo
+      if (sanitized.tags !== undefined) dbUpdates.tags = sanitized.tags
+      if (sanitized.archived !== undefined) dbUpdates.archived = sanitized.archived
+
+      const { data, error } = await supabase
+        .from('campaigns')
+        .update(dbUpdates)
+        .eq('id', campaignId)
         .eq('workspace_id', workspaceId)
         .select()
         .single()
@@ -179,6 +215,16 @@ export class CampaignService {
       color: dbCampaign.color,
       startDate: dbCampaign.start_date,
       endDate: dbCampaign.end_date,
+      goals: dbCampaign.goals || [],
+      status: dbCampaign.status || 'planning',
+      campaignType: dbCampaign.campaign_type,
+      contentThemes: dbCampaign.content_themes || [],
+      targetAudience: dbCampaign.target_audience,
+      performanceTargets: dbCampaign.performance_targets,
+      budgetHours: dbCampaign.budget_hours,
+      assignedTo: dbCampaign.assigned_to || [],
+      tags: dbCampaign.tags || [],
+      archived: dbCampaign.archived || false,
       createdAt: dbCampaign.created_at,
     }
   }

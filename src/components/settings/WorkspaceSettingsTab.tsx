@@ -101,7 +101,7 @@ export default function WorkspaceSettingsTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-slate">Loading workspace settings...</div>
+        <div className="text-gray-600">Loading workspace settings...</div>
       </div>
     )
   }
@@ -122,7 +122,7 @@ export default function WorkspaceSettingsTab() {
     <div className="max-w-2xl space-y-8">
       {/* Workspace Name */}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-charcoal mb-2">
+        <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-2">
           Workspace Name
         </label>
         <input
@@ -132,14 +132,14 @@ export default function WorkspaceSettingsTab() {
           value={formData.name}
           onChange={handleInputChange}
           placeholder="My Workspace"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
-        <p className="text-xs text-slate mt-1">The name of your workspace</p>
+        <p className="text-xs text-gray-500 mt-1">The name of your workspace</p>
       </div>
 
       {/* Max Users */}
       <div>
-        <label htmlFor="max_users" className="block text-sm font-medium text-charcoal mb-2">
+        <label htmlFor="max_users" className="block text-sm font-medium text-gray-900 mb-2">
           Maximum Members
         </label>
         <input
@@ -150,27 +150,27 @@ export default function WorkspaceSettingsTab() {
           max="1000"
           value={formData.max_users}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
-        <p className="text-xs text-slate mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Maximum number of members allowed in this workspace
         </p>
       </div>
 
       {/* Current Stats */}
       {workspace && (
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="font-semibold text-blue-900 mb-3">Workspace Information</h3>
+        <div className="p-6 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg border border-indigo-200">
+          <h3 className="font-semibold text-indigo-900 mb-4">Workspace Information</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-blue-700 font-medium">Created</p>
-              <p className="text-blue-600">
+              <p className="text-indigo-700 font-medium mb-1">Created</p>
+              <p className="text-indigo-900">
                 {new Date((workspace as any).created_at).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <p className="text-blue-700 font-medium">Last Updated</p>
-              <p className="text-blue-600">
+              <p className="text-indigo-700 font-medium mb-1">Last Updated</p>
+              <p className="text-indigo-900">
                 {new Date((workspace as any).updated_at).toLocaleDateString()}
               </p>
             </div>
@@ -182,7 +182,7 @@ export default function WorkspaceSettingsTab() {
       <button
         onClick={handleSave}
         disabled={saving || !isAdmin}
-        className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-md"
       >
         <Save size={18} />
         {saving ? 'Saving...' : 'Save Changes'}

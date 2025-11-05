@@ -128,6 +128,41 @@ export const generateSocialMediaContent = async (
     }
 };
 
+export const generateCampaignBrief = async (
+    name: string,
+    goals: string[],
+    platforms: Platform[]
+): Promise<{ audience: string; pillars: string[]; cadence: string; keyMessages: string[]; risks: string[]; }> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
+    const platformDetails = getPlatformDetails(platforms);
+    const prompt = `You are a senior social media strategist. Create a brief for the campaign "${name}".
+Goals:\n- ${goals.join('\n- ')}\nPlatforms:\n${platformDetails}\nReturn JSON with keys: audience, pillars (array), cadence (string), keyMessages (array), risks (array).`;
+    try {
+        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+        return parseJsonFromText(response.text ?? '');
+    } catch (error) {
+        console.error('Error generating campaign brief:', error);
+        throw new Error('Failed to generate brief');
+    }
+};
+
+export const generateCampaignIdeas = async (
+    name: string,
+    pillars: string[],
+    platforms: Platform[]
+): Promise<Array<{ title: string; description: string; platforms?: Platform[] }>> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
+    const platformDetails = getPlatformDetails(platforms);
+    const prompt = `Generate 10 organic content ideas for the campaign "${name}" based on pillars: ${pillars.join(', ')}. Target platforms:\n${platformDetails}\nReturn as JSON array of objects with title, description, and optional platforms.`;
+    try {
+        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+        return parseJsonFromText(response.text ?? '');
+    } catch (error) {
+        console.error('Error generating campaign ideas:', error);
+        throw new Error('Failed to generate ideas');
+    }
+};
+
 export const improvePrompt = async (prompt: string, type: 'image' | 'video', userGuidance?: string): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
     const guidanceText = userGuidance ? `\n\nUser's specific guidance: "${userGuidance}"\nMake sure to incorporate this guidance into your improvements.` : '';

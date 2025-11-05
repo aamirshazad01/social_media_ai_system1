@@ -39,11 +39,13 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
     const ViewToggleButton: React.FC<{ mode: ViewMode, icon: React.ElementType, label: string }> = ({ mode, icon: Icon, label }) => (
         <button
             onClick={() => setViewMode(mode)}
-            className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                viewMode === mode ? 'bg-charcoal text-white' : 'bg-white hover:bg-slate/10 border border-slate/30'
+            className={`flex items-center px-4 py-2 text-base font-bold rounded-lg transition-all transform hover:scale-105 active:scale-95 min-w-[100px] ${
+                viewMode === mode 
+                    ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700' 
+                    : 'bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 hover:border-indigo-400 shadow-sm'
             }`}
         >
-            <Icon className="w-4 h-4 mr-2" />
+            <Icon className="w-4 h-4 mr-1.5" />
             {label}
         </button>
     );
@@ -51,17 +53,17 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
     const renderGridContent = () => {
         if (nonFinalizedPosts.length === 0) {
              return (
-                <div className="text-center py-20">
-                    <h2 className="text-3xl font-semibold text-slate">Your content queue is empty!</h2>
-                    <p className="text-slate mt-2">Go to "Create Content" to generate a new post, or check "Published" for finalized items.</p>
+                <div className="text-center py-20 bg-white border-2 border-dashed border-gray-300 rounded-xl">
+                    <h2 className="text-2xl font-semibold text-gray-900">Your content queue is empty!</h2>
+                    <p className="text-gray-600 mt-2">Go to "Create Content" to generate a new post, or check "Published" for finalized items.</p>
                 </div>
             );
         }
         if (filteredPosts.length === 0) {
             return (
-                <div className="text-center py-20">
-                    <h2 className="text-2xl font-semibold text-slate">No Posts Match Your Filters</h2>
-                    <p className="text-slate mt-2">Try adjusting your search or selected filters.</p>
+                <div className="text-center py-20 bg-white border-2 border-dashed border-gray-300 rounded-xl">
+                    <h2 className="text-xl font-semibold text-gray-900">No Posts Match Your Filters</h2>
+                    <p className="text-gray-600 mt-2">Try adjusting your search or selected filters.</p>
                 </div>
             );
         }
@@ -84,10 +86,13 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
     };
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-                <h2 className="text-3xl font-bold text-charcoal-dark">Manage & Finalize Posts</h2>
-                <div className="flex items-center space-x-2 bg-light-gray p-1 rounded-lg">
+        <div className="space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Manage & Finalize Posts</h2>
+                    <p className="text-gray-600 mt-1 text-sm">Review, edit, and approve your content</p>
+                </div>
+                <div className="flex items-center gap-2">
                     <ViewToggleButton mode="grid" icon={LayoutGrid} label="Grid" />
                     <ViewToggleButton mode="calendar" icon={Calendar} label="Calendar" />
                 </div>

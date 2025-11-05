@@ -92,26 +92,28 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-charcoal-dark flex items-center">
-          <Sparkles className="w-8 h-8 mr-3 text-yellow-400" />
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <div className="p-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
           Content Repurposer
         </h2>
-        <p className="text-slate mt-2">
+        <p className="text-gray-600 mt-1 text-sm">
           Transform long-form content into multiple engaging social media posts
         </p>
       </div>
 
-      <div className="bg-white p-8 rounded-lg shadow-xl border border-slate/30">
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
         {/* Input Type Selection */}
-        <div className="mb-6">
-          <label className="block text-md font-medium text-charcoal mb-3">Input Source</label>
-          <div className="flex gap-4">
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-900 mb-2">Input Source</label>
+          <div className="flex gap-3">
             <button
               onClick={() => setInputType('text')}
-              className={`flex items-center px-4 py-2 rounded-lg transition ${
-                inputType === 'text' ? 'bg-charcoal text-white' : 'bg-gray-50 text-charcoal hover:bg-slate/10'
+              className={`flex items-center px-4 py-2.5 rounded-lg transition-all font-medium transform hover:scale-105 active:scale-95 ${
+                inputType === 'text' ? 'bg-indigo-600 text-white shadow-md hover:shadow-lg' : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
               }`}
             >
               <FileText className="w-4 h-4 mr-2" />
@@ -119,16 +121,16 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
             </button>
             <button
               onClick={() => setInputType('url')}
-              className={`flex items-center px-4 py-2 rounded-lg transition ${
-                inputType === 'url' ? 'bg-charcoal text-white' : 'bg-gray-50 text-charcoal hover:bg-slate/10'
+              className={`flex items-center px-4 py-2.5 rounded-lg transition-all font-medium transform hover:scale-105 active:scale-95 ${
+                inputType === 'url' ? 'bg-indigo-600 text-white shadow-md hover:shadow-lg' : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
               }`}
             >
               <LinkIcon className="w-4 h-4 mr-2" />
               From URL
             </button>
             <label
-              className={`flex items-center px-4 py-2 rounded-lg transition cursor-pointer ${
-                inputType === 'file' ? 'bg-charcoal text-white' : 'bg-gray-50 text-charcoal hover:bg-slate/10'
+              className={`flex items-center px-4 py-2.5 rounded-lg transition-all cursor-pointer font-medium transform hover:scale-105 active:scale-95 ${
+                inputType === 'file' ? 'bg-indigo-600 text-white shadow-md hover:shadow-lg' : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
               }`}
             >
               <Upload className="w-4 h-4 mr-2" />
@@ -148,15 +150,15 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
 
         {/* Content Input */}
         {inputType === 'text' && (
-          <div className="mb-6">
-            <label className="block text-md font-medium text-charcoal mb-3">Long-Form Content</label>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-900 mb-2">Long-Form Content</label>
             <textarea
               value={longFormContent}
               onChange={(e) => setLongFormContent(e.target.value)}
               placeholder="Paste your blog post, article, video transcript, or any long-form content here..."
-              className="w-full h-64 px-4 py-3 bg-white border border-slate/30 rounded-lg text-charcoal focus:ring-2 focus:ring-charcoal focus:border-transparent resize-none"
+              className="w-full h-64 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
             />
-            <p className="text-sm text-slate mt-2">
+            <p className="text-sm text-gray-500 mt-2">
               {longFormContent.length} characters · Minimum 500 characters recommended
             </p>
           </div>
@@ -198,16 +200,16 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
         )}
 
         {/* Platform Selection */}
-        <div className="mb-6">
-          <label className="block text-md font-medium text-charcoal mb-3">Target Platforms</label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-900 mb-2">Target Platforms</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {PLATFORMS.map(({ id, name, icon: Icon }) => (
               <label
                 key={id}
-                className={`flex items-center space-x-3 p-4 rounded-lg cursor-pointer transition-all duration-200 border-2 ${
+                className={`flex items-center space-x-3 p-4 rounded-lg cursor-pointer transition-all border-2 transform hover:scale-105 active:scale-95 ${
                   selectedPlatforms.includes(id)
-                    ? 'bg-charcoal/10 border-charcoal'
-                    : 'bg-gray-50 border-transparent hover:border-slate/30'
+                    ? 'bg-indigo-50 border-indigo-500 shadow-md hover:shadow-lg'
+                    : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
                 <input
@@ -216,17 +218,17 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
                   onChange={() => handlePlatformChange(id)}
                   className="hidden"
                 />
-                <Icon className={`w-6 h-6 ${selectedPlatforms.includes(id) ? 'text-charcoal-dark' : 'text-slate'}`} />
-                <span className="font-medium text-charcoal-dark">{name}</span>
+                <Icon className={`w-6 h-6 ${selectedPlatforms.includes(id) ? 'text-indigo-600' : 'text-gray-600'}`} />
+                <span className={`font-medium ${selectedPlatforms.includes(id) ? 'text-indigo-900' : 'text-gray-700'}`}>{name}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Number of Posts */}
-        <div className="mb-6">
-          <label className="block text-md font-medium text-charcoal mb-3">
-            Number of Posts to Generate: {numberOfPosts}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-900 mb-2">
+            Number of Posts to Generate: <span className="text-indigo-600 font-bold">{numberOfPosts}</span>
           </label>
           <input
             type="range"
@@ -234,31 +236,31 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
             max="10"
             value={numberOfPosts}
             onChange={(e) => setNumberOfPosts(parseInt(e.target.value))}
-            className="w-full h-2 bg-light-gray rounded-lg appearance-none cursor-pointer accent-charcoal"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
           />
-          <div className="flex justify-between text-xs text-slate mt-1">
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>3 posts</span>
             <span>10 posts</span>
           </div>
         </div>
 
-        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+        {error && <p className="text-red-600 text-sm mb-4 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
 
         {/* Action Button */}
         <button
           onClick={handleRepurpose}
           disabled={isProcessing || !longFormContent.trim()}
-          className="w-full flex items-center justify-center py-3 px-6 bg-charcoal hover:bg-charcoal-dark disabled:bg-slate disabled:cursor-not-allowed text-white rounded-lg transition font-medium"
+          className="w-full flex items-center justify-center py-2 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all font-bold text-base shadow-md transform hover:scale-105 active:scale-95 hover:shadow-lg"
         >
           {isProcessing ? (
             <>
-              <Loader2 className="animate-spin w-5 h-5 mr-2" />
-              Generating {numberOfPosts} Posts...
+              <Loader2 className="animate-spin w-4 h-4 mr-1.5" />
+              <span className="whitespace-nowrap">Generating {numberOfPosts} Posts...</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-5 h-5 mr-2" />
-              Repurpose Content
+              <Sparkles className="w-4 h-4 mr-1.5" />
+              <span className="whitespace-nowrap">Repurpose Content</span>
             </>
           )}
         </button>
@@ -266,18 +268,20 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
 
       {/* Generated Posts Preview */}
       {generatedPosts.length > 0 && (
-        <div className="mt-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <div>
-              <h3 className="text-2xl font-bold text-charcoal-dark flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-yellow-400" />
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
                 Generated Posts
               </h3>
-              <p className="text-sm text-slate mt-1">{generatedPosts.length} posts ready to save</p>
+              <p className="text-sm text-gray-600 mt-1">{generatedPosts.length} posts ready to save</p>
             </div>
             <button
               onClick={handleSaveAll}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-bold text-base shadow-md transform hover:scale-105 active:scale-95 hover:shadow-lg min-w-[150px]"
             >
               <Save className="w-4 h-4" />
               Save All to Drafts
@@ -286,45 +290,45 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {generatedPosts.map((post, index) => (
-              <div key={post.id} className="bg-white rounded-lg shadow-lg border border-slate/30 overflow-hidden hover:shadow-xl transition-shadow duration-200">
+              <div key={post.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl transition-all transform hover:scale-[1.02] hover:-translate-y-1">
                 {/* Card Header */}
-                <div className="bg-light-gray px-6 py-4 border-b border-slate/30">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-charcoal text-white flex items-center justify-center font-bold text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
                         {index + 1}
                       </div>
                       <div>
-                        <h4 className="font-bold text-charcoal-dark">Post {index + 1}</h4>
-                        <p className="text-xs text-slate">Draft</p>
+                        <h4 className="font-semibold text-gray-900 text-sm">Post {index + 1}</h4>
+                        <p className="text-xs text-gray-600">Draft</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       {selectedPlatforms.map(platform => {
                         const platformInfo = PLATFORMS.find(p => p.id === platform);
                         if (!platformInfo) return null;
                         const { icon: Icon } = platformInfo;
-                        return <Icon key={platform} className="w-5 h-5 text-slate" />;
+                        return <Icon key={platform} className="w-4 h-4 text-gray-600" />;
                       })}
                     </div>
                   </div>
                 </div>
 
                 {/* Card Body */}
-                <div className="p-6 space-y-4">
+                <div className="p-4 space-y-3">
                   {/* Topic */}
-                  <div className="pb-3 border-b border-slate/20">
-                    <p className="text-sm font-semibold text-charcoal-dark leading-relaxed">{post.topic}</p>
+                  <div className="pb-2 border-b border-gray-200">
+                    <p className="text-sm font-semibold text-gray-900 leading-relaxed">{post.topic}</p>
                   </div>
                   
                   {/* Content Preview */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-charcoal" />
-                      <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Content</p>
+                      <FileText className="w-4 h-4 text-gray-600" />
+                      <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Content</p>
                     </div>
-                    <div className="bg-slate/5 border border-slate/20 p-4 rounded-lg">
-                      <p className="text-charcoal text-sm leading-relaxed line-clamp-4">
+                    <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg min-h-[100px]">
+                      <p className="text-gray-900 text-base leading-relaxed line-clamp-4">
                         {typeof post?.content?.[selectedPlatforms?.[0]] === 'string'
                           ? post.content[selectedPlatforms[0]]
                           : typeof post?.content?.[selectedPlatforms?.[0]] === 'object'
@@ -338,11 +342,11 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
                   {post.content?.imageSuggestion && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4 text-teal-600" />
-                        <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Picture Script</p>
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Picture Script</p>
                       </div>
-                      <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg">
-                        <p className="text-slate text-xs italic leading-relaxed line-clamp-3">
+                      <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+                        <p className="text-gray-700 text-xs italic leading-relaxed line-clamp-3">
                           "{post.content.imageSuggestion}"
                         </p>
                       </div>
@@ -354,10 +358,10 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Video className="w-4 h-4 text-purple-600" />
-                        <p className="text-xs font-semibold text-charcoal uppercase tracking-wide">Video Script</p>
+                        <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Video Script</p>
                       </div>
                       <div className="bg-purple-50 border border-purple-200 p-4 rounded-lg">
-                        <p className="text-slate text-xs italic leading-relaxed line-clamp-3">
+                        <p className="text-gray-700 text-xs italic leading-relaxed line-clamp-3">
                           "{post.content.videoSuggestion}"
                         </p>
                       </div>

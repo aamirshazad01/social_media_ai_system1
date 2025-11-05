@@ -24,6 +24,18 @@ export interface PostContent {
   videoSuggestion?: string;
 }
 
+// Post Analytics
+export interface PostAnalytics {
+  reach: number;
+  impressions: number;
+  engagement: number;
+  clicks: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
+}
+
 // Enhanced Post interface with new features
 export interface Post {
   id: string;
@@ -50,6 +62,10 @@ export interface Post {
   originalPostId?: string; // For A/B testing variants
   variantType?: string; // e.g., 'A', 'B'
   recurrence?: RecurrencePattern;
+  // Campaign planning metadata
+  theme?: string;
+  // Analytics
+  analytics?: PostAnalytics;
 }
 
 // Campaign types
@@ -62,6 +78,25 @@ export interface Campaign {
   endDate?: string;
   goals?: string[];
   createdAt: string;
+  // Advanced management fields
+  status?: 'planning' | 'active' | 'paused' | 'completed';
+  campaignType?: 'awareness' | 'engagement' | 'conversion' | 'retention';
+  contentThemes?: string[];
+  targetAudience?: {
+    demographics?: string[];
+    interests?: string[];
+    platforms?: Platform[];
+  };
+  performanceTargets?: {
+    reach?: number;
+    engagement?: number;
+    clicks?: number;
+    followers?: number;
+  };
+  budgetHours?: number;
+  assignedTo?: string[]; // User IDs
+  tags?: string[];
+  archived?: boolean;
 }
 
 // Media Library types

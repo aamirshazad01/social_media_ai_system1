@@ -283,15 +283,15 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
 
         if (isSystem && msg.postData) {
             return (
-                <div className="bg-white rounded-lg p-4 my-2 text-sm text-charcoal border border-charcoal shadow-lg">
-                    <p className="font-semibold mb-4">{msg.content}</p>
-                    <div className="bg-light-gray p-3 rounded-md mb-4">
-                        <h4 className="font-bold text-charcoal-dark mb-2">Topic: <span className="font-normal">{msg.postData.topic}</span></h4>
-                        <p className="text-xs text-slate whitespace-pre-wrap">{JSON.stringify(msg.postData, null, 2)}</p>
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-8 my-3 border border-indigo-200 shadow-md">
+                    <p className="font-semibold text-gray-900 mb-4 text-base">{msg.content}</p>
+                    <div className="bg-white p-5 rounded-lg mb-5 border border-gray-200 min-h-[200px]">
+                        <h4 className="font-bold text-gray-900 mb-3 text-sm">Topic: <span className="font-normal">{msg.postData.topic}</span></h4>
+                        <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{JSON.stringify(msg.postData, null, 2)}</p>
                     </div>
                     <button
                         onClick={() => handleCreatePost(msg.postData)}
-                        className="w-full flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-charcoal hover:bg-charcoal-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-charcoal"
+                        className="w-full flex items-center justify-center py-4 px-4 shadow-lg shadow-indigo-500/30 text-base font-bold rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                         <CheckCircle className="w-5 h-5 mr-2" />
                         Accept & Create Post
@@ -302,10 +302,10 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
 
         return (
             <div className={`flex items-start gap-3 my-4 ${isUser ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-charcoal' : 'bg-slate'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-indigo-700' : 'bg-gray-600'}`}>
                     {isUser ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                 </div>
-                <div className={`p-3 rounded-lg max-w-2xl text-base ${isUser ? 'bg-charcoal text-white' : 'bg-light-gray text-gray-900'}`}>
+                <div className={`p-4 rounded-lg text-base shadow-sm ${isUser ? 'bg-indigo-700 text-white max-w-4xl' : 'bg-gray-100 text-gray-900 border border-gray-200 w-[70%]'}`}>
                     {isModel ? renderMarkdown(msg.content) : <p className="whitespace-pre-wrap">{msg.content}</p>}
                 </div>
             </div>
@@ -313,31 +313,31 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
     };
 
     return (
-        <div className="max-w-7xl mx-auto h-full flex flex-row gap-6">
+        <div className="h-full flex flex-row gap-4">
             {isHistoryVisible && (
-                <div className="w-1/3 lg:w-1/4 bg-white rounded-lg shadow-xl flex flex-col h-full border border-slate/30">
-                    <div className="p-4 border-b border-slate/30">
+                <div className="w-64 bg-white rounded-xl shadow-md flex flex-col h-full border border-gray-200">
+                    <div className="p-3 border-b border-gray-200">
                         <button
                             onClick={() => startNewChat()}
-                            className="w-full flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-charcoal hover:bg-charcoal-dark"
+                            className="w-full flex items-center justify-center py-2.5 px-4 shadow-md text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
                         >
                             <PlusCircle className="w-5 h-5 mr-2" />
                             New Chat
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
-                        <h3 className="px-2 pb-2 text-xs font-semibold text-slate uppercase tracking-wider">History</h3>
+                        <h3 className="px-2 pb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">History</h3>
                         <nav className="space-y-1">
                             {chatHistory.map(thread => (
                                 <button
                                     key={thread.id}
                                     onClick={() => handleSelectThread(thread)}
-                                    className={`w-full text-left flex flex-col p-2 rounded-md transition-colors ${
-                                        activeThreadId === thread.id ? 'bg-light-gray' : 'hover:bg-slate/10'
+                                    className={`w-full text-left flex flex-col p-2 rounded-lg transition-all ${
+                                        activeThreadId === thread.id ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-gray-50 border border-transparent'
                                     }`}
                                 >
-                                    <p className="text-sm font-medium text-charcoal-dark truncate">{thread.title}</p>
-                                    <p className="text-xs text-slate">{new Date(thread.timestamp).toLocaleDateString()}</p>
+                                    <p className="text-sm font-medium text-gray-900 truncate">{thread.title}</p>
+                                    <p className="text-xs text-gray-600">{new Date(thread.timestamp).toLocaleDateString()}</p>
                                 </button>
                             ))}
                         </nav>
@@ -347,44 +347,52 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
 
             <div className="flex-1 flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-3xl font-bold text-charcoal-dark">AI Content Strategist</h2>
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                                <Bot className="w-5 h-5 text-white" />
+                            </div>
+                            AI Content Strategist
+                        </h2>
+                        <p className="text-gray-600 mt-1 text-sm">Brainstorm and create content with AI assistance</p>
+                    </div>
                     <button
                         onClick={() => setIsHistoryVisible(!isHistoryVisible)}
-                        className="p-2 rounded-full text-slate hover:bg-slate/10 hover:text-charcoal-dark transition-colors"
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
                         title={isHistoryVisible ? "Hide History" : "Show History"}
                     >
-                        {isHistoryVisible ? <PanelLeftClose className="w-5 h-5" /> : <History className="w-5 h-5" />}
+                        {isHistoryVisible ? <PanelLeftClose className="w-6 h-6 text-gray-600" /> : <History className="w-6 h-6 text-gray-600" />}
                     </button>
                 </div>
-                <div className="flex-grow bg-white rounded-lg shadow-xl flex flex-col p-4 min-h-0 border border-slate/30">
+                <div className="flex-grow bg-white rounded-xl shadow-md flex flex-col p-4 min-h-0 border border-gray-200">
                     <div ref={chatContainerRef} className="flex-1 overflow-y-auto pr-2">
                         {messages.map((msg, index) => <MessageBubble key={index} msg={msg} />)}
                         {isLoading && (
                             <div className="flex items-start gap-3 my-4">
-                                <div className="w-8 h-8 rounded-full bg-slate flex items-center justify-center flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
                                     <Bot className="w-5 h-5 text-white" />
                                 </div>
-                                <div className="p-3 rounded-lg bg-light-gray text-charcoal flex items-center">
-                                    <Loader2 className="w-5 h-5 animate-spin text-slate" />
+                                <div className="p-4 rounded-lg bg-gray-100 border border-gray-200 flex items-center shadow-sm">
+                                    <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
                                 </div>
                             </div>
                         )}
                     </div>
-                    <div className="mt-4 border-t border-slate/30 pt-4">
-                        {error && <p className="text-red-400 text-sm text-center mb-2">{error}</p>}
+                    <div className="mt-4 border-t border-gray-200 pt-4">
+                        {error && <p className="text-red-600 text-sm text-center mb-3 bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>}
                         <form onSubmit={handleSubmit} className="flex items-center gap-3">
                             <input
                                 type="text"
                                 value={userInput}
                                 onChange={(e) => setUserInput(e.target.value)}
                                 placeholder={activeThreadId !== 'new' ? "Viewing history (read-only)" : "Let's brainstorm some content..."}
-                                className="flex-1 bg-white border border-slate/30 rounded-full shadow-sm focus:ring-charcoal focus:border-charcoal text-charcoal p-3 px-5"
+                                className="flex-1 bg-white border border-gray-300 rounded-full shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 p-3 px-5"
                                 disabled={isLoading || activeThreadId !== 'new'}
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !userInput.trim() || activeThreadId !== 'new'}
-                                className="p-3 rounded-full text-white bg-charcoal hover:bg-charcoal-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-charcoal disabled:bg-slate disabled:cursor-not-allowed transition-colors"
+                                className="p-3 rounded-full text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                             >
                                 <Send className="w-5 h-5" />
                             </button>

@@ -243,12 +243,15 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
   }
 
   return (
-    <div>
-      <h2 className="text-3xl font-bold mb-8 text-charcoal-dark">Connected Accounts</h2>
-      <div className="bg-white p-8 rounded-lg shadow-xl max-w-3xl mx-auto border border-slate/30">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex gap-3">
-          <Settings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold text-gray-900">Connected Accounts</h2>
+        <p className="text-gray-600 mt-1">Manage your social media integrations</p>
+      </div>
+      <div className="bg-white p-8 rounded-xl shadow-md max-w-3xl mx-auto border border-gray-200">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 flex gap-3">
+          <Settings className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-indigo-800">
             <p className="font-semibold mb-1">Production-Ready Integration</p>
             <p>
               Connect your social media accounts securely. Your credentials are encrypted and
@@ -259,8 +262,8 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-slate mr-2" />
-            <span className="text-slate">Loading connection status...</span>
+            <Loader2 className="w-6 h-6 animate-spin text-gray-600 mr-2" />
+            <span className="text-gray-600">Loading connection status...</span>
           </div>
         ) : (
           <div className="space-y-4">
@@ -272,16 +275,16 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
               const hasTimeout = timeoutWarnings.has(id)
 
               return (
-                <div key={id} className="bg-light-gray rounded-lg overflow-hidden">
+                <div key={id} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-4 flex-1">
-                      <Icon className="w-8 h-8 text-charcoal" />
+                      <Icon className="w-8 h-8 text-gray-700" />
                       <div className="flex-1">
-                        <span className="text-lg font-medium text-charcoal-dark block">
+                        <span className="text-lg font-medium text-gray-900 block">
                           {name}
                         </span>
                         {isConnected && info?.username && (
-                          <div className="text-sm text-slate">
+                          <div className="text-sm text-gray-600">
                             <span>@{info.username}</span>
                             {info.isExpired && (
                               <span className="ml-2 text-red-600 font-semibold">
@@ -296,7 +299,7 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
                           </div>
                         )}
                         {isConnected && info?.expiresAt && (
-                          <span className="text-xs text-slate">
+                          <span className="text-xs text-gray-500">
                             Expires: {new Date(info.expiresAt).toLocaleDateString()}
                           </span>
                         )}
@@ -304,19 +307,19 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
                     </div>
 
                     {isConnecting ? (
-                      <div className="flex items-center gap-2 text-slate">
+                      <div className="flex items-center gap-2 text-gray-600">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span className="font-semibold text-sm">Connecting...</span>
+                        <span className="font-medium text-sm">Connecting...</span>
                       </div>
                     ) : isConnected ? (
                       <div className="flex items-center gap-4">
                         <div className="flex items-center text-green-600">
                           <CheckCircle className="w-5 h-5 mr-2" />
-                          <span className="font-semibold text-sm">Connected</span>
+                          <span className="font-medium text-sm">Connected</span>
                         </div>
                         <button
                           onClick={() => handleDisconnect(id)}
-                          className="px-4 py-2 text-sm font-medium bg-slate hover:bg-slate/80 rounded-md text-white transition-colors"
+                          className="px-4 py-2 text-sm font-medium border border-gray-300 hover:bg-gray-100 rounded-lg text-gray-700 transition-colors"
                         >
                           Disconnect
                         </button>
@@ -324,7 +327,7 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
                     ) : (
                       <button
                         onClick={() => handleConnect(id)}
-                        className="px-4 py-2 text-sm font-medium bg-charcoal hover:bg-charcoal-dark rounded-md text-white flex items-center transition-colors"
+                        className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white flex items-center transition-colors shadow-md"
                       >
                         <Link className="w-4 h-4 mr-2" />
                         Connect
@@ -370,8 +373,8 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
           </div>
         )}
 
-        <div className="mt-6 pt-6 border-t border-slate/30">
-          <p className="text-sm text-slate">
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
             <strong>Security:</strong> Your API credentials are encrypted using AES-256 encryption
             and stored securely on our servers. We never store them in your browser.
           </p>

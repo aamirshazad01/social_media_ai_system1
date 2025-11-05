@@ -49,13 +49,13 @@ export default function SettingsLayout({ children, activeTab }: SettingsLayoutPr
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/" className="text-slate hover:text-charcoal transition-colors">
+          <div className="flex items-center gap-4 mb-2">
+            <Link href="/" className="text-gray-600 hover:text-gray-900 transition-colors">
               <ChevronLeft size={24} />
             </Link>
-            <h1 className="text-3xl font-bold text-charcoal">Workspace Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Workspace Settings</h1>
           </div>
-          <p className="text-slate">Manage your workspace, members, and activity</p>
+          <p className="text-gray-600">Manage your workspace, members, and activity</p>
         </div>
       </div>
 
@@ -69,10 +69,10 @@ export default function SettingsLayout({ children, activeTab }: SettingsLayoutPr
                 <Link
                   key={tab.id}
                   href={`/settings?tab=${tab.id}`}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
                     activeTab === tab.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-slate hover:bg-gray-100'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   {tab.icon}
@@ -84,7 +84,7 @@ export default function SettingsLayout({ children, activeTab }: SettingsLayoutPr
 
           {/* Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-md">
               {children}
             </div>
           </div>

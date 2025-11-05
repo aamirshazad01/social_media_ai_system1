@@ -165,7 +165,7 @@ export default function MembersTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-slate">Loading members...</div>
+        <div className="text-gray-600">Loading members...</div>
       </div>
     )
   }
@@ -176,13 +176,13 @@ export default function MembersTab() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-charcoal">Workspace Members</h2>
-            <p className="text-sm text-slate mt-1">{members.length} member{members.length !== 1 ? 's' : ''}</p>
+            <h2 className="text-xl font-semibold text-gray-900">Workspace Members</h2>
+            <p className="text-sm text-gray-600 mt-1">{members.length} member{members.length !== 1 ? 's' : ''}</p>
           </div>
           {isAdmin && (
             <button
               onClick={() => setIsInviteModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md"
             >
               <Plus size={18} />
               Invite Member
@@ -192,8 +192,8 @@ export default function MembersTab() {
 
         <div className="space-y-3">
           {members.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-slate">No members yet</p>
+            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-gray-600">No members yet</p>
             </div>
           ) : (
             members.map(member => (
@@ -213,7 +213,7 @@ export default function MembersTab() {
       {/* Pending Invitations Section */}
       {isAdmin && pendingInvites.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-charcoal mb-6">Pending Invitations</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Pending Invitations</h2>
           <div className="space-y-3">
             {pendingInvites.map(invite => (
               <div
@@ -221,14 +221,14 @@ export default function MembersTab() {
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
               >
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    {invite.email ? <Mail size={20} className="text-blue-600" /> : <LinkIcon size={20} className="text-blue-600" />}
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                    {invite.email ? <Mail size={20} className="text-indigo-600" /> : <LinkIcon size={20} className="text-indigo-600" />}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-charcoal">
+                    <p className="font-medium text-gray-900">
                       {invite.email || 'Shareable Link'}
                     </p>
-                    <p className="text-sm text-slate">
+                    <p className="text-sm text-gray-600">
                       {invite.email ? `Email invitation` : `Anyone with link can join`}
                     </p>
                   </div>
@@ -241,14 +241,14 @@ export default function MembersTab() {
                   )}
                   <button
                     onClick={() => handleResendInvite(invite.id)}
-                    className="p-2 hover:bg-white rounded transition-colors"
+                    className="p-2 hover:bg-white rounded-lg transition-colors"
                     title="Resend invitation"
                   >
-                    <Mail size={18} className="text-blue-600" />
+                    <Mail size={18} className="text-indigo-600" />
                   </button>
                   <button
                     onClick={() => handleRevokeInvite(invite.id)}
-                    className="p-2 hover:bg-white rounded transition-colors"
+                    className="p-2 hover:bg-white rounded-lg transition-colors"
                     title="Revoke invitation"
                   >
                     <Trash2 size={18} className="text-red-600" />
