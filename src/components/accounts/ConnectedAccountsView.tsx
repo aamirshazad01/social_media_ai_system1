@@ -218,15 +218,20 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to disconnect')
+      if (!response.ok) {
+        const errorData = await response.json()
+        const errorMessage = errorData?.details || errorData?.error || 'Failed to disconnect'
+        throw new Error(errorMessage)
+      }
 
       loadConnectionStatus()
       setErrors(prev => ({ ...prev, [platform]: undefined }))
     } catch (error) {
-      console.error('Failed to disconnect:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to disconnect'
+      console.error('Failed to disconnect:', errorMessage)
       setErrors(prev => ({
         ...prev,
-        [platform]: 'Failed to disconnect',
+        [platform]: errorMessage,
       }))
     }
   }

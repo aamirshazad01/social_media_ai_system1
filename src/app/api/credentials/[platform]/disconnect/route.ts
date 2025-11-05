@@ -75,9 +75,13 @@ export async function DELETE(
       message: `${platform} disconnected successfully`,
     })
   } catch (error) {
-    console.error('Disconnect error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Disconnect error:', errorMessage)
     return NextResponse.json(
-      { error: 'Failed to disconnect' },
+      {
+        error: 'Failed to disconnect',
+        details: errorMessage
+      },
       { status: 500 }
     )
   }
