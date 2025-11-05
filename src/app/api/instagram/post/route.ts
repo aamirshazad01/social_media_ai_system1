@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { createMediaContainer, createVideoContainer, publishMediaContainer } from '@/lib/instagram/client'
+import { createMediaContainer, createVideoContainer, publishMediaContainer, generateAppSecretProof } from '@/lib/instagram/client'
 import { CredentialService } from '@/services/database'
 import { InstagramCredentials } from '@/types'
 
@@ -86,6 +86,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Generate appsecret_proof for server-to-server API calls
+    // This is required by Facebook/Instagram Graph API for enhanced security
+    const appSecret = process.env.FACEBOOK_CLIENT_SECRET
+    if (!appSecret) {
+      return NextResponse.json(
+        { error: 'Instagram app secret not configured' },
+        { status: 500 }
+      )
+    }
+
+    const appSecretProof = generateAppSecretProof(instagramCreds.accessToken, appSecret)
+
     // Step 1: Create media container (video or image)
     let container;
     if (isVideo) {
@@ -93,14 +105,16 @@ export async function POST(req: NextRequest) {
         instagramCreds.userId!,
         instagramCreds.accessToken,
         imageUrl,
-        caption
+        caption,
+        appSecretProof
       );
     } else {
       container = await createMediaContainer(
         instagramCreds.userId!,
         instagramCreds.accessToken,
         imageUrl,
-        caption
+        caption,
+        appSecretProof
       );
     }
 
@@ -108,7 +122,8 @@ export async function POST(req: NextRequest) {
     const published = await publishMediaContainer(
       instagramCreds.userId!,
       instagramCreds.accessToken,
-      container.id
+      container.id,
+      appSecretProof
     )
 
     // Generate post URL
