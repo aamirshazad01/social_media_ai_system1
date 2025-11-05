@@ -69,6 +69,14 @@ export async function POST(req: NextRequest) {
     }
     const facebookCreds = credentials as FacebookCredentials
 
+    // Validate that pageId is set (not a group or other type)
+    if (!facebookCreds.pageId) {
+      return NextResponse.json(
+        { error: 'Invalid Facebook configuration. Page ID is missing.' },
+        { status: 400 }
+      )
+    }
+
     // Check if token is expired
     if (facebookCreds.expiresAt && new Date(facebookCreds.expiresAt) < new Date()) {
       return NextResponse.json(

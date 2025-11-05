@@ -250,8 +250,9 @@ export async function GET(req: NextRequest) {
       // Generate appsecret_proof for secure server-to-server calls
       const appSecretProof = generateAppSecretProof(longLivedToken, appSecret)
 
+      // Fetch pages with type field to filter out groups
       const pagesResponse = await fetch(
-        `https://graph.facebook.com/v24.0/me/accounts?access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
+        `https://graph.facebook.com/v24.0/me/accounts?fields=id,name,access_token,category,type&access_token=${longLivedToken}&appsecret_proof=${appSecretProof}`
       )
 
       console.log('📱 Pages API response status:', pagesResponse.status, pagesResponse.statusText)
@@ -318,8 +319,14 @@ export async function GET(req: NextRequest) {
 
       // Check if data exists and is an array
       if (pagesData.data && Array.isArray(pagesData.data)) {
-        pages = pagesData.data
-        console.log('✅ Found', pages.length, 'Facebook pages')
+        // Filter to only include Pages, exclude Groups
+        // type field is: "PAGE" for pages, "GROUP" for groups, "APPLICATION" for apps
+        pages = pagesData.data.filter((item: any) => item.type === 'PAGE' || !item.type)
+        console.log('✅ Found', pagesData.data.length, 'total accounts,', pages.length, 'are pages')
+
+        if (pages.length === 0) {
+          throw new Error('No Facebook pages found. Groups are not supported for posting.')
+        }
       } else if (pagesData.data === undefined) {
         throw new Error('No data in Facebook API response')
       }
