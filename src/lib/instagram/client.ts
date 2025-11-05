@@ -29,11 +29,15 @@ export function generateAppSecretProof(accessToken: string, appSecret: string): 
  * - instagram_basic: Basic access to Instagram business account data
  * - instagram_content_publish: Create posts (images, videos, carousels)
  * - instagram_manage_insights: Get analytics (reach, impressions, engagement)
+ * - pages_manage_posts: Create posts on connected Facebook pages
+ * - pages_read_engagement: Read engagement metrics
  */
 export const INSTAGRAM_SCOPES = [
   'instagram_basic',
   'instagram_content_publish',
   'instagram_manage_insights',
+  'pages_manage_posts',
+  'pages_read_engagement',
 ];
 
 /**
