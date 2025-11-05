@@ -221,7 +221,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                         <div className="bg-slate/5 border border-slate/20 p-4 rounded-lg">
                             <textarea
                                 readOnly={!isEditing}
-                                value={editedContent?.[activePlatform] || ''}
+                                value={typeof editedContent?.[activePlatform] === 'string'
+                                  ? editedContent[activePlatform]
+                                  : typeof editedContent?.[activePlatform] === 'object'
+                                  ? (editedContent[activePlatform] as any)?.description || ''
+                                  : ''}
                                 onChange={(e) => handleContentChange(activePlatform, e.target.value)}
                                 className={`w-full h-40 bg-transparent text-charcoal resize-none focus:outline-none text-sm leading-relaxed ${isEditing ? 'focus:ring-2 focus:ring-charcoal rounded p-2' : ''}`}
                             />

@@ -124,5 +124,7 @@ export function getConnectionSummary(): Record<Platform, boolean> {
     linkedin: allCredentials.linkedin?.isConnected ?? false,
     facebook: allCredentials.facebook?.isConnected ?? false,
     instagram: allCredentials.instagram?.isConnected ?? false,
+    tiktok: allCredentials.tiktok?.isConnected ?? false,
+    youtube: allCredentials.youtube?.isConnected ?? false,
   };
 }

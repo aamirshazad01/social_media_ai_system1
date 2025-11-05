@@ -317,6 +317,8 @@ export class CredentialService {
         linkedin: { isConnected: false },
         facebook: { isConnected: false },
         instagram: { isConnected: false },
+        tiktok: { isConnected: false },
+        youtube: { isConnected: false },
       }
 
       for (const account of data || []) {
@@ -341,6 +343,8 @@ export class CredentialService {
         linkedin: { isConnected: false },
         facebook: { isConnected: false },
         instagram: { isConnected: false },
+        tiktok: { isConnected: false },
+        youtube: { isConnected: false },
       }
     }
   }
@@ -452,6 +456,187 @@ export class CredentialService {
     } catch (error) {
       console.error('Error getting all credentials status:', error)
       return []
+    }
+  }
+
+  /**
+   * Instance methods for use with injected Supabase client
+   * These wrap the static methods but allow passing a Supabase instance
+   */
+  private supabase: any;
+
+  constructor(supabase: any) {
+    this.supabase = supabase;
+  }
+
+  async savePlatformCredentials(
+    workspaceId: string,
+    platform: Platform,
+    credentials: any,
+    options: { pageId?: string; pageName?: string } = {}
+  ): Promise<any> {
+    try {
+      // Get encryption key for this workspace
+      const encryptionKey = await getOrCreateWorkspaceEncryptionKey(workspaceId)
+
+      // Encrypt credentials
+      const encryptedData = await encryptCredentials(credentials, encryptionKey)
+
+      // Check if already exists
+      const { data: existing, error: checkError } = await this.supabase
+        .from('social_accounts')
+        .select('id')
+        .eq('workspace_id', workspaceId)
+        .eq('platform', platform)
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      // Prepare common data
+      const commonData = {
+        credentials_encrypted: encryptedData,
+        is_connected: credentials.isConnected ?? true,
+        username: credentials.username || credentials.displayName || credentials.channelTitle || null,
+        expires_at: credentials.expiresAt || null,
+        last_refreshed_at: new Date().toISOString(),
+        refresh_token_encrypted: credentials.refreshToken
+          ? await encryptCredentials(
+              { token: credentials.refreshToken },
+              encryptionKey
+            )
+          : null,
+        page_id: options.pageId || credentials.pageId || credentials.channelId || null,
+        page_name: options.pageName || credentials.pageName || credentials.channelTitle || null,
+        connected_at: credentials.isConnected ? new Date().toISOString() : null,
+        refresh_error_count: 0,
+      }
+
+      if (existing) {
+        // Update existing
+        const { data: updated, error: updateError } = await this.supabase
+          .from('social_accounts')
+          .update(commonData)
+          .eq('id', (existing as any).id)
+          .select()
+
+        if (updateError) throw updateError
+        return updated?.[0]
+      } else {
+        // Insert new
+        const { data: inserted, error: insertError } = await this.supabase
+          .from('social_accounts')
+          .insert({
+            workspace_id: workspaceId,
+            platform,
+            ...commonData,
+          })
+          .select()
+
+        if (insertError) throw insertError
+        return inserted?.[0]
+      }
+    } catch (error) {
+      console.error('Error saving credentials:', error)
+      throw error
+    }
+  }
+
+  async getPlatformCredentials(
+    workspaceId: string,
+    platform: Platform
+  ): Promise<any | null> {
+    try {
+      const { data, error } = await this.supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .eq('platform', platform)
+        .maybeSingle()
+
+      if (error || !data) return null
+
+      // Decrypt credentials
+      const encryptionKey = await getOrCreateWorkspaceEncryptionKey(workspaceId)
+      const credentials = await decryptCredentials((data as any).credentials_encrypted, encryptionKey)
+
+      // Decrypt refresh token if exists
+      let refreshToken = null
+      if ((data as any).refresh_token_encrypted) {
+        try {
+          const decryptedRefresh = await decryptCredentials(
+            (data as any).refresh_token_encrypted,
+            encryptionKey
+          )
+          refreshToken = decryptedRefresh.token
+        } catch (err) {
+          console.error('Failed to decrypt refresh token:', err)
+        }
+      }
+
+      return {
+        ...credentials,
+        refreshToken,
+        expiresAt: (data as any).expires_at,
+        pageId: (data as any).page_id,
+        pageName: (data as any).page_name,
+        channelId: (data as any).page_id,
+        channelTitle: (data as any).page_name,
+        isConnected: (data as any).is_connected,
+      }
+    } catch (error) {
+      console.error('Error getting credentials:', error)
+      return null
+    }
+  }
+
+  async verifyAndRefreshToken(
+    workspaceId: string,
+    platform: Platform,
+    refreshFunction?: (credentials: any) => Promise<any>
+  ): Promise<any> {
+    try {
+      const credentials = await this.getPlatformCredentials(workspaceId, platform)
+
+      if (!credentials) {
+        throw new Error(`No credentials found for ${platform}`)
+      }
+
+      // Check if token is expired
+      if (credentials.expiresAt) {
+        const expiresAt = new Date(credentials.expiresAt).getTime()
+        const now = Date.now()
+
+        if (now > expiresAt) {
+          // Token expired, try to refresh
+          if (refreshFunction && credentials.refreshToken) {
+            try {
+              const newCredentials = await refreshFunction(credentials)
+
+              // Save refreshed credentials
+              await this.savePlatformCredentials(
+                workspaceId,
+                platform,
+                newCredentials
+              )
+
+              return newCredentials
+            } catch (refreshError) {
+              throw new Error(
+                `Token refresh failed: ${
+                  refreshError instanceof Error ? refreshError.message : String(refreshError)
+                }`
+              )
+            }
+          } else {
+            throw new Error('Token expired and no refresh token available')
+          }
+        }
+      }
+
+      return credentials
+    } catch (error) {
+      console.error('Token verification failed:', error)
+      throw error
     }
   }
 }

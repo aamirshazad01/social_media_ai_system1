@@ -126,7 +126,12 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
     const PlatformPreview: React.FC<{ platform: Platform }> = ({ platform }) => {
         const platformInfo = PLATFORMS.find(p => p.id === platform);
         if (!platformInfo) return null;
-        const content = post.content[platform] || '';
+        const rawContent = post.content[platform] || '';
+        const content = typeof rawContent === 'string'
+          ? rawContent
+          : typeof rawContent === 'object'
+          ? (rawContent as any)?.description || ''
+          : '';
 
         return (
             <div className="bg-slate/10 rounded-lg p-4">

@@ -1,4 +1,4 @@
-export type Platform = 'twitter' | 'linkedin' | 'facebook' | 'instagram';
+export type Platform = 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube';
 
 export type PostStatus = 'draft' | 'needs approval' | 'approved' | 'ready to publish' | 'scheduled' | 'published';
 
@@ -13,6 +13,13 @@ export interface PostContent {
   linkedin?: string;
   facebook?: string;
   instagram?: string;
+  tiktok?: string;
+  youtube?: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    privacyStatus?: 'public' | 'private' | 'unlisted';
+  };
   imageSuggestion?: string;
   videoSuggestion?: string;
 }
@@ -151,7 +158,7 @@ export interface AIInsight {
 export type PlatformCredentials = Partial<
   Record<
     Platform,
-    TwitterCredentials | LinkedInCredentials | FacebookCredentials | InstagramCredentials
+    TwitterCredentials | LinkedInCredentials | FacebookCredentials | InstagramCredentials | TikTokCredentials | YouTubeCredentials
   >
 >
 
@@ -194,6 +201,29 @@ export interface InstagramCredentials {
   username?: string;
   expiresAt?: string;
   isConnected: boolean;
+  connectedAt?: string;
+}
+
+export interface TikTokCredentials {
+  accessToken: string;
+  refreshToken?: string;
+  openId?: string;
+  expiresAt?: string;
+  isConnected: boolean;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  connectedAt?: string;
+}
+
+export interface YouTubeCredentials {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  isConnected: boolean;
+  channelId?: string;
+  channelTitle?: string;
+  channelThumbnail?: string;
   connectedAt?: string;
 }
 

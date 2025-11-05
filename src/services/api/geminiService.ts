@@ -363,3 +363,148 @@ export const generateEngagementScore = async (
         throw new Error("Failed to generate engagement score.");
     }
 };
+
+// Generate video for TikTok with platform-specific formatting (9:16 vertical, 15-60 seconds)
+export const generateTikTokVideoPrompt = async (
+    topic: string,
+    tone: Tone,
+    userGuidance?: string
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
+
+    const guidanceText = userGuidance ? `\n\nUser's specific guidance: "${userGuidance}"` : '';
+
+    const prompt = `
+        You are an expert TikTok content creator. Create a detailed, creative video script for TikTok.
+
+        **Topic:** ${topic}
+        **Tone:** ${tone}
+        **Format Requirements:**
+        - Vertical video (9:16 aspect ratio)
+        - Duration: 15-60 seconds
+        - High-energy, engaging opening (first 3 seconds crucial)
+        - Clear visual directions for each scene
+        - Sound design suggestions
+        - Hashtag recommendations
+
+        Create a prompt for an AI video generator that will produce a TikTok video script.
+        Focus on:
+        1. Trending TikTok formats and hooks
+        2. Fast-paced cuts and transitions
+        3. Text overlays and visual effects
+        4. Music beat synchronization${guidanceText}
+
+        Do NOT add any explanatory text, markdown, or preamble. Return ONLY the detailed video generation prompt.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        return (response.text ?? '').trim();
+    } catch (error) {
+        console.error("Error generating TikTok video prompt:", error);
+        throw new Error("Failed to generate TikTok video prompt.");
+    }
+};
+
+// Generate video for YouTube with platform-specific formatting (9:16 for Shorts, 16:9 for standard)
+export const generateYouTubeVideoPrompt = async (
+    topic: string,
+    tone: Tone,
+    format: 'shorts' | 'standard' = 'shorts',
+    userGuidance?: string
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
+
+    const guidanceText = userGuidance ? `\n\nUser's specific guidance: "${userGuidance}"` : '';
+    const aspectRatio = format === 'shorts' ? '9:16' : '16:9';
+    const duration = format === 'shorts' ? '15-60 seconds' : '2-10 minutes';
+
+    const prompt = `
+        You are an expert YouTube content creator and filmmaker. Create a detailed, high-quality video production guide for YouTube.
+
+        **Topic:** ${topic}
+        **Tone:** ${tone}
+        **Format:** YouTube ${format === 'shorts' ? 'Shorts' : 'Standard'}
+        **Format Requirements:**
+        - Aspect Ratio: ${aspectRatio}
+        - Duration: ${duration}
+        - Professional production quality
+        - Clear audio with narration/voiceover
+        - On-screen text and graphics
+        - SEO-optimized thumbnail elements
+        - Chapter markers for longer content
+
+        Create a prompt for an AI video generator that will produce a YouTube ${format} video script.
+        Focus on:
+        1. Professional production value
+        2. Story arc with strong narrative
+        3. Visual hierarchy and composition
+        4. Color grading and cinematography
+        5. Audio mixing and music selection${guidanceText}
+
+        Do NOT add any explanatory text, markdown, or preamble. Return ONLY the detailed video generation prompt.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        return (response.text ?? '').trim();
+    } catch (error) {
+        console.error("Error generating YouTube video prompt:", error);
+        throw new Error("Failed to generate YouTube video prompt.");
+    }
+};
+
+// Generate optimized content for YouTube with metadata
+export const generateYouTubeMetadata = async (
+    title: string,
+    description: string,
+    topic: string
+): Promise<{ tags: string[]; seoDescription: string }> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.API_KEY });
+
+    const prompt = `
+        You are a YouTube SEO expert. Optimize the following video metadata for better discoverability and engagement.
+
+        **Title:** ${title}
+        **Description:** ${description}
+        **Topic:** ${topic}
+
+        Generate:
+        1. 10-15 relevant, trending YouTube tags
+        2. An optimized description (300-500 characters) with keywords naturally incorporated
+
+        Return as JSON with keys: "tags" (array of strings) and "seoDescription" (string).
+        Do not include markdown or explanatory text outside the JSON.
+    `;
+
+    const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+            seoDescription: { type: Type.STRING },
+        },
+        required: ['tags', 'seoDescription'],
+    };
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+            },
+        });
+        const jsonText = (response.text ?? '').trim();
+        return parseJsonFromText(jsonText);
+    } catch (error) {
+        console.error("Error generating YouTube metadata:", error);
+        throw new Error("Failed to generate YouTube metadata.");
+    }
+};

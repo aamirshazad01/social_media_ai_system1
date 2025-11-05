@@ -76,6 +76,37 @@ const PLATFORM_DOCS = {
       'Generate a long-lived access token',
     ],
   },
+  tiktok: {
+    name: 'TikTok',
+    docsUrl: 'https://developer.tiktok.com/',
+    fields: [
+      { key: 'clientKey', label: 'Client Key', type: 'text', required: true },
+      { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+    ],
+    instructions: [
+      'Go to TikTok Developer Console',
+      'Create a new app with "Content Management Tool" category',
+      'Enable "Content Posting API"',
+      'Copy your Client Key and Client Secret',
+      'Use OAuth to connect your account (click the Connect button above)',
+    ],
+  },
+  youtube: {
+    name: 'YouTube',
+    docsUrl: 'https://developers.google.com/youtube/v3',
+    fields: [
+      { key: 'clientId', label: 'Client ID', type: 'text', required: true },
+      { key: 'clientSecret', label: 'Client Secret', type: 'password', required: true },
+    ],
+    instructions: [
+      'Go to Google Cloud Console',
+      'Create a new project',
+      'Enable YouTube Data API v3',
+      'Create OAuth 2.0 Web Application credentials',
+      'Copy your Client ID and Client Secret',
+      'Use OAuth to connect your account (click the Connect button above)',
+    ],
+  },
 };
 
 const CredentialModal: React.FC<CredentialModalProps> = ({ platform, isOpen, onClose, onSave }) => {

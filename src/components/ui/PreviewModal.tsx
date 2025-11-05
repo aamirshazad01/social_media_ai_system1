@@ -27,7 +27,12 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ post, onClose }) => {
         const platformInfo = PLATFORMS.find(p => p.id === platform);
         if (!platformInfo) return null;
 
-        const content = post.content?.[platform] || '';
+        const rawContent = post.content?.[platform] || '';
+        const content = typeof rawContent === 'string'
+          ? rawContent
+          : typeof rawContent === 'object'
+          ? (rawContent as any)?.description || ''
+          : '';
         const hasGeneratedMedia = post.generatedImage || post.generatedVideoUrl;
 
         return (

@@ -31,7 +31,9 @@ const AppContent: React.FC = () => {
         twitter: false,
         linkedin: false,
         facebook: false,
-        instagram: false
+        instagram: false,
+        tiktok: false,
+        youtube: false
     });
 
     // Load data from Supabase on mount
@@ -55,6 +57,8 @@ const AppContent: React.FC = () => {
                     linkedin: accountsStatus.linkedin?.isConnected ?? false,
                     facebook: accountsStatus.facebook?.isConnected ?? false,
                     instagram: accountsStatus.instagram?.isConnected ?? false,
+                    tiktok: accountsStatus.tiktok?.isConnected ?? false,
+                    youtube: accountsStatus.youtube?.isConnected ?? false,
                 };
                 setConnectedAccounts(accountsSummary);
             } catch (error) {

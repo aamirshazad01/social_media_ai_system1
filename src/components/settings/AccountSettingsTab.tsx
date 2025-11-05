@@ -21,6 +21,8 @@ const AccountSettingsTab: React.FC = () => {
     linkedin: false,
     facebook: false,
     instagram: false,
+    tiktok: false,
+    youtube: false,
   })
   const [connectingPlatform, setConnectingPlatform] = useState<Platform | null>(null)
   const [errors, setErrors] = useState<Record<Platform, string | undefined>>({
@@ -28,12 +30,16 @@ const AccountSettingsTab: React.FC = () => {
     linkedin: undefined,
     facebook: undefined,
     instagram: undefined,
+    tiktok: undefined,
+    youtube: undefined,
   })
   const [statusInfo, setStatusInfo] = useState<Record<Platform, any>>({
     twitter: {},
     linkedin: {},
     facebook: {},
     instagram: {},
+    tiktok: {},
+    youtube: {},
   })
   const [timeoutWarnings, setTimeoutWarnings] = useState<Set<Platform>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
@@ -44,6 +50,8 @@ const AccountSettingsTab: React.FC = () => {
     linkedin: 60000, // 60 seconds
     facebook: 90000, // 90 seconds
     instagram: 90000, // 90 seconds
+    tiktok: 60000, // 60 seconds
+    youtube: 60000, // 60 seconds
   }
 
   // Show loading state while auth is initializing
@@ -414,7 +422,7 @@ const AccountSettingsTab: React.FC = () => {
       <div className="mt-6 pt-6 border-t border-slate/30">
         <p className="text-sm text-slate">
           <strong>Security:</strong> Your API credentials are encrypted using AES-256 encryption
-          and stored securely on our servers. We never store them in your browser.
+          and stored securely on yor servers. We never store them in your browser.
         </p>
       </div>
     </div>

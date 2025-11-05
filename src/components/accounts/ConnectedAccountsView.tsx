@@ -28,12 +28,16 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
     linkedin: undefined,
     facebook: undefined,
     instagram: undefined,
+    tiktok: undefined,
+    youtube: undefined,
   })
   const [statusInfo, setStatusInfo] = useState<Record<Platform, any>>({
     twitter: {},
     linkedin: {},
     facebook: {},
     instagram: {},
+    tiktok: {},
+    youtube: {},
   })
   const [timeoutWarnings, setTimeoutWarnings] = useState<Set<Platform>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
@@ -44,6 +48,8 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
     linkedin: 60000, // 60 seconds
     facebook: 90000, // 90 seconds
     instagram: 90000, // 90 seconds
+    tiktok: 60000, // 60 seconds
+    youtube: 60000, // 60 seconds
   }
 
   useEffect(() => {

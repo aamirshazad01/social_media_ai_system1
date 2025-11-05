@@ -19,6 +19,8 @@ const OAUTH_URLS: Record<string, string> = {
   linkedin: 'https://www.linkedin.com/oauth/v2/authorization',
   facebook: 'https://www.facebook.com/v24.0/dialog/oauth',
   instagram: 'https://www.facebook.com/v24.0/dialog/oauth', // Instagram uses Facebook OAuth
+  tiktok: 'https://www.tiktok.com/v1/oauth/authorize',
+  youtube: 'https://accounts.google.com/o/oauth2/v2/auth',
 }
 
 const SCOPES: Record<string, string[]> = {
@@ -26,6 +28,12 @@ const SCOPES: Record<string, string[]> = {
   linkedin: ['r_basicprofile', 'w_member_social', 'r_emailaddress'],
   facebook: getFacebookScopes(), // Use environment-based scope selection
   instagram: INSTAGRAM_SCOPES,
+  tiktok: ['user.info.basic', 'video.upload', 'video.publish'],
+  youtube: [
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ],
 }
 
 export async function POST(
@@ -152,6 +160,18 @@ export async function POST(
     } else if (platform === 'facebook' || platform === 'instagram') {
       params.append('scope', SCOPES[platform].join(','))
       params.append('display', 'popup')
+    } else if (platform === 'tiktok') {
+      params.set('client_key', clientId)
+      params.delete('client_id')
+      params.append('scope', SCOPES[platform].join(' '))
+      params.append('code_challenge', oauthState.codeChallenge!)
+      params.append('code_challenge_method', 'S256')
+    } else if (platform === 'youtube') {
+      params.append('scope', SCOPES[platform].join(' '))
+      params.append('access_type', 'offline')
+      params.append('prompt', 'consent')
+      params.append('code_challenge', oauthState.codeChallenge!)
+      params.append('code_challenge_method', 'S256')
     }
 
     const oauthUrl = `${OAUTH_URLS[platform]}?${params.toString()}`

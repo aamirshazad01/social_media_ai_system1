@@ -325,7 +325,11 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
                     </div>
                     <div className="bg-slate/5 border border-slate/20 p-4 rounded-lg">
                       <p className="text-charcoal text-sm leading-relaxed line-clamp-4">
-                        {post?.content?.[selectedPlatforms?.[0]] ?? 'No content'}
+                        {typeof post?.content?.[selectedPlatforms?.[0]] === 'string'
+                          ? post.content[selectedPlatforms[0]]
+                          : typeof post?.content?.[selectedPlatforms?.[0]] === 'object'
+                          ? (post.content[selectedPlatforms[0]] as any)?.description || 'No content'
+                          : 'No content'}
                       </p>
                     </div>
                   </div>

@@ -155,13 +155,29 @@ export async function publishPost(post: Post): Promise<PublishResult[]> {
 
   for (const platform of post.platforms) {
     // Get platform-specific content
-    const content = post.content[platform];
+    const rawContent = post.content[platform];
+
+    if (!rawContent) {
+      results.push({
+        platform,
+        success: false,
+        error: `No content specified for ${platform}`
+      });
+      continue;
+    }
+
+    // Convert content to string (handle YouTube object type)
+    const content = typeof rawContent === 'string'
+      ? rawContent
+      : typeof rawContent === 'object'
+      ? (rawContent as any)?.description || ''
+      : '';
 
     if (!content) {
       results.push({
         platform,
         success: false,
-        error: `No content specified for ${platform}`
+        error: `Invalid content for ${platform}`
       });
       continue;
     }
@@ -195,7 +211,9 @@ export function getPublishingReadiness(): Record<Platform, boolean> {
     twitter: isPlatformReady('twitter'),
     linkedin: isPlatformReady('linkedin'),
     facebook: isPlatformReady('facebook'),
-    instagram: isPlatformReady('instagram')
+    instagram: isPlatformReady('instagram'),
+    tiktok: isPlatformReady('tiktok'),
+    youtube: isPlatformReady('youtube')
   };
 }
 
@@ -222,7 +240,16 @@ export function validatePostForPublishing(post: Post): { valid: boolean; errors:
 
   // Platform-specific validations
   post.platforms.forEach(platform => {
-    const content = post.content[platform];
+    const rawContent = post.content[platform];
+    if (!rawContent) return;
+
+    // Convert content to string (handle YouTube object type)
+    const content = typeof rawContent === 'string'
+      ? rawContent
+      : typeof rawContent === 'object'
+      ? (rawContent as any)?.description || ''
+      : '';
+
     if (!content) return;
 
     switch (platform) {
@@ -247,6 +274,22 @@ export function validatePostForPublishing(post: Post): { valid: boolean; errors:
         }
         if (!post.generatedImage && !post.generatedVideoUrl) {
           errors.push('Instagram requires an image or video');
+        }
+        break;
+      case 'tiktok':
+        if (content.length > 2200) {
+          errors.push('TikTok caption exceeds 2200 characters');
+        }
+        if (!post.generatedImage && !post.generatedVideoUrl) {
+          errors.push('TikTok requires a video');
+        }
+        break;
+      case 'youtube':
+        if (content.length > 5000) {
+          errors.push('YouTube description exceeds 5000 characters');
+        }
+        if (!post.generatedImage && !post.generatedVideoUrl) {
+          errors.push('YouTube requires a video');
         }
         break;
     }
