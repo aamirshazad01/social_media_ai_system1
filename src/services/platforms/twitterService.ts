@@ -85,15 +85,12 @@ export async function postTweet(
   options: TwitterPostOptions
 ): Promise<{ success: boolean; tweetId?: string; url?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Twitter account not connected' };
-    }
-
+    // Text length validation is useful client-side for UX
     if (!options.text || options.text.length > 280) {
       return { success: false, error: 'Tweet text must be between 1-280 characters' };
     }
 
-    // Call backend to post tweet
+    // Call backend to post tweet - backend will validate credentials from database
     const response = await fetch('/api/twitter/post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -133,11 +130,7 @@ export async function uploadTwitterMedia(
   mediaType: 'image' | 'video'
 ): Promise<{ success: boolean; mediaId?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Twitter account not connected' };
-    }
-
-    // Call backend to upload media
+    // Call backend to upload media - backend will validate credentials from database
     const response = await fetch('/api/twitter/upload-media', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

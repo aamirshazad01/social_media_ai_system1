@@ -90,15 +90,12 @@ export async function postToFacebook(
   options: FacebookPostOptions
 ): Promise<{ success: boolean; postId?: string; url?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Facebook account not connected' };
-    }
-
+    // Message length validation is still useful client-side for UX
     if (!options.message || options.message.length > 63206) {
       return { success: false, error: 'Message must be between 1-63206 characters' };
     }
 
-    // Call backend to post
+    // Call backend to post - backend will validate credentials from database
     const response = await fetch('/api/facebook/post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -139,11 +136,7 @@ export async function uploadFacebookPhoto(
   mediaData: string  // base64 encoded
 ): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Facebook account not connected' };
-    }
-
-    // Call backend to upload media to Supabase Storage
+    // Call backend to upload media to Supabase Storage - backend will validate credentials from database
     const response = await fetch('/api/facebook/upload-media', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -179,11 +172,7 @@ export async function getFacebookPageInfo(
   credentials: FacebookCredentials
 ): Promise<{ success: boolean; pageInfo?: any; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Facebook account not connected' };
-    }
-
-    // Call backend to get page info
+    // Call backend to get page info - backend will validate credentials from database
     const response = await fetch('/api/facebook/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

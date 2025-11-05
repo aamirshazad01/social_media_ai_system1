@@ -86,15 +86,12 @@ export async function postToLinkedIn(
   options: LinkedInPostOptions
 ): Promise<{ success: boolean; postId?: string; url?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'LinkedIn account not connected' };
-    }
-
+    // Text length validation is useful client-side for UX
     if (!options.text || options.text.length > 3000) {
       return { success: false, error: 'Post text must be between 1-3000 characters' };
     }
 
-    // Call backend to post
+    // Call backend to post - backend will validate credentials from database
     const response = await fetch('/api/linkedin/post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -135,11 +132,7 @@ export async function uploadLinkedInMedia(
   mediaType: 'image' | 'video' = 'image'
 ): Promise<{ success: boolean; mediaUrn?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'LinkedIn account not connected' };
-    }
-
-    // Call backend to upload media
+    // Call backend to upload media - backend will validate credentials from database
     const response = await fetch('/api/linkedin/upload-media', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -176,11 +169,7 @@ export async function getLinkedInProfile(
   credentials: LinkedInCredentials
 ): Promise<{ success: boolean; profile?: any; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'LinkedIn account not connected' };
-    }
-
-    // Call backend to get profile
+    // Call backend to get profile - backend will validate credentials from database
     const response = await fetch('/api/linkedin/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

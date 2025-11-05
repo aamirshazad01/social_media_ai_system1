@@ -88,10 +88,7 @@ export async function postToInstagram(
   options: InstagramPostOptions
 ): Promise<{ success: boolean; postId?: string; url?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Instagram account not connected' };
-    }
-
+    // Caption length validation is useful client-side for UX
     if (!options.caption || options.caption.length > 2200) {
       return { success: false, error: 'Caption must be between 1-2200 characters' };
     }
@@ -100,7 +97,7 @@ export async function postToInstagram(
       return { success: false, error: 'Instagram requires an image' };
     }
 
-    // Call backend to post (handles 2-step process)
+    // Call backend to post (handles 2-step process) - backend will validate credentials from database
     const response = await fetch('/api/instagram/post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -140,11 +137,7 @@ export async function uploadInstagramMedia(
   mediaData: string  // base64 encoded
 ): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Instagram account not connected' };
-    }
-
-    // Call backend to upload media to Supabase Storage
+    // Call backend to upload media to Supabase Storage - backend will validate credentials from database
     const response = await fetch('/api/instagram/upload-media', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -180,11 +173,7 @@ export async function getInstagramProfile(
   credentials: InstagramCredentials
 ): Promise<{ success: boolean; profile?: any; error?: string }> {
   try {
-    if (!credentials.isConnected) {
-      return { success: false, error: 'Instagram account not connected' };
-    }
-
-    // Call backend to get profile
+    // Call backend to get profile - backend will validate credentials from database
     const response = await fetch('/api/instagram/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

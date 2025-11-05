@@ -1,5 +1,4 @@
 import { Platform, Post, PostContent, TwitterCredentials, LinkedInCredentials, FacebookCredentials, InstagramCredentials } from '@/types';
-import { getPlatformCredentials } from './credentialService';
 import { postTweet, uploadTwitterMedia } from './platforms/twitterService';
 import { postToLinkedIn, uploadLinkedInMedia } from './platforms/linkedinService';
 import { postToFacebook, uploadFacebookPhoto } from './platforms/facebookService';
@@ -24,20 +23,13 @@ export async function publishToSinglePlatform(
 ): Promise<PublishResult> {
   // Auto-detect media type if not provided
   if (!mediaType && mediaUrl) {
-    mediaType = (mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('video')) 
-      ? 'video' 
+    mediaType = (mediaUrl.includes('.mp4') || mediaUrl.includes('.mov') || mediaUrl.includes('video'))
+      ? 'video'
       : 'image';
   }
   try {
-    const credentials = getPlatformCredentials(platform);
-
-    if (!credentials || !credentials.isConnected) {
-      return {
-        platform,
-        success: false,
-        error: `${platform} is not connected. Please connect your account first.`
-      };
-    }
+    // Create empty credentials object - backend API will validate actual credentials from database
+    const emptyCredentials = {} as any;
 
     let result;
 
@@ -47,8 +39,8 @@ export async function publishToSinglePlatform(
         let mediaIds: string[] | undefined;
         if (mediaUrl) {
           const mediaResult = await uploadTwitterMedia(
-            credentials as TwitterCredentials, 
-            mediaUrl, 
+            emptyCredentials as TwitterCredentials,
+            mediaUrl,
             mediaType || 'image'
           );
           if (mediaResult.success && mediaResult.mediaId) {
@@ -56,7 +48,7 @@ export async function publishToSinglePlatform(
           }
         }
 
-        result = await postTweet(credentials as TwitterCredentials, {
+        result = await postTweet(emptyCredentials as TwitterCredentials, {
           text: content,
           mediaIds
         });
@@ -68,7 +60,7 @@ export async function publishToSinglePlatform(
         let mediaUrn: string | undefined;
         if (mediaUrl) {
           const mediaResult = await uploadLinkedInMedia(
-            credentials as LinkedInCredentials, 
+            emptyCredentials as LinkedInCredentials,
             mediaUrl,
             mediaType || 'image'
           );
@@ -77,7 +69,7 @@ export async function publishToSinglePlatform(
           }
         }
 
-        result = await postToLinkedIn(credentials as LinkedInCredentials, {
+        result = await postToLinkedIn(emptyCredentials as LinkedInCredentials, {
           text: content,
           visibility: 'PUBLIC',
           mediaUrn
@@ -89,13 +81,13 @@ export async function publishToSinglePlatform(
         // Handle media upload if present
         let imageUrl: string | undefined;
         if (mediaUrl) {
-          const mediaResult = await uploadFacebookPhoto(credentials as FacebookCredentials, mediaUrl);
+          const mediaResult = await uploadFacebookPhoto(emptyCredentials as FacebookCredentials, mediaUrl);
           if (mediaResult.success && mediaResult.imageUrl) {
             imageUrl = mediaResult.imageUrl;
           }
         }
 
-        result = await postToFacebook(credentials as FacebookCredentials, {
+        result = await postToFacebook(emptyCredentials as FacebookCredentials, {
           message: content,
           imageUrl: imageUrl,
           mediaType: mediaType
@@ -113,7 +105,7 @@ export async function publishToSinglePlatform(
         }
 
         // Upload media to get public URL (Instagram requires public URLs)
-        const mediaResult = await uploadInstagramMedia(credentials as InstagramCredentials, mediaUrl);
+        const mediaResult = await uploadInstagramMedia(emptyCredentials as InstagramCredentials, mediaUrl);
         if (!mediaResult.success || !mediaResult.imageUrl) {
           return {
             platform,
@@ -122,7 +114,7 @@ export async function publishToSinglePlatform(
           };
         }
 
-        result = await postToInstagram(credentials as InstagramCredentials, {
+        result = await postToInstagram(emptyCredentials as InstagramCredentials, {
           caption: content,
           imageUrl: mediaResult.imageUrl,
           mediaType: mediaType
@@ -186,10 +178,13 @@ export async function publishPost(post: Post): Promise<PublishResult[]> {
 
 /**
  * Check if a platform is ready to publish (connected and has valid credentials)
+ * Note: This now returns true as validation is handled server-side
+ * Backend APIs will return proper errors if platform is not connected
  */
 export function isPlatformReady(platform: Platform): boolean {
-  const credentials = getPlatformCredentials(platform);
-  return credentials?.isConnected ?? false;
+  // Credential validation is now done server-side by backend APIs
+  // which have access to database credentials
+  return true;
 }
 
 /**
@@ -215,12 +210,8 @@ export function validatePostForPublishing(post: Post): { valid: boolean; errors:
     errors.push('No platforms selected');
   }
 
-  // Check if platforms are connected
-  post.platforms.forEach(platform => {
-    if (!isPlatformReady(platform)) {
-      errors.push(`${platform} is not connected`);
-    }
-  });
+  // Platform connection validation is now done server-side by backend APIs
+  // No need to check client-side since backend APIs have database access
 
   // Check if content exists for each platform
   post.platforms.forEach(platform => {
