@@ -14,7 +14,11 @@
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:oauth-scopes.netlify.app)",
       "WebFetch(domain:developers.facebook.com)",
-      "WebFetch(domain:developer.x.com)"
+      "WebFetch(domain:developer.x.com)",
+      "WebFetch(domain:social-medias-os.vercel.app)",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__click"
     ],
     "deny": [],
     "ask": []

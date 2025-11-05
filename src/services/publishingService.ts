@@ -1,8 +1,10 @@
-import { Platform, Post, PostContent, TwitterCredentials, LinkedInCredentials, FacebookCredentials, InstagramCredentials } from '@/types';
+import { Platform, Post, PostContent, TwitterCredentials, LinkedInCredentials, FacebookCredentials, InstagramCredentials, TikTokCredentials, YouTubeCredentials } from '@/types';
 import { postTweet, uploadTwitterMedia } from './platforms/twitterService';
 import { postToLinkedIn, uploadLinkedInMedia } from './platforms/linkedinService';
 import { postToFacebook, uploadFacebookPhoto } from './platforms/facebookService';
 import { postToInstagram, uploadInstagramMedia } from './platforms/instagramService';
+import { postToTikTok, uploadTikTokVideo } from './platforms/tiktokService';
+import { uploadToYouTube } from './platforms/youtubeService';
 
 export interface PublishResult {
   platform: Platform;
@@ -95,6 +97,33 @@ export async function publishToSinglePlatform(
         break;
       }
 
+      case 'tiktok': {
+        if (!mediaUrl) {
+          return {
+            platform,
+            success: false,
+            error: 'TikTok requires a video to post'
+          };
+        }
+
+        // Upload video to get public URL (TikTok requires public URLs)
+        const mediaResult = await uploadTikTokVideo(emptyCredentials as TikTokCredentials, mediaUrl);
+        if (!mediaResult.success || !mediaResult.videoUrl) {
+          return {
+            platform,
+            success: false,
+            error: mediaResult.error || 'Failed to upload video'
+          };
+        }
+
+        result = await postToTikTok(emptyCredentials as TikTokCredentials, {
+          caption: content,
+          videoUrl: mediaResult.videoUrl,
+          videoSize: mediaResult.videoSize || 0
+        });
+        break;
+      }
+
       case 'instagram': {
         if (!mediaUrl) {
           return {
@@ -118,6 +147,38 @@ export async function publishToSinglePlatform(
           caption: content,
           imageUrl: mediaResult.imageUrl,
           mediaType: mediaType
+        });
+        break;
+      }
+
+      case 'youtube': {
+        if (!mediaUrl) {
+          return {
+            platform,
+            success: false,
+            error: 'YouTube requires a video to upload'
+          };
+        }
+
+        // Convert media URL to base64 if needed (YouTube expects base64 encoded video buffer)
+        // If mediaUrl is already a URL, we need to fetch and convert to base64
+        let videoBuffer: string;
+        if (mediaUrl.startsWith('http')) {
+          // Fetch video from URL and convert to base64
+          const videoResponse = await fetch(mediaUrl);
+          const videoBlob = await videoResponse.blob();
+          const arrayBuffer = await videoBlob.arrayBuffer();
+          videoBuffer = Buffer.from(arrayBuffer).toString('base64');
+        } else {
+          // Already base64
+          videoBuffer = mediaUrl;
+        }
+
+        result = await uploadToYouTube(emptyCredentials as YouTubeCredentials, {
+          title: content.substring(0, 100), // YouTube title max 100 chars
+          description: content,
+          videoBuffer: videoBuffer,
+          privacyStatus: 'private' // Default to private
         });
         break;
       }
