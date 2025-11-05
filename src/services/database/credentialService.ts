@@ -253,6 +253,8 @@ export class CredentialService {
 
   /**
    * Disconnect platform
+   * Deletes the credential record for the specific platform
+   * Only removes the platform credential being disconnected
    */
   static async disconnectPlatform(
     platform: Platform,
@@ -261,14 +263,11 @@ export class CredentialService {
   ): Promise<void> {
     try {
       const supabase = await getSupabase()
+
+      // Delete only the credential record for this specific platform
       const { error } = await (supabase
         .from('social_accounts') as any)
-        .update({
-          is_connected: false,
-          credentials_encrypted: null,
-          refresh_token_encrypted: null,
-          connected_at: null,
-        })
+        .delete()
         .eq('workspace_id', workspaceId)
         .eq('platform', platform)
 
