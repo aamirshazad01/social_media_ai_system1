@@ -19,56 +19,122 @@ import { CredentialService } from '@/services/database'
 import { TikTokCredentials } from '@/types'
 
 export async function POST(req: NextRequest) {
+  const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip')
+
   try {
-    // Check authentication
+    // ✅ Step 1: Check authentication
     const supabase = await createServerClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get workspace_id
-    const { data: userData } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .maybeSingle<{ workspace_id: string }>()
-
-    if (!userData) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Get request body
-    const body = await req.json()
-    const { videoData } = body
-
-    if (!videoData) {
       return NextResponse.json(
-        { error: 'videoData is required' },
+        {
+          error: 'Unauthorized',
+          code: 'AUTH_REQUIRED',
+          message: 'You must be logged in to upload media',
+          status: 401
+        },
+        { status: 401 }
+      )
+    }
+
+    // ✅ Step 2: Get workspace and verify user exists
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('workspace_id, role')
+      .eq('id', user.id)
+      .maybeSingle<{ workspace_id: string; role: string }>()
+
+    if (userError || !userData) {
+      return NextResponse.json(
+        {
+          error: 'User not found',
+          code: 'USER_NOT_FOUND',
+          message: 'Your user profile could not be found. Please try logging out and back in.',
+          status: 404
+        },
+        { status: 404 }
+      )
+    }
+
+    const workspaceId = userData.workspace_id
+
+    // ✅ Step 3: Get request body
+    let body: any
+    try {
+      body = await req.json()
+    } catch (parseError) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request',
+          code: 'INVALID_JSON',
+          message: 'Request body must be valid JSON',
+          status: 400
+        },
         { status: 400 }
       )
     }
 
-    // Get TikTok credentials from database
+    const { videoData } = body
+
+    if (!videoData) {
+      return NextResponse.json(
+        {
+          error: 'Missing videoData',
+          code: 'MISSING_VIDEO_DATA',
+          message: 'videoData field is required in request body',
+          status: 400
+        },
+        { status: 400 }
+      )
+    }
+
+    // ✅ Step 4: Get TikTok credentials from database
     const credentialService = new CredentialService(supabase)
     const credentials = await credentialService.getPlatformCredentials(
-      userData.workspace_id,
+      workspaceId,
       'tiktok'
     )
 
-    if (!credentials || !('accessToken' in credentials)) {
-      return NextResponse.json({ error: 'TikTok not connected' }, { status: 400 })
+    if (!credentials) {
+      return NextResponse.json(
+        {
+          error: 'TikTok not connected',
+          code: 'PLATFORM_NOT_CONNECTED',
+          message: 'Please connect your TikTok account in Settings → Account Connections',
+          status: 403
+        },
+        { status: 403 }
+      )
     }
+
+    if (!('accessToken' in credentials)) {
+      return NextResponse.json(
+        {
+          error: 'Invalid TikTok credentials',
+          code: 'INVALID_CREDENTIALS',
+          message: 'TikTok credentials are corrupted. Please reconnect your account.',
+          status: 400
+        },
+        { status: 400 }
+      )
+    }
+
     const tikTokCreds = credentials as TikTokCredentials
 
-    // Check if token is expired
+    // ✅ Step 5: Check if token is expired
     if (tikTokCreds.expiresAt && new Date(tikTokCreds.expiresAt) < new Date()) {
       return NextResponse.json(
-        { error: 'Access token expired. Please reconnect.' },
-        { status: 400 }
+        {
+          error: 'Token expired',
+          code: 'TOKEN_EXPIRED',
+          message: 'Your TikTok access token has expired. Please reconnect your account in Settings → Account Connections',
+          status: 401,
+          expired: true
+        },
+        { status: 401 }
       )
     }
 
@@ -129,13 +195,50 @@ export async function POST(req: NextRequest) {
       fileName: fileName,
     })
   } catch (error) {
-    // Handle errors
+    // Handle unexpected errors
     const errorMessage = (error as any).message || 'Unknown error'
+    const errorCode = (error as any).code || 'UPLOAD_ERROR'
 
+    // Log error for debugging
+    console.error('TikTok upload error:', {
+      error: errorMessage,
+      code: errorCode,
+      ipAddress: ipAddress || 'unknown',
+      timestamp: new Date().toISOString()
+    })
+
+    // Provide helpful error responses based on error type
+    if (errorMessage.includes('Failed to upload to storage')) {
+      return NextResponse.json(
+        {
+          error: 'Storage upload failed',
+          code: 'STORAGE_ERROR',
+          message: 'Failed to upload video to storage. Please try again or contact support.',
+          details: errorMessage
+        },
+        { status: 500 }
+      )
+    }
+
+    if (errorMessage.includes('Failed to get public URL')) {
+      return NextResponse.json(
+        {
+          error: 'URL generation failed',
+          code: 'URL_ERROR',
+          message: 'Failed to generate public URL for video. Please try again.',
+          details: errorMessage
+        },
+        { status: 500 }
+      )
+    }
+
+    // Generic error response
     return NextResponse.json(
       {
-        error: 'Failed to upload media',
-        details: errorMessage,
+        error: 'Upload failed',
+        code: errorCode,
+        message: 'An unexpected error occurred during upload. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       },
       { status: 500 }
     )

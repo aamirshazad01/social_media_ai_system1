@@ -12,59 +12,101 @@ import { CredentialService } from '@/services/database'
 import type { TikTokCredentials } from '@/types'
 
 export async function POST(req: NextRequest) {
+  const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip')
+
   try {
-    // Check authentication
+    // ✅ Step 1: Check authentication
     const supabase = await createServerClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        {
+          error: 'Unauthorized',
+          code: 'AUTH_REQUIRED',
+          message: 'You must be logged in to verify TikTok credentials',
+          connected: false,
+          status: 401
+        },
+        { status: 401 }
+      )
     }
 
-    // Get workspace_id
-    const { data: userData } = await supabase
+    // ✅ Step 2: Get workspace_id
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('workspace_id')
       .eq('id', user.id)
       .maybeSingle<{ workspace_id: string }>()
 
-    if (!userData) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (userError || !userData) {
+      return NextResponse.json(
+        {
+          error: 'User not found',
+          code: 'USER_NOT_FOUND',
+          message: 'Your user profile could not be found. Please try logging out and back in.',
+          connected: false,
+          status: 404
+        },
+        { status: 404 }
+      )
     }
 
     const workspaceId = userData.workspace_id
 
-    // Get TikTok credentials from database
+    // ✅ Step 3: Get TikTok credentials from database
     const credentialService = new CredentialService(supabase)
     const credentials = await credentialService.getPlatformCredentials(
       workspaceId,
       'tiktok'
     )
 
-    if (!credentials || !('accessToken' in credentials) || !('openId' in credentials)) {
+    if (!credentials) {
       return NextResponse.json(
-        { error: 'TikTok not connected', connected: false },
+        {
+          error: 'TikTok not connected',
+          code: 'PLATFORM_NOT_CONNECTED',
+          message: 'Please connect your TikTok account in Settings → Account Connections',
+          connected: false,
+          status: 403
+        },
+        { status: 403 }
+      )
+    }
+
+    if (!('accessToken' in credentials) || !('openId' in credentials)) {
+      return NextResponse.json(
+        {
+          error: 'Invalid TikTok credentials',
+          code: 'INVALID_CREDENTIALS',
+          message: 'TikTok credentials are incomplete or corrupted. Please reconnect your account.',
+          connected: false,
+          status: 400
+        },
         { status: 400 }
       )
     }
 
     const tikTokCreds = credentials as TikTokCredentials
 
-    // Check if token is expired
+    // ✅ Step 4: Check if token is expired
     if (tikTokCreds.expiresAt && new Date(tikTokCreds.expiresAt) < new Date()) {
       return NextResponse.json(
         {
-          error: 'Access token expired. Please reconnect.',
+          error: 'Token expired',
+          code: 'TOKEN_EXPIRED',
+          message: 'Your TikTok access token has expired. Please reconnect your account in Settings → Account Connections',
           connected: false,
-          expired: true
+          expired: true,
+          status: 401
         },
-        { status: 400 }
+        { status: 401 }
       )
     }
 
-    // Token is valid, return account info
+    // ✅ Step 5: Token is valid, return account info
     return NextResponse.json({
       connected: true,
       username: tikTokCreds.username,
@@ -74,11 +116,21 @@ export async function POST(req: NextRequest) {
       openId: tikTokCreds.openId
     })
   } catch (error) {
+    // Log error for debugging
+    console.error('TikTok verify error:', {
+      error: (error as Error).message,
+      ipAddress: ipAddress || 'unknown',
+      timestamp: new Date().toISOString()
+    })
+
     return NextResponse.json(
       {
-        error: 'Failed to verify TikTok credentials',
+        error: 'Verification failed',
+        code: 'VERIFY_ERROR',
+        message: 'An unexpected error occurred while verifying TikTok credentials. Please try again.',
         connected: false,
-        details: (error as Error).message
+        details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
+        status: 500
       },
       { status: 500 }
     )
