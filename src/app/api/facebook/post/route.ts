@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
-import { postToFacebookPage, postPhotoToFacebookPage, uploadVideoToFacebookPage } from '@/lib/facebook/client'
+import { postToFacebookPage, postPhotoToFacebookPage, uploadVideoToFacebookPage, generateAppSecretProof } from '@/lib/facebook/client'
 import { CredentialService } from '@/services/database'
 import { FacebookCredentials } from '@/types'
 
@@ -77,10 +77,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Generate appsecret_proof for server-to-server API calls
+    // This is required by Facebook's Graph API for enhanced security
+    const appSecret = process.env.FACEBOOK_CLIENT_SECRET
+    if (!appSecret) {
+      return NextResponse.json(
+        { error: 'Facebook app secret not configured' },
+        { status: 500 }
+      )
+    }
+
+    const appSecretProof = generateAppSecretProof(facebookCreds.accessToken, appSecret)
+
     let result: { id: string; post_id?: string };
 
     // Detect if it's a video
-    const isVideo = mediaType === 'video' || 
+    const isVideo = mediaType === 'video' ||
                     (imageUrl && (imageUrl.includes('.mp4') || imageUrl.includes('.mov') || imageUrl.includes('video')));
 
     // Post with media if URL provided
@@ -90,7 +102,8 @@ export async function POST(req: NextRequest) {
         facebookCreds.pageId!,
         facebookCreds.accessToken,
         imageUrl,
-        message
+        message,
+        appSecretProof
       );
     } else if (imageUrl) {
       // Upload photo
@@ -98,7 +111,8 @@ export async function POST(req: NextRequest) {
         facebookCreds.pageId!,
         facebookCreds.accessToken,
         imageUrl,
-        message
+        message,
+        appSecretProof
       );
     } else {
       // Post text only or with link
@@ -106,7 +120,8 @@ export async function POST(req: NextRequest) {
         facebookCreds.pageId!,
         facebookCreds.accessToken,
         message,
-        link
+        link,
+        appSecretProof
       );
     }
 
