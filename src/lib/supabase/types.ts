@@ -1,6 +1,6 @@
 /**
- * Database TypeScript Types
- * These types will be updated as we create tables in Supabase
+ * ENTERPRISE-READY DATABASE TYPES
+ * Generated from the new normalized schema
  */
 
 export type Json =
@@ -11,188 +11,190 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type UserRole = 'admin' | 'editor' | 'viewer'
+export type PlatformType = 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+export type PostStatus = 'draft' | 'needs_approval' | 'approved' | 'scheduled' | 'published' | 'failed'
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+export type MediaType = 'image' | 'video'
+export type MediaSource = 'uploaded' | 'ai-generated'
+
 export interface Database {
   public: {
     Tables: {
+      // ========================================
+      // CORE TABLES
+      // ========================================
+
       workspaces: {
         Row: {
           id: string
           name: string
+          description: string | null
+          logo_url: string | null
+          max_users: number
+          settings: Json
+          is_active: boolean
           created_at: string
           updated_at: string
-          max_users: number
-          settings: Json | null
         }
         Insert: {
           id?: string
           name: string
+          description?: string | null
+          logo_url?: string | null
+          max_users?: number
+          settings?: Json
+          is_active?: boolean
           created_at?: string
           updated_at?: string
-          max_users?: number
-          settings?: Json | null
         }
         Update: {
           id?: string
           name?: string
+          description?: string | null
+          logo_url?: string | null
+          max_users?: number
+          settings?: Json
+          is_active?: boolean
           created_at?: string
           updated_at?: string
-          max_users?: number
-          settings?: Json | null
         }
       }
+
       users: {
         Row: {
           id: string
+          workspace_id: string
           email: string
           full_name: string | null
-          role: 'admin' | 'editor' | 'viewer'
-          workspace_id: string
+          role: UserRole
+          avatar_url: string | null
+          phone: string | null
+          is_active: boolean
+          last_login_at: string | null
           created_at: string
           updated_at: string
-          avatar_url: string | null
         }
         Insert: {
           id: string
+          workspace_id: string
           email: string
           full_name?: string | null
-          role?: 'admin' | 'editor' | 'viewer'
-          workspace_id: string
+          role?: UserRole
+          avatar_url?: string | null
+          phone?: string | null
+          is_active?: boolean
+          last_login_at?: string | null
           created_at?: string
           updated_at?: string
-          avatar_url?: string | null
         }
         Update: {
           id?: string
+          workspace_id?: string
           email?: string
           full_name?: string | null
-          role?: 'admin' | 'editor' | 'viewer'
-          workspace_id?: string
-          created_at?: string
-          updated_at?: string
+          role?: UserRole
           avatar_url?: string | null
-        }
-      }
-      posts: {
-        Row: {
-          id: string
-          workspace_id: string
-          created_by: string
-          topic: string
-          platforms: string[]
-          content: Json
-          status: 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed'
-          scheduled_at: string | null
-          published_at: string | null
-          campaign_id: string | null
-          engagement_score: number | null
-          engagement_suggestions: string[] | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          workspace_id: string
-          created_by: string
-          topic: string
-          platforms: string[]
-          content: Json
-          status?: 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed'
-          scheduled_at?: string | null
-          published_at?: string | null
-          campaign_id?: string | null
-          engagement_score?: number | null
-          engagement_suggestions?: string[] | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          workspace_id?: string
-          created_by?: string
-          topic?: string
-          platforms?: string[]
-          content?: Json
-          status?: 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed'
-          scheduled_at?: string | null
-          published_at?: string | null
-          campaign_id?: string | null
-          engagement_score?: number | null
-          engagement_suggestions?: string[] | null
+          phone?: string | null
+          is_active?: boolean
+          last_login_at?: string | null
           created_at?: string
           updated_at?: string
         }
       }
+
       social_accounts: {
         Row: {
           id: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+          platform: PlatformType
           credentials_encrypted: string
-          is_connected: boolean
+          refresh_token_encrypted: string | null
           username: string | null
+          account_id: string | null
+          account_name: string | null
+          profile_picture_url: string | null
+          is_connected: boolean
+          is_verified: boolean
           connected_at: string | null
           last_verified_at: string | null
-          expires_at: string | null
+          access_token_expires_at: string | null
           last_refreshed_at: string | null
-          refresh_token_encrypted: string | null
-          page_id: string | null
-          page_name: string | null
-          is_auto_refreshed: boolean
           refresh_error_count: number
           last_error_message: string | null
+          platform_user_id: string | null
+          page_id: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+          platform: PlatformType
           credentials_encrypted: string
-          is_connected?: boolean
+          refresh_token_encrypted?: string | null
           username?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          profile_picture_url?: string | null
+          is_connected?: boolean
+          is_verified?: boolean
           connected_at?: string | null
           last_verified_at?: string | null
-          expires_at?: string | null
+          access_token_expires_at?: string | null
           last_refreshed_at?: string | null
-          refresh_token_encrypted?: string | null
-          page_id?: string | null
-          page_name?: string | null
-          is_auto_refreshed?: boolean
           refresh_error_count?: number
           last_error_message?: string | null
+          platform_user_id?: string | null
+          page_id?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           workspace_id?: string
-          platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+          platform?: PlatformType
           credentials_encrypted?: string
-          is_connected?: boolean
+          refresh_token_encrypted?: string | null
           username?: string | null
+          account_id?: string | null
+          account_name?: string | null
+          profile_picture_url?: string | null
+          is_connected?: boolean
+          is_verified?: boolean
           connected_at?: string | null
           last_verified_at?: string | null
-          expires_at?: string | null
+          access_token_expires_at?: string | null
           last_refreshed_at?: string | null
-          refresh_token_encrypted?: string | null
-          page_id?: string | null
-          page_name?: string | null
-          is_auto_refreshed?: boolean
           refresh_error_count?: number
           last_error_message?: string | null
+          platform_user_id?: string | null
+          page_id?: string | null
           created_at?: string
           updated_at?: string
         }
       }
+
       campaigns: {
         Row: {
           id: string
           workspace_id: string
           name: string
+          description: string | null
           goal: string | null
-          color: string
+          status: string
           start_date: string | null
           end_date: string | null
+          color: string | null
+          icon: string | null
+          content_themes: string[] | null
+          target_audience: Json
+          performance_targets: Json
+          budget_hours: number
+          tags: string[] | null
+          assigned_to: string[] | null
+          is_archived: boolean
+          created_by: string
           created_at: string
           updated_at: string
         }
@@ -200,10 +202,21 @@ export interface Database {
           id?: string
           workspace_id: string
           name: string
+          description?: string | null
           goal?: string | null
-          color?: string
+          status?: string
           start_date?: string | null
           end_date?: string | null
+          color?: string | null
+          icon?: string | null
+          content_themes?: string[] | null
+          target_audience?: Json
+          performance_targets?: Json
+          budget_hours?: number
+          tags?: string[] | null
+          assigned_to?: string[] | null
+          is_archived?: boolean
+          created_by: string
           created_at?: string
           updated_at?: string
         }
@@ -211,64 +224,266 @@ export interface Database {
           id?: string
           workspace_id?: string
           name?: string
+          description?: string | null
           goal?: string | null
-          color?: string
+          status?: string
           start_date?: string | null
           end_date?: string | null
+          color?: string | null
+          icon?: string | null
+          content_themes?: string[] | null
+          target_audience?: Json
+          performance_targets?: Json
+          budget_hours?: number
+          tags?: string[] | null
+          assigned_to?: string[] | null
+          is_archived?: boolean
+          created_by?: string
           created_at?: string
           updated_at?: string
         }
       }
+
+      posts: {
+        Row: {
+          id: string
+          workspace_id: string
+          campaign_id: string | null
+          title: string | null
+          topic: string | null
+          status: PostStatus
+          scheduled_at: string | null
+          published_at: string | null
+          engagement_score: number
+          engagement_suggestions: string[] | null
+          created_by: string
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          campaign_id?: string | null
+          title?: string | null
+          topic?: string | null
+          status?: PostStatus
+          scheduled_at?: string | null
+          published_at?: string | null
+          engagement_score?: number
+          engagement_suggestions?: string[] | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          campaign_id?: string | null
+          title?: string | null
+          topic?: string | null
+          status?: PostStatus
+          scheduled_at?: string | null
+          published_at?: string | null
+          engagement_score?: number
+          engagement_suggestions?: string[] | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+      }
+
+      post_content: {
+        Row: {
+          id: string
+          post_id: string
+          text_content: string | null
+          description: string | null
+          hashtags: string[] | null
+          mentions: string[] | null
+          call_to_action: string | null
+          version_number: number
+          change_summary: string | null
+          changed_by: string | null
+          is_current: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          text_content?: string | null
+          description?: string | null
+          hashtags?: string[] | null
+          mentions?: string[] | null
+          call_to_action?: string | null
+          version_number: number
+          change_summary?: string | null
+          changed_by?: string | null
+          is_current?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          text_content?: string | null
+          description?: string | null
+          hashtags?: string[] | null
+          mentions?: string[] | null
+          call_to_action?: string | null
+          version_number?: number
+          change_summary?: string | null
+          changed_by?: string | null
+          is_current?: boolean
+          created_at?: string
+        }
+      }
+
+      post_platforms: {
+        Row: {
+          id: string
+          post_id: string
+          platform: PlatformType
+          platform_post_id: string | null
+          platform_status: string | null
+          platform_error_message: string | null
+          platform_impressions: number
+          platform_engagement: number
+          platform_reach: number
+          posted_at: string | null
+          error_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          platform: PlatformType
+          platform_post_id?: string | null
+          platform_status?: string | null
+          platform_error_message?: string | null
+          platform_impressions?: number
+          platform_engagement?: number
+          platform_reach?: number
+          posted_at?: string | null
+          error_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          platform?: PlatformType
+          platform_post_id?: string | null
+          platform_status?: string | null
+          platform_error_message?: string | null
+          platform_impressions?: number
+          platform_engagement?: number
+          platform_reach?: number
+          posted_at?: string | null
+          error_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+
       media_assets: {
         Row: {
           id: string
           workspace_id: string
           name: string
-          type: 'image' | 'video'
-          url: string
+          description: string | null
+          type: MediaType
+          source: MediaSource
+          file_url: string
           thumbnail_url: string | null
-          size: number
+          file_size: number | null
           width: number | null
           height: number | null
-          tags: string[]
-          source: 'ai-generated' | 'uploaded'
-          used_in_posts: string[]
+          duration_seconds: number | null
+          tags: string[] | null
+          alt_text: string | null
+          usage_count: number
+          last_used_at: string | null
+          created_by: string | null
           created_at: string
           updated_at: string
+          deleted_at: string | null
         }
         Insert: {
           id?: string
           workspace_id: string
           name: string
-          type: 'image' | 'video'
-          url: string
+          description?: string | null
+          type: MediaType
+          source: MediaSource
+          file_url: string
           thumbnail_url?: string | null
-          size: number
+          file_size?: number | null
           width?: number | null
           height?: number | null
-          tags?: string[]
-          source?: 'ai-generated' | 'uploaded'
-          used_in_posts?: string[]
+          duration_seconds?: number | null
+          tags?: string[] | null
+          alt_text?: string | null
+          usage_count?: number
+          last_used_at?: string | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
+          deleted_at?: string | null
         }
         Update: {
           id?: string
           workspace_id?: string
           name?: string
-          type?: 'image' | 'video'
-          url?: string
+          description?: string | null
+          type?: MediaType
+          source?: MediaSource
+          file_url?: string
           thumbnail_url?: string | null
-          size?: number
+          file_size?: number | null
           width?: number | null
           height?: number | null
-          tags?: string[]
-          source?: 'ai-generated' | 'uploaded'
-          used_in_posts?: string[]
+          duration_seconds?: number | null
+          tags?: string[] | null
+          alt_text?: string | null
+          usage_count?: number
+          last_used_at?: string | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
+          deleted_at?: string | null
         }
       }
+
+      post_media: {
+        Row: {
+          id: string
+          post_id: string
+          media_asset_id: string
+          position_order: number
+          usage_caption: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          media_asset_id: string
+          position_order?: number
+          usage_caption?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          media_asset_id?: string
+          position_order?: number
+          usage_caption?: string | null
+          created_at?: string
+        }
+      }
+
       approvals: {
         Row: {
           id: string
@@ -276,7 +491,7 @@ export interface Database {
           workspace_id: string
           requested_by: string
           approved_by: string | null
-          status: 'pending' | 'approved' | 'rejected'
+          status: ApprovalStatus
           comment: string | null
           created_at: string
           updated_at: string
@@ -287,7 +502,7 @@ export interface Database {
           workspace_id: string
           requested_by: string
           approved_by?: string | null
-          status?: 'pending' | 'approved' | 'rejected'
+          status?: ApprovalStatus
           comment?: string | null
           created_at?: string
           updated_at?: string
@@ -298,102 +513,367 @@ export interface Database {
           workspace_id?: string
           requested_by?: string
           approved_by?: string | null
-          status?: 'pending' | 'approved' | 'rejected'
+          status?: ApprovalStatus
           comment?: string | null
           created_at?: string
           updated_at?: string
         }
       }
-      activity_logs: {
-        Row: {
-          id: string
-          workspace_id: string
-          user_id: string
-          action: string
-          resource_type: string
-          resource_id: string | null
-          details: Json | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          workspace_id: string
-          user_id: string
-          action: string
-          resource_type: string
-          resource_id?: string | null
-          details?: Json | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          workspace_id?: string
-          user_id?: string
-          action?: string
-          resource_type?: string
-          resource_id?: string | null
-          details?: Json | null
-          created_at?: string
-        }
-      }
+
       post_analytics: {
         Row: {
           id: string
           post_id: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+          platform: PlatformType
           impressions: number
-          engagement: number
+          reach: number
+          engagement_rate: number
           clicks: number
           shares: number
           comments: number
           likes: number
-          fetched_at: string
+          reposts: number
+          replies: number
+          saves: number
+          engagement_total: number
+          fetched_at: string | null
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           post_id: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+          platform: PlatformType
           impressions?: number
-          engagement?: number
+          reach?: number
+          engagement_rate?: number
           clicks?: number
           shares?: number
           comments?: number
           likes?: number
-          fetched_at?: string
+          reposts?: number
+          replies?: number
+          saves?: number
+          engagement_total?: number
+          fetched_at?: string | null
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           post_id?: string
           workspace_id?: string
-          platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
+          platform?: PlatformType
           impressions?: number
-          engagement?: number
+          reach?: number
+          engagement_rate?: number
           clicks?: number
           shares?: number
           comments?: number
           likes?: number
-          fetched_at?: string
+          reposts?: number
+          replies?: number
+          saves?: number
+          engagement_total?: number
+          fetched_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+
+      activity_logs: {
+        Row: {
+          id: string
+          workspace_id: string
+          user_id: string | null
+          action: string
+          resource_type: string
+          resource_id: string | null
+          old_values: Json | null
+          new_values: Json | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          user_id?: string | null
+          action: string
+          resource_type: string
+          resource_id?: string | null
+          old_values?: Json | null
+          new_values?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          user_id?: string | null
+          action?: string
+          resource_type?: string
+          resource_id?: string | null
+          old_values?: Json | null
+          new_values?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
           created_at?: string
         }
       }
+
+      oauth_states: {
+        Row: {
+          id: string
+          workspace_id: string
+          platform: PlatformType
+          state: string
+          code_challenge: string | null
+          code_challenge_method: string | null
+          ip_address: string | null
+          user_agent: string | null
+          is_used: boolean
+          used_at: string | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          platform: PlatformType
+          state: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          is_used?: boolean
+          used_at?: string | null
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          platform?: PlatformType
+          state?: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          is_used?: boolean
+          used_at?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+      }
+
+      workspace_invites: {
+        Row: {
+          id: string
+          workspace_id: string
+          email: string
+          invited_by: string
+          role: UserRole
+          token: string
+          is_accepted: boolean
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          email: string
+          invited_by: string
+          role?: UserRole
+          token: string
+          is_accepted?: boolean
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          email?: string
+          invited_by?: string
+          role?: UserRole
+          token?: string
+          is_accepted?: boolean
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+      }
+
+      a_b_tests: {
+        Row: {
+          id: string
+          workspace_id: string
+          campaign_id: string | null
+          name: string
+          description: string | null
+          status: string
+          test_type: string | null
+          hypothesis: string | null
+          start_date: string | null
+          end_date: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          campaign_id?: string | null
+          name: string
+          description?: string | null
+          status?: string
+          test_type?: string | null
+          hypothesis?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          campaign_id?: string | null
+          name?: string
+          description?: string | null
+          status?: string
+          test_type?: string | null
+          hypothesis?: string | null
+          start_date?: string | null
+          end_date?: string | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+
+      a_b_test_variants: {
+        Row: {
+          id: string
+          test_id: string
+          post_id: string
+          variant_name: string | null
+          variant_number: number | null
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          test_id: string
+          post_id: string
+          variant_name?: string | null
+          variant_number?: number | null
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          test_id?: string
+          post_id?: string
+          variant_name?: string | null
+          variant_number?: number | null
+          description?: string | null
+          created_at?: string
+        }
+      }
+
+      campaign_analytics: {
+        Row: {
+          id: string
+          campaign_id: string
+          workspace_id: string
+          metric_date: string
+          platform: PlatformType | null
+          total_posts: number
+          published_posts: number
+          total_impressions: number
+          total_engagement: number
+          total_reach: number
+          average_engagement_rate: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          workspace_id: string
+          metric_date: string
+          platform?: PlatformType | null
+          total_posts?: number
+          published_posts?: number
+          total_impressions?: number
+          total_engagement?: number
+          total_reach?: number
+          average_engagement_rate?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          workspace_id?: string
+          metric_date?: string
+          platform?: PlatformType | null
+          total_posts?: number
+          published_posts?: number
+          total_impressions?: number
+          total_engagement?: number
+          total_reach?: number
+          average_engagement_rate?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
+
     Views: {
       [_ in never]: never
     }
+
     Functions: {
-      [_ in never]: never
+      get_user_workspace_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_workspace_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      get_post_with_platforms: {
+        Args: {
+          post_id: string
+        }
+        Returns: {
+          id: string
+          workspace_id: string
+          title: string | null
+          status: string
+          platforms: string | null
+          scheduled_at: string | null
+        }[]
+      }
     }
+
     Enums: {
-      user_role: 'admin' | 'editor' | 'viewer'
-      post_status: 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed'
-      platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
-      media_type: 'image' | 'video'
-      media_source: 'ai-generated' | 'uploaded'
-      approval_status: 'pending' | 'approved' | 'rejected'
+      user_role: UserRole
+      platform_type: PlatformType
+      post_status: PostStatus
+      approval_status: ApprovalStatus
+      media_type: MediaType
+      media_source: MediaSource
     }
   }
 }

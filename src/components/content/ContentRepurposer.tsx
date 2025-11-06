@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Post, Platform } from '@/types';
+import { Post, Platform, PostType } from '@/types';
 import { PLATFORMS } from '@/constants';
 import { repurposeContent } from '@/services/api/geminiService';
 import { Sparkles, Loader2, FileText, Link as LinkIcon, Upload, Save, Video, Image as ImageIcon } from 'lucide-react';
@@ -64,17 +64,61 @@ const ContentRepurposer: React.FC<ContentRepurposerProps> = ({ onPostsCreated })
     try {
       const repurposedPosts = await repurposeContent(longFormContent, selectedPlatforms, numberOfPosts);
 
-      const posts: Post[] = repurposedPosts.map(post => ({
-        id: crypto.randomUUID(),
-        topic: post.topic,
-        platforms: selectedPlatforms,
-        content: post.content,
-        status: 'draft' as const,
-        createdAt: new Date().toISOString(),
-        isGeneratingImage: false,
-        isGeneratingVideo: false,
-        videoGenerationStatus: '',
-      }));
+      const posts: Post[] = repurposedPosts.map(post => {
+        // Determine optimal post type for each platform
+        const postTypeMap: Record<Platform, PostType> = {
+          twitter: 'post',
+          linkedin: post.content?.imageSuggestion ? 'carousel' : 'post',
+          facebook: post.content?.videoSuggestion ? 'reel' : (post.content?.imageSuggestion ? 'carousel' : 'post'),
+          instagram: post.content?.videoSuggestion ? 'reel' : (post.content?.imageSuggestion ? 'carousel' : 'feed'),
+          tiktok: post.content?.videoSuggestion ? 'video' : (post.content?.imageSuggestion ? 'slideshow' : 'video'),
+          youtube: post.content?.videoSuggestion ? 'video' : 'short',
+        };
+
+        // Infer postType from available content
+        const inferredPostType = selectedPlatforms.length > 0
+          ? postTypeMap[selectedPlatforms[0]]
+          : 'post';
+
+        // Enhance image suggestion for Gemini API
+        let enhancedImageSuggestion = undefined;
+        if (post.content?.imageSuggestion) {
+          const hasQualityKeywords = /high.?resolution|4k|professional|cinematic|studio|detailed|composition/i.test(post.content.imageSuggestion);
+          if (!hasQualityKeywords) {
+            enhancedImageSuggestion = `${post.content.imageSuggestion}. Style: professional, high-resolution, cinematic quality. Composition: well-balanced, eye-catching. Colors: vibrant and engaging. Perfect for social media.`;
+          } else {
+            enhancedImageSuggestion = post.content.imageSuggestion;
+          }
+        }
+
+        // Enhance video suggestion for Gemini API
+        let enhancedVideoSuggestion = undefined;
+        if (post.content?.videoSuggestion) {
+          const hasTechKeywords = /9:16|vertical|duration|pacing|cinematic|seconds|fps|editing/i.test(post.content.videoSuggestion);
+          if (!hasTechKeywords) {
+            enhancedVideoSuggestion = `${post.content.videoSuggestion}. Format: 9:16 vertical video, 30-45 seconds. Style: cinematic quality, professional editing, engaging pacing, smooth transitions. Include text overlays, energetic transitions, modern visual effects. Perfect for TikTok, Instagram Reels, YouTube Shorts.`;
+          } else {
+            enhancedVideoSuggestion = post.content.videoSuggestion;
+          }
+        }
+
+        return {
+          id: crypto.randomUUID(),
+          topic: post.topic,
+          platforms: selectedPlatforms,
+          postType: inferredPostType,
+          content: {
+            ...post.content,
+            imageSuggestion: enhancedImageSuggestion,
+            videoSuggestion: enhancedVideoSuggestion,
+          },
+          status: 'draft' as const,
+          createdAt: new Date().toISOString(),
+          isGeneratingImage: false,
+          isGeneratingVideo: false,
+          videoGenerationStatus: '',
+        };
+      });
 
       setGeneratedPosts(posts);
     } catch (err) {

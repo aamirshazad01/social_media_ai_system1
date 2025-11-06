@@ -361,3 +361,14 @@ export function validatePostForPublishing(post: Post): { valid: boolean; errors:
     errors
   };
 }
+
+/**
+ * Publishing service namespace for compatibility
+ */
+export const publishingService = {
+  publishToSinglePlatform,
+  publishPost,
+  isPlatformReady,
+  getPublishingReadiness,
+  validatePostForPublishing
+};

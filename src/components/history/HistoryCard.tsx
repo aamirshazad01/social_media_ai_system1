@@ -1,19 +1,20 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Post, Platform } from '@/types';
+import { Post, Platform, MediaAsset } from '@/types';
 import { PLATFORMS, STATUS_CONFIG } from '@/constants';
-import { publishPost } from '@/services/publishingService';
 import { Link as LinkIcon, Globe, Send, Clock, X, Trash2, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { PlatformTemplateRenderer } from '@/components/templates/PlatformTemplateRenderer';
 
 interface PublishedCardProps {
     post: Post;
     onUpdatePost: (post: Post) => void;
     onDeletePost: (postId: string) => void;
+    onPublishPost?: (post: Post) => Promise<void>;
     connectedAccounts: Record<Platform, boolean>;
 }
 
-const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDeletePost, connectedAccounts }) => {
+const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDeletePost, onPublishPost, connectedAccounts }) => {
     const [activePlatform, setActivePlatform] = useState<Platform>(post.platforms[0]);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [scheduleDate, setScheduleDate] = useState('');
@@ -22,34 +23,19 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
     const [publishSuccess, setPublishSuccess] = useState(false);
 
     const handlePublish = async () => {
+        if (!onPublishPost) return;
+
         setIsPublishing(true);
         setPublishError(null);
         setPublishSuccess(false);
-        
+
         try {
-            // Actually publish to social media platforms!
-            const results = await publishPost(post);
-            
-            // Check for failures
-            const failures = results.filter(r => !r.success);
-            
-            if (failures.length === 0) {
-                // All platforms succeeded
-                const updates: Partial<Post> = { 
-                    status: 'published', 
-                    publishedAt: new Date().toISOString() 
-                };
-                onUpdatePost({ ...post, ...updates });
-                setPublishSuccess(true);
-                
-                // Auto-hide success message after 3 seconds
-                setTimeout(() => setPublishSuccess(false), 3000);
-            } else {
-                // Some platforms failed
-                const failedPlatforms = failures.map(f => f.platform).join(', ');
-                const errorMessages = failures.map(f => f.error).join('; ');
-                setPublishError(`Failed to publish to ${failedPlatforms}: ${errorMessages}`);
-            }
+            // Use the callback from App.tsx to publish
+            await onPublishPost(post);
+            setPublishSuccess(true);
+
+            // Auto-hide success message after 3 seconds
+            setTimeout(() => setPublishSuccess(false), 3000);
         } catch (error) {
             console.error('Publishing error:', error);
             setPublishError(error instanceof Error ? error.message : 'An unexpected error occurred while publishing');
@@ -134,29 +120,44 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
     );
 
     const PlatformPreview: React.FC<{ platform: Platform }> = ({ platform }) => {
-        const platformInfo = PLATFORMS.find(p => p.id === platform);
-        if (!platformInfo) return null;
-        const rawContent = post.content[platform] || '';
-        const content = typeof rawContent === 'string'
-          ? rawContent
-          : typeof rawContent === 'object'
-          ? (rawContent as any)?.description || ''
-          : '';
+        // Build media array from post properties
+        const media: MediaAsset[] = [];
+        if (post.generatedImage) {
+            media.push({
+                id: `image-${Date.now()}`,
+                name: 'Generated Image',
+                type: 'image' as const,
+                url: post.generatedImage,
+                size: 0,
+                tags: [],
+                createdAt: new Date().toISOString(),
+                source: 'ai-generated' as const,
+                usedInPosts: [post.id]
+            });
+        }
+        if (post.generatedVideoUrl) {
+            media.push({
+                id: `video-${Date.now()}`,
+                name: 'Generated Video',
+                type: 'video' as const,
+                url: post.generatedVideoUrl,
+                size: 0,
+                tags: [],
+                createdAt: new Date().toISOString(),
+                source: 'ai-generated' as const,
+                usedInPosts: [post.id]
+            });
+        }
 
         return (
-            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <div className="flex items-center mb-3">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0">AI</div>
-                    <div className="ml-2">
-                        <p className="font-semibold text-gray-900 text-sm">{platformInfo.name}</p>
-                        <p className="text-xs text-gray-600">AI Content OS</p>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200 min-h-[120px]">
-                    <p className="text-gray-900 text-base leading-relaxed whitespace-pre-wrap">{content}</p>
-                </div>
-                {post.generatedImage && <img src={post.generatedImage} alt="Generated content" className="rounded-lg w-full border border-gray-300 mb-4" />}
-                {post.generatedVideoUrl && <video src={post.generatedVideoUrl} controls className="rounded-lg w-full border border-gray-300" />}
+            <div className="flex justify-center w-full">
+                <PlatformTemplateRenderer
+                    post={post}
+                    platform={platform}
+                    postType={post.postType || 'post'}
+                    media={media}
+                    mode="preview"
+                />
             </div>
         );
     };

@@ -16,9 +16,15 @@ import { NotificationProvider, useNotifications } from '@/contexts/NotificationC
 import { useAuth } from '@/contexts/AuthContext';
 import { checkVideoOperationStatus, fetchVideo } from '@/services/api/geminiService';
 import { autoSaveAIMedia } from '@/services/mediaService';
-import { Edit3, LayoutGrid, BarChart3, History, Image, Target, Sparkles, LogOut, User, Cog } from 'lucide-react';
+// NEW: Import database services
+import { PostService } from '@/services/database/postService';
+import { PostLibraryService } from '@/services/database/postLibraryService';
+import { ThreadService } from '@/services/database/threadService';
+import { publishingService } from '@/services/publishingService';
+import { Edit3, LayoutGrid, BarChart3, History, Image, Target, Sparkles, LogOut, User, Cog, Library } from 'lucide-react';
+import LibraryView from '@/components/library/LibraryView';
 
-type View = 'create' | 'manage' | 'history' | 'analytics' | 'media' | 'campaigns' | 'repurpose';
+type View = 'create' | 'manage' | 'history' | 'analytics' | 'media' | 'campaigns' | 'repurpose' | 'library';
 
 const AppContent: React.FC = () => {
     const { addNotification } = useNotifications();
@@ -36,9 +42,8 @@ const AppContent: React.FC = () => {
         youtube: false
     });
 
-    // Load data from Supabase on mount
+    // UPDATED: Load posts from database on mount
     useEffect(() => {
-        // If prerequisites aren’t ready, don’t block the UI
         if (!user || !workspaceId) {
             setLoading(false);
             return;
@@ -47,6 +52,10 @@ const AppContent: React.FC = () => {
         const loadData = async () => {
             try {
                 setLoading(true);
+
+                // Load posts from database
+                const dbPosts = await PostService.getAllPosts(workspaceId);
+                setPosts(dbPosts);
 
                 // Load connected accounts from API
                 const credStatusRes = await fetch('/api/credentials/status');
@@ -62,29 +71,15 @@ const AppContent: React.FC = () => {
                 };
                 setConnectedAccounts(accountsSummary);
             } catch (error) {
-                console.error("Error loading data from Supabase:", error);
-
-                // Fallback to localStorage if Supabase fails
-                try {
-                    const savedPosts = localStorage.getItem('socialMediaPosts');
-                    if (savedPosts) {
-                        setPosts(JSON.parse(savedPosts));
-                    }
-
-                    const savedAccounts = localStorage.getItem('connectedSocialAccounts');
-                    if (savedAccounts) {
-                        setConnectedAccounts(JSON.parse(savedAccounts));
-                    }
-                } catch (localError) {
-                    console.error("Could not load from localStorage either", localError);
-                }
+                console.error('Error loading data from database:', error);
+                addNotification('error', 'Load Error', 'Failed to load posts from database');
             } finally {
                 setLoading(false);
             }
         };
 
         loadData();
-    }, [user, workspaceId]);
+    }, [user, workspaceId, addNotification]);
 
     const [isApiKeyReady, setIsApiKeyReady] = useState(false);
 
@@ -108,20 +103,27 @@ const AppContent: React.FC = () => {
         }
     }, []);
 
-    const updatePost = useCallback(async (updatedPost: Post) => {
-        // Update local state immediately
-        setPosts(prevPosts => prevPosts.map(post => post.id === updatedPost.id ? updatedPost : post));
+    // UPDATED: Update post in both state and database
+    const updatePost = useCallback(
+        async (updatedPost: Post) => {
+            // Update local state immediately for responsiveness
+            setPosts((prevPosts) =>
+                prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+            );
 
-        // TODO: Save to Supabase in background via API endpoint
-        if (user && workspaceId) {
-            try {
-                // await PostService.updatePost(updatedPost, user.id, workspaceId);
-                // Temporarily disabled - use API endpoint instead
-            } catch (error) {
-                console.error('Error updating post in Supabase:', error);
+            // Save to database in background
+            if (user && workspaceId) {
+                try {
+                    await PostService.updatePost(updatedPost, user.id, workspaceId);
+                    addNotification('post_scheduled', 'Post Updated', `"${updatedPost.topic}" has been updated.`);
+                } catch (error) {
+                    console.error('Error updating post in database:', error);
+                    addNotification('error', 'Update Error', 'Failed to save changes to database');
+                }
             }
-        }
-    }, [user, workspaceId]);
+        },
+        [user, workspaceId, addNotification]
+    );
 
     const pollVideoStatuses = useCallback(() => {
         posts.forEach(post => {
@@ -155,30 +157,136 @@ const AppContent: React.FC = () => {
         });
     }, [posts, updatePost, addNotification]);
 
-    // Save to Supabase when posts change (with debounce)
-    useEffect(() => {
-        if (!user || !workspaceId || posts.length === 0) return;
-
-        // Also save to localStorage as backup
-        localStorage.setItem('socialMediaPosts', JSON.stringify(posts));
-    }, [posts, user, workspaceId]);
-
-    // Save connected accounts to localStorage as backup
-    useEffect(() => {
-        localStorage.setItem('connectedSocialAccounts', JSON.stringify(connectedAccounts));
-    }, [connectedAccounts]);
-
-
-    const checkScheduledPosts = useCallback(() => {
-        setPosts(prevPosts =>
-            prevPosts.map(post => {
-                if (post.status === 'scheduled' && post.scheduledAt && new Date(post.scheduledAt) <= new Date()) {
-                    return { ...post, status: 'published', publishedAt: new Date().toISOString() };
-                }
-                return post;
-            })
+    // UPDATED: Check for scheduled posts and auto-publish them
+    const checkScheduledPosts = useCallback(async () => {
+        const now = new Date();
+        const readyToPublish = posts.filter(
+            (post) => post.status === 'scheduled' && post.scheduledAt && new Date(post.scheduledAt) <= now
         );
-    }, []);
+
+        for (const post of readyToPublish) {
+            try {
+                // Auto-publish the post
+                await publishPost(post);
+            } catch (error) {
+                console.error(`Failed to auto-publish post ${post.id}:`, error);
+                addNotification('error', 'Publishing Error', `Failed to publish "${post.topic}"`);
+            }
+        }
+    }, [posts, addNotification]);
+
+    // UPDATED: Add post to database
+    const addPost = useCallback(
+        async (post: Post) => {
+            // Add to local state immediately for responsiveness
+            setPosts((prevPosts) => [post, ...prevPosts]);
+            setActiveView('manage');
+
+            // Save to database
+            if (user && workspaceId) {
+                try {
+                    await PostService.createPost(post, user.id, workspaceId);
+                    addNotification(
+                        'post_scheduled',
+                        'New Post Created',
+                        `Post "${post.topic}" has been added to drafts.`,
+                        post.id
+                    );
+                } catch (error) {
+                    console.error('Error saving post to database:', error);
+                    addNotification('error', 'Save Error', 'Failed to save post to database');
+                    // Remove from state if save fails
+                    setPosts((prevPosts) => prevPosts.filter((p) => p.id !== post.id));
+                }
+            }
+        },
+        [user, workspaceId, addNotification]
+    );
+
+    // UPDATED: Add multiple posts to database
+    const addMultiplePosts = useCallback(
+        async (newPosts: Post[]) => {
+            // Add to local state immediately
+            setPosts((prevPosts) => [...newPosts, ...prevPosts]);
+            setActiveView('manage');
+
+            // Save all to database
+            if (user && workspaceId) {
+                try {
+                    for (const post of newPosts) {
+                        await PostService.createPost(post, user.id, workspaceId);
+                    }
+                    addNotification(
+                        'post_scheduled',
+                        'Posts Created',
+                        `${newPosts.length} posts have been added to your drafts.`
+                    );
+                } catch (error) {
+                    console.error('Error saving posts to database:', error);
+                    addNotification('error', 'Save Error', 'Failed to save some posts to database');
+                }
+            }
+        },
+        [user, workspaceId, addNotification]
+    );
+
+    // UPDATED: Delete post from database
+    const deletePost = useCallback(
+        async (postId: string) => {
+            // Delete from local state immediately
+            setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+
+            // Delete from database
+            if (user && workspaceId) {
+                try {
+                    await PostService.deletePost(postId, user.id, workspaceId);
+                    addNotification('post_scheduled', 'Post Deleted', 'Post has been removed.');
+                } catch (error) {
+                    console.error('Error deleting post from database:', error);
+                    addNotification('error', 'Delete Error', 'Failed to delete post from database');
+                }
+            }
+        },
+        [user, workspaceId, addNotification]
+    );
+
+    // NEW: Publish post to all platforms and archive to library
+    const publishPost = useCallback(
+        async (post: Post) => {
+            try {
+                // Validate post
+                const validation = publishingService.validatePostForPublishing(post);
+                if (!validation.valid) {
+                    addNotification('error', 'Validation Error', validation.errors?.join(', ') || 'Post validation failed');
+                    return;
+                }
+
+                // Publish to platforms
+                const results = await publishingService.publishPost(post);
+
+                // Archive to library
+                if (user && workspaceId) {
+                    await PostLibraryService.archivePost(post, results, workspaceId, user.id);
+                }
+
+                // Remove from posts table
+                await deletePost(post.id);
+
+                // Notify user
+                const successCount = results.filter((r) => r.success).length;
+                addNotification(
+                    'post_published',
+                    'Post Published',
+                    `Posted to ${successCount}/${results.length} platforms`,
+                    post.id
+                );
+            } catch (error) {
+                console.error('Error publishing post:', error);
+                addNotification('error', 'Publishing Error', 'Failed to publish post to platforms');
+            }
+        },
+        [user, workspaceId, deletePost, addNotification]
+    );
 
     useEffect(() => {
         const scheduleInterval = setInterval(checkScheduledPosts, 60000);
@@ -189,45 +297,6 @@ const AppContent: React.FC = () => {
             clearInterval(videoPollInterval);
         };
     }, [checkScheduledPosts, pollVideoStatuses]);
-
-    const addPost = async (post: Post) => {
-        // Add to local state immediately for responsiveness
-        setPosts(prevPosts => [post, ...prevPosts]);
-        setActiveView('manage');
-        addNotification('post_scheduled', 'New Post Created', `Post "${post.topic}" has been added to drafts.`, post.id);
-
-        // TODO: Save to Supabase in background via API endpoint
-        if (user && workspaceId) {
-            try {
-                // await PostService.createPost(post, user.id, workspaceId);
-                // Temporarily disabled - use API endpoint instead
-            } catch (error) {
-                console.error('Error saving post to Supabase:', error);
-                addNotification('error', 'Save Error', 'Failed to save post to database. It will be saved locally.');
-            }
-        }
-    };
-
-    const addMultiplePosts = (newPosts: Post[]) => {
-        setPosts(prevPosts => [...newPosts, ...prevPosts]);
-        setActiveView('manage');
-        addNotification('post_scheduled', 'Posts Created', `${newPosts.length} posts have been added to your drafts.`);
-    };
-
-    const deletePost = async (postId: string) => {
-        // Delete from local state immediately
-        setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
-
-        // TODO: Delete from Supabase in background via API endpoint
-        if (user && workspaceId) {
-            try {
-                // await PostService.deletePost(postId, user.id, workspaceId);
-                // Temporarily disabled - use API endpoint instead
-            } catch (error) {
-                console.error('Error deleting post from Supabase:', error);
-            }
-        }
-    };
     
     const SidebarItem: React.FC<{ viewName: View; icon: React.ElementType; label: string }> = ({ viewName, icon: Icon, label }) => (
         <button
@@ -259,7 +328,7 @@ const AppContent: React.FC = () => {
             case 'manage':
                 return <ManagePosts {...viewProps} />;
             case 'history':
-                return <PublishedView {...viewProps} />;
+                return <PublishedView {...viewProps} onPublishPost={publishPost} />;
             case 'analytics':
                 return <AnalyticsDashboard posts={posts} />;
             case 'media':
@@ -268,6 +337,8 @@ const AppContent: React.FC = () => {
                 return <CampaignManager posts={posts} onUpdatePost={updatePost} onCreatePost={addPost} />;
             case 'repurpose':
                 return <ContentRepurposer onPostsCreated={addMultiplePosts} />;
+            case 'library':
+                return <LibraryView posts={posts} onDeletePost={deletePost} />;
             default:
                 return null;
         }
@@ -294,6 +365,7 @@ const AppContent: React.FC = () => {
                         <div className="border-t border-gray-200 my-3"></div>
                         <SidebarItem viewName="campaigns" icon={Target} label="Campaigns" />
                         <SidebarItem viewName="media" icon={Image} label="Media Library" />
+                        <SidebarItem viewName="library" icon={Library} label="Archive" />
                         <SidebarItem viewName="analytics" icon={BarChart3} label="Analytics" />
                     </nav>
                 </div>

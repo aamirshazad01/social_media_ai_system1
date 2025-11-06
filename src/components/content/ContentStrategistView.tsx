@@ -35,26 +35,59 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
     const platformList = PLATFORMS.map(p => p.id).join(', ');
-    const systemInstruction = `You are 'ContentOS AI', an expert social media strategist. Your goal is to have a friendly and helpful conversation with the user to brainstorm and create a social media post.
+    const postTypeGuide = `
+Post Types by Platform:
+- Twitter/X: 'post' (text + media)
+- LinkedIn: 'post' (text), 'carousel' (multi-image documents)
+- Facebook: 'post' (text + image), 'carousel' (multi-image), 'reel' (video)
+- Instagram: 'feed' (1:1 image), 'carousel' (multi-image), 'reel' (video), 'story' (24h)
+- TikTok: 'video' (full video), 'slideshow' (photo montage)
+- YouTube: 'video' (standard long-form), 'short' (9:16 short video)`;
+
+    const systemInstruction = `You are 'ContentOS AI', an expert social media strategist specializing in AI-generated visual content. Your goal is to brainstorm and create social media posts WITH detailed AI generation prompts for images and videos.
+
+${postTypeGuide}
 
 1.  Start by introducing yourself and asking what the user wants to promote or talk about.
 2.  Guide the conversation to gather these key details:
     *   A clear **topic**.
     *   One or more target **platforms** from this list: ${platformList}.
-    *   A specific **content type** (e.g., engaging, educational, promotional).
+    *   The **post type** for each platform (see Post Types guide above).
+    *   Should we include **visual assets**? (image, video, or both)
+    *   A specific **content style** (e.g., engaging, educational, promotional).
     *   A desired **tone** (e.g., professional, casual, humorous).
-3.  Once you have all the information, summarize the plan and ask the user for confirmation to proceed with generating the content. Use markdown for your summary (bolding and bullet points).
-4.  **IMPORTANT**: After the user confirms, your VERY NEXT response must be ONLY the generated content as a single JSON object, enclosed in a markdown code block like this:
+3.  For **YouTube posts**, ask: title, description, tags, and privacy setting.
+4.  **CRITICAL**: For visual assets:
+    - If IMAGE needed: Create a **detailed, vivid image prompt** (300+ characters) describing: composition, style, mood, colors, elements, lighting
+    - If VIDEO needed: Create a **detailed video prompt** (300+ characters) describing: scenes, actions, pacing, visual style, music vibe, text overlay
+5.  Once you have all the information, summarize the plan and ask the user for confirmation to proceed with generating the content. Use markdown for your summary (bolding and bullet points).
+6.  **IMPORTANT**: After the user confirms, your VERY NEXT response must be ONLY the generated content as a single JSON object, enclosed in a markdown code block like this:
     \`\`\`json
     {
       "topic": "A brief, descriptive topic summary",
-      "twitter": "...",
-      "linkedin": "...",
-      "imageSuggestion": "...",
-      "videoSuggestion": "..."
+      "postType": "post",
+      "twitter": "Tweet content here (280 chars max)",
+      "linkedin": "LinkedIn content here (3000 chars max)",
+      "instagram": "Instagram caption here (2200 chars max)",
+      "youtube": {
+        "title": "Video title (max 100 chars)",
+        "description": "Full video description with details and links (max 5000 chars)",
+        "tags": ["tag1", "tag2", "tag3"],
+        "privacyStatus": "PUBLIC"
+      },
+      "imageSuggestion": "Professional, detailed image generation prompt. Include: style (e.g., 'cinematic, high-resolution'), composition, subject, colors, mood, lighting, and any specific visual elements. Make it vivid and specific for AI image generation.",
+      "videoSuggestion": "Detailed video generation prompt for AI. Include: opening scene, main actions/scenes, pacing, visual style (e.g., 'cinematic', 'energetic'), colors/mood, transitions, music vibe, and any text overlays. Specify duration (15-60 seconds for social)."
     }
     \`\`\`
-    Only include keys in the JSON for the platforms the user selected. Do not add any text or explanation before or after the JSON block in that final message.`;
+    RULES for image/video prompts:
+    - Use DETAILED, DESCRIPTIVE language
+    - Include style keywords (cinematic, professional, vibrant, minimalist, etc.)
+    - Specify composition and framing
+    - Include colors and lighting
+    - Mention mood and emotion
+    - Be specific about subjects and elements
+    - Only include keys in the JSON for the platforms the user selected
+    - Do not add any text or explanation before or after the JSON block in that final message.`;
 
     useEffect(() => {
         try {
@@ -160,25 +193,63 @@ const ContentStrategistView: React.FC<ContentStrategistViewProps> = ({ onPostCre
     };
 
     const handleCreatePost = (postData: any) => {
-        const { topic, imageSuggestion, videoSuggestion, ...platformContent } = postData;
-        const platforms = Object.keys(platformContent).filter(key => PLATFORMS.some(p => p.id === key)) as Platform[];
+        const { topic, postType, imageSuggestion, videoSuggestion, ...platformContent } = postData;
+
+        // Extract valid platforms from the generated content
+        const platforms = Object.keys(platformContent).filter(
+            key => PLATFORMS.some(p => p.id === key)
+        ) as Platform[];
 
         if (platforms.length === 0) {
             setError("The generated content didn't specify any valid platforms.");
             return;
         }
 
+        // Build content object with proper structure for each platform
+        const content: PostContent = {};
+        platforms.forEach(platform => {
+            if (platformContent[platform]) {
+                content[platform] = platformContent[platform];
+            }
+        });
+
+        // Enhance image suggestion for Gemini API
+        // Add technical specifications for better image generation quality
+        let enhancedImageSuggestion = imageSuggestion;
+        if (imageSuggestion) {
+            // Ensure the prompt has style, composition, and quality keywords
+            const hasQualityKeywords = /high.?resolution|4k|professional|cinematic|studio|detailed/i.test(imageSuggestion);
+            if (!hasQualityKeywords) {
+                enhancedImageSuggestion = `${imageSuggestion}. Style: high-resolution, professional, cinematic quality. Perfect for social media.`;
+            }
+            content.imageSuggestion = enhancedImageSuggestion;
+        }
+
+        // Enhance video suggestion for Gemini API (veo-3.1-fast-generate-preview)
+        // Add technical specifications for better video generation
+        let enhancedVideoSuggestion = videoSuggestion;
+        if (videoSuggestion) {
+            // Ensure the prompt has pacing, duration, and technical keywords
+            const hasTechKeywords = /9:16|vertical|15.?sec|30.?sec|45.?sec|60.?sec|duration|pacing|cinematic/i.test(videoSuggestion);
+            if (!hasTechKeywords) {
+                enhancedVideoSuggestion = `${videoSuggestion}. Format: 9:16 vertical video, 30-45 seconds duration. Cinematic quality, professional editing, engaging pacing. Suitable for social media (TikTok, Instagram Reels, YouTube Shorts).`;
+            }
+            content.videoSuggestion = enhancedVideoSuggestion;
+        }
+
         const newPost: Post = {
             id: crypto.randomUUID(),
             topic: topic || "AI Generated Content",
             platforms,
-            content: { ...platformContent, imageSuggestion, videoSuggestion },
+            postType: postType || 'post',
+            content,
             status: 'draft',
             createdAt: new Date().toISOString(),
             isGeneratingImage: false,
             isGeneratingVideo: false,
             videoGenerationStatus: '',
         };
+
         onPostCreated(newPost);
         saveCurrentChat();
         startNewChat();

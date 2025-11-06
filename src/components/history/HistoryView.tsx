@@ -9,10 +9,11 @@ interface PublishedViewProps {
     posts: Post[];
     onUpdatePost: (post: Post) => void;
     onDeletePost: (postId: string) => void;
+    onPublishPost?: (post: Post) => Promise<void>;
     connectedAccounts: Record<Platform, boolean>;
 }
 
-const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDeletePost, connectedAccounts }) => {
+const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDeletePost, onPublishPost, connectedAccounts }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [platformFilter, setPlatformFilter] = useState<Platform | 'all'>('all');
 
@@ -72,6 +73,7 @@ const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDe
                         post={post}
                         onUpdatePost={onUpdatePost}
                         onDeletePost={onDeletePost}
+                        onPublishPost={onPublishPost}
                         connectedAccounts={connectedAccounts}
                     />
                 ))}

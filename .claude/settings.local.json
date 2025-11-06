@@ -18,7 +18,9 @@
       "WebFetch(domain:social-medias-os.vercel.app)",
       "mcp__chrome-devtools__take_snapshot",
       "mcp__chrome-devtools__take_screenshot",
-      "mcp__chrome-devtools__click"
+      "mcp__chrome-devtools__click",
+      "Bash(printf:*)",
+      "Bash(\"C:\\Users\\aamir\\social_media_os\\src\\app\\api\\auth\\oauth\\youtube\\callback\\route.ts\")"
     ],
     "deny": [],
     "ask": []

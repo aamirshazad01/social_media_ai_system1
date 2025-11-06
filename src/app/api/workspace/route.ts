@@ -1,158 +1,100 @@
 /**
- * API Route: /api/workspace
- * Methods: GET, PATCH
+ * WORKSPACE API ROUTES
+ * GET /api/workspace - Get workspace details
+ * PATCH /api/workspace - Update workspace (admin)
+ * DELETE /api/workspace - Delete workspace (admin)
  *
- * GET: Retrieve current user's workspace information
- * PATCH: Update workspace settings (admin only)
+ * Architecture Pattern:
+ * Request → Authentication → Validation → Service → Repository → Database
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
-import { WorkspaceService } from '@/services/database/workspaceService'
-import type { UpdateWorkspaceInput } from '@/types/workspace'
+import { NextRequest } from 'next/server'
+import {
+  successResponse,
+  errorResponse,
+  validationErrorResponse
+} from '@/core/middleware/responseHandler'
+import {
+  createRequestContext,
+  generateRequestId,
+  extractRequestMetadata,
+  requireAdmin
+} from '@/core/middleware/auth'
+import { WorkspaceService } from '@/services/WorkspaceService'
+import { UpdateWorkspaceSchema } from '@/lib/validation/schemas'
+import { ZodError } from 'zod'
 
 /**
  * GET /api/workspace
- * Retrieve current user's workspace details
+ * Get current workspace details
  *
- * Response: { data: Workspace } or { error: string }
+ * Authentication: Required
+ * Authorization: Any authenticated user
  */
 export async function GET(request: NextRequest) {
+  const requestId = generateRequestId()
+  const { ip, userAgent } = extractRequestMetadata(request)
+
   try {
-    // Authenticate user
-    const supabase = await createServerClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Get user's workspace ID
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData || !('workspace_id' in userData)) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      )
-    }
-
-    // Get workspace details
-    const workspace = await WorkspaceService.getWorkspace((userData as any).workspace_id)
-
-    if (!workspace) {
-      return NextResponse.json(
-        { error: 'Workspace not found' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ data: workspace })
+    const context = await createRequestContext(requestId, ip, userAgent)
+    const workspaceService = new WorkspaceService()
+    const workspace = await workspaceService.getWorkspace(context)
+    return successResponse(workspace, 200)
   } catch (error) {
-    console.error('Error in GET /api/workspace:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return errorResponse(error, requestId)
   }
 }
 
 /**
  * PATCH /api/workspace
- * Update workspace settings
- * Requires: Admin role
+ * Update workspace settings (admin only)
  *
- * Body: { name?: string, max_users?: number, settings?: object }
- * Response: { data: Workspace } or { error: string }
+ * Authentication: Required
+ * Authorization: Admin role only
  */
 export async function PATCH(request: NextRequest) {
+  const requestId = generateRequestId()
+  const { ip, userAgent } = extractRequestMetadata(request)
+
   try {
-    // Authenticate user
-    const supabase = await createServerClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const context = await createRequestContext(requestId, ip, userAgent)
+    requireAdmin(context)
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    const body = await request.json()
+    const validatedData = UpdateWorkspaceSchema.parse(body)
 
-    // Get user's role and workspace
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .single()
+    const workspaceService = new WorkspaceService()
+    const updated = await workspaceService.updateWorkspace(context, validatedData)
 
-    if (userError || !userData || !('workspace_id' in userData)) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user is admin
-    if ((userData as any).role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Only workspace admins can update settings' },
-        { status: 403 }
-      )
-    }
-
-    // Parse request body
-    let updates: UpdateWorkspaceInput
-    try {
-      updates = await request.json()
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      )
-    }
-
-    // Validate updates
-    if (updates.max_users !== undefined && updates.max_users < 1) {
-      return NextResponse.json(
-        { error: 'Maximum users must be at least 1' },
-        { status: 400 }
-      )
-    }
-
-    if (updates.name !== undefined && updates.name.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Workspace name cannot be empty' },
-        { status: 400 }
-      )
-    }
-
-    // Update workspace
-    const updatedWorkspace = await WorkspaceService.updateWorkspace(
-      (userData as any).workspace_id,
-      updates,
-      user.id
-    )
-
-    if (!updatedWorkspace) {
-      return NextResponse.json(
-        { error: 'Failed to update workspace' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ data: updatedWorkspace })
+    return successResponse(updated, 200)
   } catch (error) {
-    console.error('Error in PATCH /api/workspace:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    if (error instanceof ZodError) {
+      return validationErrorResponse(error, requestId)
+    }
+    return errorResponse(error, requestId)
+  }
+}
+
+/**
+ * DELETE /api/workspace
+ * Delete/deactivate workspace (admin only)
+ *
+ * Authentication: Required
+ * Authorization: Admin role only
+ */
+export async function DELETE(request: NextRequest) {
+  const requestId = generateRequestId()
+  const { ip, userAgent } = extractRequestMetadata(request)
+
+  try {
+    const context = await createRequestContext(requestId, ip, userAgent)
+    requireAdmin(context)
+
+    const workspaceService = new WorkspaceService()
+    await workspaceService.deleteWorkspace(context)
+
+    return successResponse({ message: 'Workspace deleted successfully' }, 200)
+  } catch (error) {
+    return errorResponse(error, requestId)
   }
 }

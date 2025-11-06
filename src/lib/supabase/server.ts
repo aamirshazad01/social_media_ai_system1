@@ -1,3 +1,5 @@
+'use server'
+
 /**
  * Supabase Server Client
  * Use this client in server components, API routes, and server actions

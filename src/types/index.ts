@@ -2,6 +2,17 @@ export type Platform = 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tikt
 
 export type PostStatus = 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed';
 
+// NEW: Post Type for multi-template support
+export type PostType =
+  | 'post'       // Generic/default
+  | 'feed'       // Instagram feed post (1:1 image)
+  | 'carousel'   // Multi-image carousel
+  | 'reel'       // Short video (Instagram/Facebook)
+  | 'story'      // 24-hour story (Instagram/Facebook)
+  | 'video'      // Standard video (TikTok/YouTube/etc)
+  | 'short'      // YouTube Shorts (9:16)
+  | 'slideshow'  // TikTok photo slideshow
+
 export const TONES = ['professional', 'casual', 'humorous', 'inspirational', 'urgent', 'friendly'] as const;
 export type Tone = typeof TONES[number];
 
@@ -43,6 +54,7 @@ export interface Post {
   platforms: Platform[];
   content: PostContent;
   status: PostStatus;
+  postType?: PostType; // NEW: Template type (feed, carousel, reel, story, video, short, slideshow)
   createdAt: string; // ISO string
   scheduledAt?: string; // ISO string
   publishedAt?: string; // ISO string

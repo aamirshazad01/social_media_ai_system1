@@ -1,56 +1,56 @@
-# 🚀 Social Media OS
+﻿# ðŸš€ Social Media OS
 
 A comprehensive social media management platform that allows you to manage multiple social media accounts, post picture , video,schedule posts, generate AI content, and track analytics - all from one unified dashboard.
 
-## 🌐 Live Demo
+## ðŸŒ Live Demo
 
 **Production**: [https://social-medias-os.vercel.app/](https://social-medias-os.vercel.app/)
 
-## ✨ Features
+## âœ¨ Features
 
-### 📱 Multi-Platform Support
+### ðŸ“± Multi-Platform Support
 - **Twitter/X** - Post, schedule, and track engagement
 - **LinkedIn** - Professional content management
 - **Instagram** - Photo and video sharing
 - **Facebook** - Page and group management
 - **Threads** - Quick updates and conversations
 
-### 🤖 AI-Powered Content
+### ðŸ¤– AI-Powered Content
 - Generate engaging post content with Google Gemini AI
 - AI-assisted captions and hashtags
 - Content suggestions based on trends
 
-### 📅 Smart Scheduling
+### ðŸ“… Smart Scheduling
 - Schedule posts across all platforms
 - Optimal posting time recommendations
 - Bulk scheduling capabilities
 - Calendar view for content planning
 
-### 📊 Analytics & Insights
+### ðŸ“Š Analytics & Insights
 - Real-time engagement metrics
 - Cross-platform performance tracking
 - Audience insights
 - Export reports
 
-### 👥 Team Collaboration
+### ðŸ‘¥ Team Collaboration
 - Multi-user workspaces
 - Role-based permissions (Admin, Editor, Viewer)
 - Approval workflows
 - Activity logs and audit trail
 
-### 📁 Media Library
+### ðŸ“ Media Library
 - Centralized media asset management
 - AI-generated images
 - Tag-based organization
 - Cloud storage integration
 
-### 🎯 Campaign Management
+### ðŸŽ¯ Campaign Management
 - Organize posts into campaigns
 - Track campaign performance
 - Color-coded organization
 - Date range tracking
 
-## 🛠️ Tech Stack
+## ðŸ› ï¸ Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TailwindCSS 4
 - **Backend**: Next.js API Routes
@@ -62,7 +62,7 @@ A comprehensive social media management platform that allows you to manage multi
 - **Icons**: Lucide React
 - **Charts**: Recharts
 
-## 📦 Installation
+## ðŸ“¦ Installation
 
 ### Prerequisites
 - Node.js 18+ 
@@ -97,7 +97,7 @@ A comprehensive social media management platform that allows you to manage multi
    ```
 
 
-## 🚀 Deployment
+## ðŸš€ Deployment
 UPDATE public.users
   SET role = 'admin'
   WHERE email = 'your-email@example.com'
@@ -106,7 +106,7 @@ UPDATE public.users
     ORDER BY created_at DESC LIMIT 1
   );
 
-## 🔑 Environment Variables
+## ðŸ”‘ Environment Variables
 
 Required environment variables:
 
@@ -146,36 +146,36 @@ THREADS_APP_SECRET=
 NEXT_PUBLIC_APP_URL=https://social-medias-os.vercel.app/
 ```
 
-## 🏗️ Project Structure
+## ðŸ—ï¸ Project Structure
 
 ```
 social_media_os/
-├── src/
-│   ├── app/                    # Next.js app directory
-│   │   ├── api/               # API routes
-│   │   │   ├── twitter/       # Twitter OAuth & posting
-│   │   │   ├── linkedin/      # LinkedIn integration
-│   │   │   ├── instagram/     # Instagram integration
-│   │   │   ├── facebook/      # Facebook integration
-│   │   │   └── threads/       # Threads integration
-│   │   ├── auth/              # Authentication pages
-│   │   ├── dashboard/         # Main dashboard
-│   │   └── ...
-│   ├── components/            # React components
-│   ├── lib/                   # Utility libraries
-│   │   ├── supabase/         # Database client & schema
-│   │   ├── twitter/          # Twitter client
-│   │   ├── linkedin/         # LinkedIn client
-│   │   └── ...
-│   └── types/                # TypeScript types
-├── public/                    # Static assets
-├── .env                       # Environment variables
-├── next.config.mjs           # Next.js configuration
-├── vercel.json               # Vercel configuration
-└── package.json              # Dependencies
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ app/                    # Next.js app directory
+â”‚   â”‚   â”œâ”€â”€ api/               # API routes
+â”‚   â”‚   â”‚   â”œâ”€â”€ twitter/       # Twitter OAuth & posting
+â”‚   â”‚   â”‚   â”œâ”€â”€ linkedin/      # LinkedIn integration
+â”‚   â”‚   â”‚   â”œâ”€â”€ instagram/     # Instagram integration
+â”‚   â”‚   â”‚   â”œâ”€â”€ facebook/      # Facebook integration
+â”‚   â”‚   â”‚   â””â”€â”€ threads/       # Threads integration
+â”‚   â”‚   â”œâ”€â”€ auth/              # Authentication pages
+â”‚   â”‚   â”œâ”€â”€ dashboard/         # Main dashboard
+â”‚   â”‚   â””â”€â”€ ...
+â”‚   â”œâ”€â”€ components/            # React components
+â”‚   â”œâ”€â”€ lib/                   # Utility libraries
+â”‚   â”‚   â”œâ”€â”€ supabase/         # Database client & schema
+â”‚   â”‚   â”œâ”€â”€ twitter/          # Twitter client
+â”‚   â”‚   â”œâ”€â”€ linkedin/         # LinkedIn client
+â”‚   â”‚   â””â”€â”€ ...
+â”‚   â””â”€â”€ types/                # TypeScript types
+â”œâ”€â”€ public/                    # Static assets
+â”œâ”€â”€ .env                       # Environment variables
+â”œâ”€â”€ next.config.mjs           # Next.js configuration
+â”œâ”€â”€ vercel.json               # Vercel configuration
+â””â”€â”€ package.json              # Dependencies
 ```
 
-## 🔐 Security Features
+## ðŸ” Security Features
 
 - **Row Level Security (RLS)** - Database-level access control
 - **Multi-tenancy** - Complete workspace isolation
@@ -184,7 +184,7 @@ social_media_os/
 - **Activity logging** - Audit trail for all actions
 - **HTTPS only** - Enforced secure connections
 
-## 🧪 Testing
+## ðŸ§ª Testing
 
 Test all features after deployment:
 
@@ -208,7 +208,7 @@ Test all features after deployment:
    - Test permissions
    - Approval workflows
 
-## 🐛 Troubleshooting
+## ðŸ› Troubleshooting
 
 ### Common Issues
 
@@ -229,11 +229,11 @@ Test all features after deployment:
 
 See `DEPLOYMENT_GUIDE.md` for more troubleshooting tips.
 
-## 📝 License
+## ðŸ“ License
 
 MIT License - See LICENSE file for details
 
-## 🤝 Contributing
+## ðŸ¤ Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -242,14 +242,14 @@ Contributions are welcome! Please follow these steps:
 3. Make your changes
 4. Submit a pull request
 
-## 📧 Support
+## ðŸ“§ Support
 
 For issues and questions:
 - Open an issue on GitHub
-- Check documentation in `/docs`
+- Documentation index: `docs/README.md`
 - Review troubleshooting guides
 
-## 🎉 Acknowledgments
+## ðŸŽ‰ Acknowledgments
 
 Built with:
 - [Next.js](https://nextjs.org/)
@@ -260,7 +260,7 @@ Built with:
 
 ---
 
-**Made with ❤️ for social media managers and content creators**
+**Made with â¤ï¸ for social media managers and content creators**
 
 1. Go to https://www.linkedin.com/developers
   2. Select your app
@@ -279,9 +279,9 @@ Built with:
 
   1. Go to https://developers.facebook.com/apps
   2. Select your app
-  3. Settings → Basic
+  3. Settings â†’ Basic
   4. Find "App Domains" and add: social-medias-os.vercel.app
-  5. Go to Settings → Advanced
+  5. Go to Settings â†’ Advanced
   6. Find "Valid OAuth Redirect URIs"
   7. Add: https://social-medias-os.vercel.app/api/auth/oauth/facebook/callback
          - https://social-medias-os.vercel.app/api/auth/oauth/instagram/callback/

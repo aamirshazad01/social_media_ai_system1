@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Post, Platform } from '@/types';
+import { Post, Platform, MediaAsset } from '@/types';
 import { PLATFORMS } from '@/constants';
-import { X, ThumbsUp, MessageCircle, Repeat, Send, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
+import { X } from 'lucide-react';
+import { PlatformTemplateRenderer } from '@/components/templates/PlatformTemplateRenderer';
 
 interface PreviewModalProps {
     post: Post;
@@ -24,53 +25,52 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ post, onClose }) => {
     }, [onClose]);
 
     const PlatformPreview: React.FC<{ platform: Platform }> = ({ platform }) => {
-        const platformInfo = PLATFORMS.find(p => p.id === platform);
-        if (!platformInfo) return null;
+        // Build media array from post properties
+        const media: MediaAsset[] = [];
+        if (post.generatedImage) {
+            media.push({
+                id: `image-${Date.now()}`,
+                name: 'Generated Image',
+                type: 'image' as const,
+                url: post.generatedImage,
+                size: 0,
+                tags: [],
+                createdAt: new Date().toISOString(),
+                source: 'ai-generated' as const,
+                usedInPosts: [post.id]
+            });
+        }
+        if (post.generatedVideoUrl) {
+            media.push({
+                id: `video-${Date.now()}`,
+                name: 'Generated Video',
+                type: 'video' as const,
+                url: post.generatedVideoUrl,
+                size: 0,
+                tags: [],
+                createdAt: new Date().toISOString(),
+                source: 'ai-generated' as const,
+                usedInPosts: [post.id]
+            });
+        }
 
+        // Get content for the platform
         const rawContent = post.content?.[platform] || '';
         const content = typeof rawContent === 'string'
-          ? rawContent
-          : typeof rawContent === 'object'
-          ? (rawContent as any)?.description || ''
-          : '';
-        const hasGeneratedMedia = post.generatedImage || post.generatedVideoUrl;
+            ? rawContent
+            : typeof rawContent === 'object'
+            ? (rawContent as any)?.description || ''
+            : '';
 
         return (
-            <div className="bg-light-gray rounded-lg p-4 w-full max-w-lg mx-auto border border-slate/30">
-                <div className="flex items-center mb-4">
-                     <div className="w-11 h-11 bg-charcoal rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                        AI
-                    </div>
-                    <div className="ml-3">
-                        <p className="font-semibold text-charcoal-dark leading-tight">AI Content OS (Preview)</p>
-                        <p className="text-xs text-slate">Posting to {platformInfo.name}</p>
-                    </div>
-                </div>
-
-                <p className="text-charcoal text-sm mb-4 whitespace-pre-wrap">{content}</p>
-
-                {post.generatedImage ? (
-                    <img src={post.generatedImage} alt="Generated content" className="rounded-lg w-full border border-slate/30 mb-4" />
-                ) : post.generatedVideoUrl ? (
-                    <video src={post.generatedVideoUrl} controls className="rounded-lg w-full border border-slate/30 mb-4" />
-                ) : post.content?.imageSuggestion ? (
-                    <div className="bg-white rounded-lg w-full aspect-video flex flex-col items-center justify-center text-slate p-4 mb-4 border border-slate/30">
-                         <ImageIcon className="w-12 h-12 mb-2" />
-                         <p className="text-center text-xs italic">Image will be generated for: "{post.content.imageSuggestion}"</p>
-                    </div>
-                ) : post.content?.videoSuggestion && (
-                    <div className="bg-white rounded-lg w-full aspect-video flex flex-col items-center justify-center text-slate p-4 mb-4 border border-slate/30">
-                         <VideoIcon className="w-12 h-12 mb-2" />
-                         <p className="text-center text-xs italic">Video will be generated for: "{post.content.videoSuggestion}"</p>
-                    </div>
-                )}
-
-                 <div className="pt-3 border-t border-slate/30 flex justify-around text-slate">
-                    <div className="flex items-center space-x-2 p-2 rounded-md"><ThumbsUp className="w-5 h-5" /><span className="text-sm font-medium">Like</span></div>
-                    <div className="flex items-center space-x-2 p-2 rounded-md"><MessageCircle className="w-5 h-5" /><span className="text-sm font-medium">Comment</span></div>
-                    <div className="flex items-center space-x-2 p-2 rounded-md"><Repeat className="w-5 h-5" /><span className="text-sm font-medium">Repost</span></div>
-                    <div className="flex items-center space-x-2 p-2 rounded-md"><Send className="w-5 h-5" /><span className="text-sm font-medium">Send</span></div>
-                </div>
+            <div className="flex justify-center w-full">
+                <PlatformTemplateRenderer
+                    post={post}
+                    platform={platform}
+                    postType={post.postType || 'post'}
+                    media={media}
+                    mode="preview"
+                />
             </div>
         );
     };
