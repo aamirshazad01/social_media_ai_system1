@@ -147,7 +147,29 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
     try {
       setIsLoading(true)
       const response = await fetch('/api/credentials/status')
-      if (!response.ok) throw new Error('Failed to load status')
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        // If workspace initialization failed, retry once after a short delay
+        if (response.status === 500 && errorData.error?.includes('initialize workspace')) {
+          console.log('Workspace initialization in progress, retrying...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          const retryResponse = await fetch('/api/credentials/status')
+          if (!retryResponse.ok) throw new Error('Failed to load status after retry')
+          const retryStatus = await retryResponse.json()
+          setStatusInfo(retryStatus)
+          onUpdateAccounts(
+            Object.fromEntries(
+              Object.entries(retryStatus).map(([platform, info]: [string, any]) => [
+                platform,
+                info.isConnected,
+              ])
+            ) as Record<Platform, boolean>
+          )
+          return
+        }
+        throw new Error(errorData.error || 'Failed to load status')
+      }
 
       const status = await response.json()
       setStatusInfo(status)
@@ -161,6 +183,15 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
       )
     } catch (error) {
       console.error('Failed to load connection status:', error)
+      // Clear any previous errors when loading fails
+      setErrors({
+        twitter: undefined,
+        linkedin: undefined,
+        facebook: undefined,
+        instagram: undefined,
+        tiktok: undefined,
+        youtube: undefined,
+      })
     } finally {
       setIsLoading(false)
     }
@@ -178,8 +209,26 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to initiate connection')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || 'Failed to initiate connection'
+        
+        // If workspace initialization failed, retry once after a short delay
+        if (response.status === 500 && errorMessage.includes('initialize workspace')) {
+          console.log('Workspace initialization in progress, retrying OAuth initiation...')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          const retryResponse = await fetch(`/api/auth/oauth/${platform}`, {
+            method: 'POST',
+          })
+          if (!retryResponse.ok) {
+            const retryErrorData = await retryResponse.json().catch(() => ({}))
+            throw new Error(retryErrorData.error || 'Failed to initiate connection after retry')
+          }
+          const { redirectUrl: retryRedirectUrl } = await retryResponse.json()
+          window.location.href = retryRedirectUrl
+          return
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const { redirectUrl } = await response.json()
@@ -395,7 +444,9 @@ function detectPlatformFromError(errorCode: string): Platform | null {
 function mapErrorCode(errorCode: string): string {
   const messages: Record<string, string> = {
     oauth_unauthorized: 'Not authenticated. Please log in.',
-    no_workspace: 'Workspace error. Please refresh and try again.',
+    no_workspace: 'Workspace is being initialized. Please try again in a moment.',
+    NO_WORKSPACE: 'Workspace is being initialized. Please try again in a moment.',
+    WORKSPACE_INIT_ERROR: 'Workspace initialization failed. Please refresh the page and try again.',
     user_denied: 'You denied the connection request.',
     missing_params: 'OAuth parameters missing. Please try again.',
     csrf_check_failed: 'Security verification failed. Please try again.',
@@ -410,7 +461,15 @@ function mapErrorCode(errorCode: string): string {
     config_missing: 'Platform is not configured. Please contact support.',
     insufficient_permissions: 'Access denied. Only workspace admins can connect social media accounts.',
   }
-  return messages[errorCode] || 'Connection failed. Please try again.'
+  
+  // Also check if error message contains workspace-related keywords
+  if (errorCode.toLowerCase().includes('workspace not found') || 
+      errorCode.toLowerCase().includes('workspace error') ||
+      errorCode.toLowerCase().includes('initialize workspace')) {
+    return 'Workspace is being initialized. Please try again in a moment.'
+  }
+  
+  return messages[errorCode] || errorCode || 'Connection failed. Please try again.'
 }
 
 export default ConnectedAccountsView

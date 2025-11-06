@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { CredentialService } from '@/services/database/credentialService'
+import { WorkspaceService } from '@/services/database/workspaceService'
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,21 +23,17 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // ✅ Get workspace
-    const { data: userRow, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (userError || !userRow) {
+    // ✅ Ensure user has a workspace (auto-create if missing)
+    let workspaceId: string
+    try {
+      workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
+    } catch (error) {
+      console.error('Error ensuring user workspace:', error)
       return NextResponse.json(
-        { error: 'Workspace not found' },
-        { status: 400 }
+        { error: 'Failed to initialize workspace' },
+        { status: 500 }
       )
     }
-
-    const workspaceId = (userRow as any).workspace_id
 
     // ✅ Clean up any invalid credentials first (orphaned records)
     await CredentialService.cleanupInvalidCredentials(workspaceId)

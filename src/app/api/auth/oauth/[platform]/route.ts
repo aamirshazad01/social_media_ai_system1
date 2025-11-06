@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { createOAuthState } from '@/services/database/oauthStateService'
 import { logAuditEvent } from '@/services/database/auditLogService'
+import { WorkspaceService } from '@/services/database/workspaceService'
 import { getFacebookScopes } from '@/lib/facebook/client'
 import { INSTAGRAM_SCOPES } from '@/lib/instagram/client'
 import type { Platform } from '@/types'
@@ -57,22 +58,27 @@ export async function POST(
       )
     }
 
-    // ✅ Step 2: Get workspace and verify admin role
-    const { data: userRow, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (userError || !userRow) {
+    // ✅ Step 2: Ensure user has workspace and get role
+    let workspaceId: string
+    let userRole: string
+    try {
+      workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
+      
+      // Get user role after workspace is ensured
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      userRole = (userRow as any)?.role || 'admin'
+    } catch (error) {
+      console.error('Error ensuring user workspace:', error)
       return NextResponse.json(
-        { error: 'Workspace not found', code: 'NO_WORKSPACE' },
-        { status: 400 }
+        { error: 'Failed to initialize workspace', code: 'WORKSPACE_INIT_ERROR' },
+        { status: 500 }
       )
     }
-
-    const workspaceId = (userRow as any).workspace_id
-    const userRole = (userRow as any).role
 
     // Check if user is admin (required for OAuth connections)
     if (userRole !== 'admin') {

@@ -30,22 +30,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user's workspace
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData || !('workspace_id' in userData)) {
+    // Ensure user has a workspace (auto-create if missing)
+    let workspaceId: string
+    try {
+      workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
+    } catch (error) {
+      console.error('Error ensuring user workspace:', error)
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Failed to initialize workspace' },
+        { status: 500 }
       )
     }
 
     // Get all members
-    let members = await WorkspaceService.getWorkspaceMembers((userData as any).workspace_id)
+    let members = await WorkspaceService.getWorkspaceMembers(workspaceId)
 
     // Optional: Filter by role if provided
     const { searchParams } = new URL(request.url)

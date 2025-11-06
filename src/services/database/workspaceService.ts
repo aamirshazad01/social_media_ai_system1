@@ -14,6 +14,100 @@ import { logWorkspaceAction } from './auditLogService'
  */
 export class WorkspaceService {
   /**
+   * Ensure user has a workspace (auto-create if missing)
+   * This is a helper function to fix users who don't have a workspace_id
+   *
+   * @param userId - The user ID to check/ensure workspace for
+   * @param userEmail - User's email (for workspace naming)
+   * @returns Workspace ID (existing or newly created)
+   * @throws Error if workspace creation fails
+   */
+  static async ensureUserWorkspace(userId: string, userEmail?: string): Promise<string> {
+    try {
+      const supabase = await createServerClient()
+
+      // Check if user already has a workspace
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('workspace_id')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (userError && userError.code !== 'PGRST116') {
+        // PGRST116 is "no rows returned" - expected if user doesn't exist
+        console.error('Error checking user workspace:', userError)
+        throw new Error('Failed to check user workspace')
+      }
+
+      // If user exists and has workspace, return it
+      if (userData && (userData as any).workspace_id) {
+        return (userData as any).workspace_id
+      }
+
+      // User doesn't exist or has no workspace - create one
+      console.log(`Creating workspace for user ${userId}...`)
+      const workspaceName = userEmail?.split('@')[0] || 'My Workspace'
+
+      // Create workspace
+      const { data: newWorkspace, error: workspaceError } = await (supabase
+        .from('workspaces') as any)
+        .insert({
+          name: `${workspaceName}'s Workspace`,
+          description: 'Auto-generated workspace',
+          is_active: true,
+        })
+        .select()
+        .single()
+
+      if (workspaceError) {
+        console.error('Failed to create workspace:', workspaceError)
+        throw new Error('Failed to create workspace')
+      }
+
+      const workspaceId = (newWorkspace as any).id
+
+      // If user doesn't exist, create user entry with workspace
+      if (!userData) {
+        const { error: userCreateError } = await (supabase
+          .from('users') as any)
+          .insert({
+            id: userId,
+            workspace_id: workspaceId,
+            email: userEmail || '',
+            full_name: userEmail?.split('@')[0] || 'User',
+            role: 'admin',
+            is_active: true,
+          })
+
+        if (userCreateError) {
+          console.error('Failed to create user entry:', userCreateError)
+          throw new Error('Failed to create user entry')
+        }
+      } else {
+        // User exists but has no workspace - update it
+        const { error: updateError } = await (supabase
+          .from('users') as any)
+          .update({
+            workspace_id: workspaceId,
+            role: 'admin', // Make them admin of their new workspace
+          })
+          .eq('id', userId)
+
+        if (updateError) {
+          console.error('Failed to update user with workspace:', updateError)
+          throw new Error('Failed to assign workspace to user')
+        }
+      }
+
+      console.log(`✅ Workspace ${workspaceId} created/assigned for user ${userId}`)
+      return workspaceId
+    } catch (error) {
+      console.error('Error in ensureUserWorkspace:', error)
+      throw error
+    }
+  }
+
+  /**
    * Get workspace by ID
    * Retrieves complete workspace information
    *

@@ -32,22 +32,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get user's workspace and role
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData || !('workspace_id' in userData)) {
+    // Ensure user has a workspace (auto-create if missing)
+    let workspaceId: string
+    let userRole: string
+    try {
+      workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
+      
+      // Get user role after workspace is ensured
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      userRole = (userData as any)?.role || 'admin'
+    } catch (error) {
+      console.error('Error ensuring user workspace:', error)
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Failed to initialize workspace' },
+        { status: 500 }
       )
     }
 
     // Only admins can view invites
-    if ((userData as any).role !== 'admin') {
+    if (userRole !== 'admin') {
       return NextResponse.json(
         { error: 'Only admins can view invitations' },
         { status: 403 }
@@ -55,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all pending invites
-    const invites = await InviteService.getWorkspaceInvites((userData as any).workspace_id)
+    const invites = await InviteService.getWorkspaceInvites(workspaceId)
 
     return NextResponse.json({ data: invites })
   } catch (error) {
@@ -87,22 +95,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user's workspace and role
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData || !('workspace_id' in userData)) {
+    // Ensure user has a workspace (auto-create if missing)
+    let workspaceId: string
+    let userRole: string
+    try {
+      workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
+      
+      // Get user role after workspace is ensured
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      userRole = (userData as any)?.role || 'admin'
+    } catch (error) {
+      console.error('Error ensuring user workspace:', error)
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Failed to initialize workspace' },
+        { status: 500 }
       )
     }
 
     // Check if user is admin
-    if ((userData as any).role !== 'admin') {
+    if (userRole !== 'admin') {
       return NextResponse.json(
         { error: 'Only admins can create invitations' },
         { status: 403 }
@@ -110,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if workspace is full
-    const isFull = await WorkspaceService.isWorkspaceFull((userData as any).workspace_id)
+    const isFull = await WorkspaceService.isWorkspaceFull(workspaceId)
     if (isFull) {
       return NextResponse.json(
         { error: 'Workspace is at maximum capacity' },
@@ -156,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     // Create the invite
     const invite = await InviteService.createInvite(
-      (userData as any).workspace_id,
+      workspaceId,
       input,
       user.id
     )
@@ -218,22 +234,30 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Get user's workspace and role
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (userError || !userData || !('workspace_id' in userData)) {
+    // Ensure user has a workspace (auto-create if missing)
+    let workspaceId: string
+    let userRole: string
+    try {
+      workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
+      
+      // Get user role after workspace is ensured
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      userRole = (userData as any)?.role || 'admin'
+    } catch (error) {
+      console.error('Error ensuring user workspace:', error)
       return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
+        { error: 'Failed to initialize workspace' },
+        { status: 500 }
       )
     }
 
     // Check if user is admin
-    if ((userData as any).role !== 'admin') {
+    if (userRole !== 'admin') {
       return NextResponse.json(
         { error: 'Only admins can revoke invitations' },
         { status: 403 }
@@ -243,7 +267,7 @@ export async function DELETE(request: NextRequest) {
     // Revoke the invite
     const success = await InviteService.revokeInvite(
       inviteId,
-      (userData as any).workspace_id,
+      workspaceId,
       user.id
     )
 
