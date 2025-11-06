@@ -33,7 +33,26 @@ export class WorkspaceService {
         throw new Error('User not authenticated or user ID mismatch')
       }
 
-      // Check if user already has a workspace
+      // Use RPC function to avoid RLS recursion issues
+      // This function uses SECURITY DEFINER to bypass RLS policies
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+      
+      if (!rpcError && rpcData) {
+        const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        if (profileData && profileData.workspace_id) {
+          const workspaceId = profileData.workspace_id
+          console.log(`✅ User ${userId} already has workspace: ${workspaceId}`)
+          return workspaceId
+        }
+      }
+
+      // If RPC didn't return workspace, user might not exist in users table
+      // Check directly (this might fail due to RLS, but we'll handle it)
+      if (rpcError) {
+        console.warn('RPC get_my_profile failed, trying direct query:', rpcError)
+      }
+
+      // Fallback: Try direct query (may fail due to RLS recursion)
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('workspace_id')
@@ -47,13 +66,17 @@ export class WorkspaceService {
           // User doesn't exist - will create below
           console.log(`User ${userId} not found in users table, will create`)
         } else {
-          // Other database errors
+          // Other database errors (including RLS recursion)
           console.error('Error checking user workspace:', {
             code: userError.code,
             message: userError.message,
             details: userError.details,
             hint: userError.hint,
           })
+          // If it's an RLS recursion error, we need to create the user via RPC or service role
+          if (userError.message?.includes('infinite recursion') || userError.message?.includes('recursion')) {
+            throw new Error('RLS policy recursion detected. User may need to be created via migration endpoint.')
+          }
           throw new Error(`Failed to check user workspace: ${userError.message}`)
         }
       }
