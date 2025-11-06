@@ -193,13 +193,26 @@ const AccountSettingsTab: React.FC = () => {
     try {
       setIsLoading(true)
       const response = await fetch('/api/credentials/status')
-      if (!response.ok) throw new Error('Failed to load status')
 
-      const status = await response.json()
-      setStatusInfo(status)
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Handle API errors properly
+        const errorMessage = data?.error || 'Failed to load status'
+        console.error('Failed to load connection status:', errorMessage, data)
+
+        // Set error for Instagram as a placeholder (or could set for all platforms)
+        setErrors(prev => ({
+          ...prev,
+          instagram: errorMessage,
+        }))
+        return
+      }
+
+      setStatusInfo(data)
       setConnectedAccounts(
         Object.fromEntries(
-          Object.entries(status).map(([platform, info]: [string, any]) => [
+          Object.entries(data).map(([platform, info]: [string, any]) => [
             platform,
             info.isConnected,
           ])
@@ -207,6 +220,10 @@ const AccountSettingsTab: React.FC = () => {
       )
     } catch (error) {
       console.error('Failed to load connection status:', error)
+      setErrors(prev => ({
+        ...prev,
+        instagram: 'Failed to load connection status',
+      }))
     } finally {
       setIsLoading(false)
     }
