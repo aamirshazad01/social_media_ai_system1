@@ -22,7 +22,10 @@
       "Bash(printf:*)",
       "Bash(\"C:\\Users\\aamir\\social_media_os\\src\\app\\api\\auth\\oauth\\youtube\\callback\\route.ts\")",
       "Bash(git checkout:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(dir /s /b \"C:\\Users\\aamir\\OneDrive\\Desktop\\social_media_ai_system1\\New folder\\src\\app\\api\")",
+      "Bash(dir /s /b \"C:\\Users\\aamir\\OneDrive\\Desktop\\social_media_ai_system1\\New folder\\src\\components\\accounts\")",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
