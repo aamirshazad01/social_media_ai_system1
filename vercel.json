@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/token-refresh",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
