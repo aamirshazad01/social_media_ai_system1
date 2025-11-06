@@ -217,9 +217,16 @@ export async function POST(
 
     return response
   } catch (error) {
-    console.error(`OAuth initiation error for ${platform}:`, error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    console.error(`OAuth initiation error for ${platform}:`, {
+      message: errorMessage,
+      stack: errorStack,
+      platform,
+    })
 
-    // Attempt to log error
+    // Attempt to log error (don't let this fail the response)
     try {
       const supabase = await createServerClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -236,7 +243,7 @@ export async function POST(
             platform,
             action: 'oauth_initiation_error',
             status: 'failed',
-            errorMessage: error instanceof Error ? error.message : String(error),
+            errorMessage: errorMessage,
             errorCode: 'INITIATION_ERROR',
             ipAddress: req.headers.get('x-forwarded-for') || undefined,
           })
@@ -246,8 +253,14 @@ export async function POST(
       console.error('Failed to log OAuth error:', auditError)
     }
 
+    // Return more specific error message in development, generic in production
+    const isDevelopment = process.env.NODE_ENV === 'development'
     return NextResponse.json(
-      { error: 'Failed to initiate OAuth', code: 'INITIATION_ERROR' },
+      { 
+        error: isDevelopment ? errorMessage : 'Failed to initiate OAuth',
+        code: 'INITIATION_ERROR',
+        ...(isDevelopment && { details: errorStack })
+      },
       { status: 500 }
     )
   }

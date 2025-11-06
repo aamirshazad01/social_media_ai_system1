@@ -63,7 +63,15 @@ export async function createOAuthState(
       user_agent: userAgent || null,
     })
 
-    if (error) throw error
+    if (error) {
+      console.error('Error inserting OAuth state:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+      throw new Error(`Failed to create OAuth state: ${error.message}`)
+    }
 
     return {
       state,
@@ -73,7 +81,11 @@ export async function createOAuthState(
     }
   } catch (error) {
     console.error('Error creating OAuth state:', error)
-    throw new Error('Failed to create OAuth state')
+    // Preserve the original error message if it's already an Error
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error(`Failed to create OAuth state: ${String(error)}`)
   }
 }
 
