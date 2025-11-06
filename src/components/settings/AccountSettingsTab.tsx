@@ -346,7 +346,7 @@ const AccountSettingsTab: React.FC = () => {
                       )}
                       {isConnected && info?.expiresAt && (
                         <span className="text-xs text-slate">
-                          Expires: {new Date(info.expiresAt).toLocaleDateString()}
+                          Expires: {typeof info.expiresAt === 'number' ? new Date(info.expiresAt * 1000).toLocaleDateString() : info.expiresAt}
                         </span>
                       )}
                     </div>

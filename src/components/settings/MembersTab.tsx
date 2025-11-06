@@ -236,7 +236,7 @@ export default function MembersTab() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {invite.expires_at && new Date(invite.expires_at) < new Date() && (
+                  {invite.expires_at && new Date(invite.expires_at).getTime() < new Date().getTime() && (
                     <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">Expired</span>
                   )}
                   <button

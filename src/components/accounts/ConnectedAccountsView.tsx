@@ -300,7 +300,7 @@ const ConnectedAccountsView: React.FC<ConnectedAccountsViewProps> = ({
                         )}
                         {isConnected && info?.expiresAt && (
                           <span className="text-xs text-gray-500">
-                            Expires: {new Date(info.expiresAt).toLocaleDateString()}
+                            Expires: {typeof info.expiresAt === 'number' ? new Date(info.expiresAt * 1000).toLocaleDateString() : info.expiresAt}
                           </span>
                         )}
                       </div>

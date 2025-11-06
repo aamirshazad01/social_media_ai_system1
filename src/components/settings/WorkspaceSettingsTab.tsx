@@ -165,13 +165,13 @@ export default function WorkspaceSettingsTab() {
             <div>
               <p className="text-indigo-700 font-medium mb-1">Created</p>
               <p className="text-indigo-900">
-                {new Date((workspace as any).created_at).toLocaleDateString()}
+                {(workspace as any).created_at}
               </p>
             </div>
             <div>
               <p className="text-indigo-700 font-medium mb-1">Last Updated</p>
               <p className="text-indigo-900">
-                {new Date((workspace as any).updated_at).toLocaleDateString()}
+                {(workspace as any).updated_at}
               </p>
             </div>
           </div>

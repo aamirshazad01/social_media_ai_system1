@@ -113,7 +113,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
         </div>
         <p className="text-sm text-slate truncate">{member.email}</p>
         <p className="text-xs text-slate mt-1">
-          Joined {new Date(member.created_at).toLocaleDateString()}
+          Joined {member.created_at}
         </p>
       </div>
 
