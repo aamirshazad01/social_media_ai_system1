@@ -6,7 +6,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/lib/supabase/types'
-import { crypto } from 'node:crypto'
+import crypto from 'node:crypto'
 
 /**
  * OAuth state record in database
@@ -16,11 +16,14 @@ export interface OAuthState {
   state: string
   platform: string
   workspace_id: string
-  user_id: string
-  code_challenge?: string
+  code_challenge?: string | null
+  code_challenge_method?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
   created_at: string
   expires_at: string
-  used: boolean
+  is_used: boolean
+  used_at?: string | null
 }
 
 /**
@@ -69,7 +72,6 @@ export class OAuthStateService {
   async createState(
     platform: string,
     workspaceId: string,
-    userId: string,
     codeChallenge?: string
   ): Promise<OAuthState> {
     const state = this.generateState()
@@ -79,22 +81,22 @@ export class OAuthStateService {
       .from('oauth_states')
       .insert({
         state,
-        platform,
+        platform: platform as any,
         workspace_id: workspaceId,
-        user_id: userId,
-        code_challenge: codeChallenge,
+        code_challenge: codeChallenge || null,
+        code_challenge_method: codeChallenge ? 'S256' : null,
         created_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),
-        used: false
-      })
+        is_used: false
+      } as any)
       .select()
-      .single()
+      .single() as any
 
     if (error) {
       throw new Error(`Failed to create OAuth state: ${error.message}`)
     }
 
-    return data
+    return data as OAuthState
   }
 
   /**
@@ -106,10 +108,10 @@ export class OAuthStateService {
       .from('oauth_states')
       .select()
       .eq('state', state)
-      .eq('platform', platform)
+      .eq('platform', platform as any)
       .eq('workspace_id', workspaceId)
-      .eq('used', false)
-      .maybeSingle()
+      .eq('is_used', false)
+      .maybeSingle() as any
 
     if (error) {
       throw new Error(`Failed to validate state: ${error.message}`)
@@ -125,17 +127,19 @@ export class OAuthStateService {
       throw new Error('OAuth state has expired')
     }
 
-    return data
+    return data as OAuthState
   }
 
   /**
    * Mark state as used (prevents replay attacks)
    */
   async markStateUsed(stateId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from('oauth_states')
-      .update({ used: true })
+    const supabaseQuery = this.supabase
+      .from('oauth_states') as any
+    const result = await supabaseQuery
+      .update({ is_used: true, used_at: new Date().toISOString() })
       .eq('id', stateId)
+    const { error } = result
 
     if (error) {
       throw new Error(`Failed to mark state as used: ${error.message}`)
@@ -147,10 +151,10 @@ export class OAuthStateService {
    * Should be run periodically via background job
    */
   async cleanupExpiredStates(): Promise<number> {
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase
       .from('oauth_states')
       .delete()
-      .lt('expires_at', new Date().toISOString())
+      .lt('expires_at', new Date().toISOString()) as any)
 
     if (error) {
       throw new Error(`Failed to cleanup states: ${error.message}`)
@@ -163,17 +167,17 @@ export class OAuthStateService {
    * Get state by ID for retrieving code verifier
    */
   async getStateById(stateId: string): Promise<OAuthState> {
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase
       .from('oauth_states')
       .select()
       .eq('id', stateId)
-      .single()
+      .single() as any)
 
     if (error) {
       throw new Error(`Failed to retrieve state: ${error.message}`)
     }
 
-    return data
+    return data as OAuthState
   }
 }
 

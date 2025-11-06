@@ -109,23 +109,24 @@ export async function getUserWorkspace(userId: string) {
     throw new UnauthorizedError('User not found')
   }
 
-  const workspaceData = (user as any).workspaces
+  const userData = user as any
+  const workspaceData = userData.workspaces
   if (!workspaceData) {
     throw new UnauthorizedError('User workspace not found')
   }
 
   return {
     user: {
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      role: user.role,
-      avatar_url: user.avatar_url,
-      phone: user.phone,
-      is_active: user.is_active,
-      workspace_id: user.workspace_id as string,
-      created_at: user.created_at,
-      updated_at: user.updated_at
+      id: userData.id,
+      email: userData.email,
+      full_name: userData.full_name,
+      role: userData.role,
+      avatar_url: userData.avatar_url,
+      phone: userData.phone,
+      is_active: userData.is_active,
+      workspace_id: userData.workspace_id as string,
+      created_at: userData.created_at,
+      updated_at: userData.updated_at
     },
     workspace: {
       id: workspaceData.id,
@@ -173,7 +174,7 @@ export async function createRequestContext(
       avatar_url: user.avatar_url,
       phone: user.phone,
       is_active: user.is_active,
-      last_login_at: user.last_login_at,
+      last_login_at: null,
       created_at: user.created_at,
       updated_at: user.updated_at
     },

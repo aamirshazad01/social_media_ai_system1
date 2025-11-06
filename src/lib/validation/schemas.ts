@@ -135,8 +135,8 @@ export const CreateCampaignSchema = z.object({
   start_date: DateSchema.optional(),
   end_date: DateSchema.optional(),
   content_themes: z.array(z.string()).default([]),
-  target_audience: z.record(z.any()).default({}),
-  performance_targets: z.record(z.any()).default({}),
+  target_audience: z.record(z.string(), z.any()).default({}),
+  performance_targets: z.record(z.string(), z.any()).default({}),
   budget_hours: z.number().int().min(0).default(0),
   tags: z.array(z.string()).default([]),
   assigned_to: z.array(UUIDSchema).default([])
@@ -379,13 +379,13 @@ export type CampaignSearchInput = z.infer<typeof CampaignSearchSchema>
 export const ErrorResponseSchema = z.object({
   error: z.string(),
   code: z.string(),
-  details: z.record(z.any()).optional()
+  details: z.record(z.string(), z.any()).optional()
 })
 
 export const ValidationErrorSchema = z.object({
   error: z.literal('Validation Error'),
   code: z.literal('VALIDATION_ERROR'),
-  details: z.record(z.array(z.string()))
+  details: z.record(z.string(), z.array(z.string()))
 })
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
@@ -409,7 +409,7 @@ export function parseAndValidate<T>(schema: z.ZodSchema<T>, data: unknown): {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errors: Record<string, string[]> = {}
-      error.errors.forEach((err) => {
+      error.issues.forEach((err) => {
         const path = err.path.join('.')
         if (!errors[path]) {
           errors[path] = []

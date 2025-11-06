@@ -52,9 +52,9 @@ export class PostLibraryService {
         }
       })
 
-      const { data, error } = await supabase
-        .from('post_library')
-        .insert({
+      const { data, error } = await (supabase
+        .from('post_library') as any)
+        .insert([{
           id: crypto.randomUUID(),
           workspace_id: workspaceId,
           original_post_id: post.id,
@@ -66,7 +66,7 @@ export class PostLibraryService {
           published_at: new Date().toISOString(),
           platform_data,
           created_by: userId,
-        })
+        }])
         .select()
         .single()
 
@@ -257,8 +257,8 @@ export class PostLibraryService {
   ): Promise<void> {
     try {
       const supabase = await createServerClient()
-      const { error } = await supabase
-        .from('post_library')
+      const { error } = await (supabase
+        .from('post_library') as any)
         .update({
           metrics,
           updated_at: new Date().toISOString(),
@@ -305,14 +305,14 @@ export class PostLibraryService {
       const supabase = await createServerClient()
 
       // Get all library posts for analysis
-      const { data, error } = await supabase
-        .from('post_library')
+      const { data, error } = await (supabase
+        .from('post_library') as any)
         .select('*')
         .eq('workspace_id', workspaceId)
 
       if (error) throw error
 
-      const posts = data || []
+      const posts = (data || []) as LibraryPost[]
       const byPlatform: Record<string, number> = {}
       const byPostType: Record<string, number> = {}
 

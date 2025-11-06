@@ -217,7 +217,8 @@ export class YouTubeService extends BasePlatformService {
       // Return placeholder - actual upload requires resumable upload
       return `youtube_${Date.now()}`
     } catch (error) {
-      throw new ExternalAPIError('YouTube', `Media upload failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('YouTube', `Media upload failed: ${message}`)
     }
   }
 
@@ -295,6 +296,7 @@ export class YouTubeService extends BasePlatformService {
       return {
         postId,
         platform: 'youtube',
+        impressions: parseInt(stats.viewCount || '0'),
         views: parseInt(stats.viewCount || '0'),
         likes: parseInt(stats.likeCount || '0'),
         comments: parseInt(stats.commentCount || '0'),
@@ -305,7 +307,8 @@ export class YouTubeService extends BasePlatformService {
         fetched_at: new Date()
       }
     } catch (error) {
-      throw new ExternalAPIError('YouTube', `Failed to fetch metrics: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('YouTube', `Failed to fetch metrics: ${message}`)
     }
   }
 

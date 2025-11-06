@@ -46,9 +46,16 @@ export class SocialAccountRepository
   }
 
   /**
+   * Find all social accounts (base repository method - not typically used)
+   */
+  async findAll(options?: FindOptions): Promise<SocialAccountDTO[]> {
+    throw new Error('Use findAllByWorkspace instead for workspace-specific queries')
+  }
+
+  /**
    * Find all social accounts in workspace
    */
-  async findAll(workspaceId: string, options?: FindOptions): Promise<SocialAccountDTO[]> {
+  async findAllByWorkspace(workspaceId: string, options?: FindOptions): Promise<SocialAccountDTO[]> {
     try {
       const supabase = await this.getSupabase()
 
@@ -156,9 +163,16 @@ export class SocialAccountRepository
   }
 
   /**
+   * Create (base repository method - not typically used)
+   */
+  async create(data: any): Promise<SocialAccountDTO> {
+    throw new Error('Use createSocialAccount instead')
+  }
+
+  /**
    * Create social account with encrypted credentials
    */
-  async create(
+  async createSocialAccount(
     workspaceId: string,
     platform: PlatformType,
     credentials: PlatformCredentials,
@@ -178,39 +192,39 @@ export class SocialAccountRepository
       // Encrypt credentials
       const encryptedCredentials = encryptAndStoreCredentials(credentials, workspaceId)
 
-      const { data, error } = await supabase
+      const accountData = {
+        workspace_id: workspaceId,
+        platform,
+        credentials_encrypted: encryptedCredentials,
+        refresh_token_encrypted: credentials.refreshToken
+          ? encryptAndStoreCredentials(
+              { ...credentials, accessToken: '' },
+              workspaceId
+            )
+          : null,
+        username: accountInfo.username,
+        account_id: accountInfo.accountId,
+        account_name: accountInfo.accountName,
+        profile_picture_url: accountInfo.profileImageUrl,
+        is_connected: true,
+        is_verified: false,
+        connected_at: new Date().toISOString(),
+        platform_user_id: credentials.userId,
+        page_id: accountInfo.pageId,
+        access_token_expires_at: credentials.expiresAt?.toISOString(),
+        refresh_error_count: 0
+      }
+
+      const { data: result, error } = await (supabase as any)
         .from('social_accounts')
-        .insert([
-          {
-            workspace_id: workspaceId,
-            platform,
-            credentials_encrypted: encryptedCredentials,
-            refresh_token_encrypted: credentials.refreshToken
-              ? encryptAndStoreCredentials(
-                  { ...credentials, accessToken: '' },
-                  workspaceId
-                )
-              : null,
-            username: accountInfo.username,
-            account_id: accountInfo.accountId,
-            account_name: accountInfo.accountName,
-            profile_picture_url: accountInfo.profileImageUrl,
-            is_connected: true,
-            is_verified: false,
-            connected_at: new Date().toISOString(),
-            platform_user_id: credentials.userId,
-            page_id: accountInfo.pageId,
-            access_token_expires_at: credentials.expiresAt?.toISOString(),
-            refresh_error_count: 0
-          }
-        ])
+        .insert([accountData])
         .select()
         .single()
 
       if (error) throw error
-      if (!data) throw new Error('Failed to create social account')
+      if (!result) throw new Error('Failed to create social account')
 
-      return data as SocialAccountDTO
+      return result as SocialAccountDTO
     } catch (error) {
       throw new DatabaseError('Failed to create social account', { error: String(error) })
     }
@@ -223,7 +237,7 @@ export class SocialAccountRepository
     try {
       const supabase = await this.getSupabase()
 
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('social_accounts')
         .update(data)
         .eq('id', accountId)
@@ -248,12 +262,18 @@ export class SocialAccountRepository
     accountId: string
   ): Promise<PlatformCredentials> {
     try {
-      const account = await this.findById(accountId)
-      if (!account) {
-        throw new Error('Account not found')
-      }
+      const supabase = await this.getSupabase()
 
-      return retrieveAndDecryptCredentials(account.credentials_encrypted, workspaceId)
+      const { data, error } = await (supabase as any)
+        .from('social_accounts')
+        .select('credentials_encrypted')
+        .eq('id', accountId)
+        .single()
+
+      if (error) throw error
+      if (!data) throw new Error('Account not found')
+
+      return retrieveAndDecryptCredentials(data.credentials_encrypted, workspaceId)
     } catch (error) {
       throw new DatabaseError('Failed to decrypt credentials', { error: String(error) })
     }
@@ -272,7 +292,7 @@ export class SocialAccountRepository
 
       const expiresAt = new Date(Date.now() + expiresIn * 1000)
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('social_accounts')
         .update({
           access_token_expires_at: expiresAt.toISOString(),
@@ -294,11 +314,11 @@ export class SocialAccountRepository
     try {
       const supabase = await this.getSupabase()
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('social_accounts')
         .update({
           last_error_message: errorMessage,
-          refresh_error_count: supabase.rpc('increment_error_count', { account_id: accountId }),
+          refresh_error_count: (supabase as any).rpc('increment_error_count', { account_id: accountId }),
           last_refreshed_at: new Date().toISOString()
         })
         .eq('id', accountId)
@@ -316,7 +336,7 @@ export class SocialAccountRepository
     try {
       const supabase = await this.getSupabase()
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('social_accounts')
         .update({
           is_verified: true,
@@ -337,7 +357,7 @@ export class SocialAccountRepository
     try {
       const supabase = await this.getSupabase()
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('social_accounts')
         .update({
           is_connected: false,
@@ -358,7 +378,7 @@ export class SocialAccountRepository
     try {
       const supabase = await this.getSupabase()
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('social_accounts')
         .select('platform')
         .eq('workspace_id', workspaceId)
@@ -366,7 +386,7 @@ export class SocialAccountRepository
 
       if (error) throw error
 
-      return (data || []).map((item) => item.platform as PlatformType)
+      return ((data as any) || []).map((item: any) => item.platform as PlatformType)
     } catch (error) {
       throw new DatabaseError('Failed to get connected platforms', { error: String(error) })
     }

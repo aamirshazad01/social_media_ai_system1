@@ -24,11 +24,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { TokenRefreshService } from '@/services/TokenRefreshService'
-import { OAuthStateService } from '@/services/OAuthStateService'
 
-const tokenRefreshService = new TokenRefreshService()
-const oauthStateService = new OAuthStateService()
+// Lazy-load services to avoid instantiation errors at build time
+let tokenRefreshService: any
+let oauthStateService: any
+
+async function getServices() {
+  if (!tokenRefreshService || !oauthStateService) {
+    const { TokenRefreshService } = await import('@/services/TokenRefreshService')
+    const { OAuthStateService } = await import('@/services/OAuthStateService')
+    tokenRefreshService = new TokenRefreshService()
+    oauthStateService = new OAuthStateService()
+  }
+  return { tokenRefreshService, oauthStateService }
+}
 
 // Verify cron secret to prevent unauthorized calls
 function verifyCronSecret(secret: string | null): boolean {
@@ -54,14 +63,17 @@ export async function GET(req: NextRequest) {
 
     console.log('🔄 Starting hourly token refresh job...')
 
+    // Get services
+    const { tokenRefreshService: trs, oauthStateService: oss } = await getServices()
+
     // ✅ Task 1: Refresh all expired tokens
     console.log('📋 Task 1: Refreshing expired tokens')
-    const refreshResult = await tokenRefreshService.refreshAllExpiredTokens()
+    const refreshResult = await trs.refreshAllExpiredTokens()
     console.log(`✅ Refresh result: ${refreshResult.successful}/${refreshResult.total} successful, ${refreshResult.failed} failed`)
 
     // ✅ Task 2: Clean up expired OAuth states
     console.log('📋 Task 2: Cleaning up expired OAuth states')
-    const cleanupCount = await oauthStateService.cleanupExpiredStates()
+    const cleanupCount = await oss.cleanupExpiredStates()
     console.log(`✅ Cleaned up ${cleanupCount} expired OAuth states`)
 
     // ✅ Task 3: Return summary

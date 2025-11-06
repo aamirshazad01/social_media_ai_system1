@@ -35,8 +35,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .insert({
           id: crypto.randomUUID(),
           workspace_id: workspaceId,
@@ -68,15 +68,15 @@ export class ThreadService {
       const supabase = await createServerClient()
 
       // Get total count
-      const { count } = await supabase
-        .from('content_threads')
+      const { count } = await (supabase
+        .from('content_threads') as any)
         .select('id', { count: 'exact', head: true })
         .eq('workspace_id', workspaceId)
         .is('deleted_at', null)
 
       // Get paginated results
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .select('*')
         .eq('workspace_id', workspaceId)
         .is('deleted_at', null)
@@ -105,8 +105,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .select('*')
         .eq('id', id)
         .eq('workspace_id', workspaceId)
@@ -133,8 +133,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .select('*')
         .eq('workspace_id', workspaceId)
         .is('deleted_at', null)
@@ -162,8 +162,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { error } = await supabase
-        .from('content_threads')
+      const { error } = await (supabase
+        .from('content_threads') as any)
         .update({
           title,
           updated_at: new Date().toISOString(),
@@ -196,8 +196,8 @@ export class ThreadService {
       // Add new message to array
       const updatedMessages = [...(thread.messages || []), message]
 
-      const { error } = await supabase
-        .from('content_threads')
+      const { error } = await (supabase
+        .from('content_threads') as any)
         .update({
           messages: updatedMessages,
           updated_at: new Date().toISOString(),
@@ -223,8 +223,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { error } = await supabase
-        .from('content_threads')
+      const { error } = await (supabase
+        .from('content_threads') as any)
         .update({
           messages,
           updated_at: new Date().toISOString(),
@@ -246,8 +246,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { error } = await supabase
-        .from('content_threads')
+      const { error } = await (supabase
+        .from('content_threads') as any)
         .update({
           deleted_at: new Date().toISOString(),
         })
@@ -268,8 +268,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { error } = await supabase
-        .from('content_threads')
+      const { error } = await (supabase
+        .from('content_threads') as any)
         .update({
           deleted_at: null,
         })
@@ -293,8 +293,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .select('*')
         .eq('workspace_id', workspaceId)
         .is('deleted_at', null)
@@ -321,8 +321,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .select('*')
         .eq('workspace_id', workspaceId)
         .eq('created_by', userId)
@@ -351,8 +351,8 @@ export class ThreadService {
     try {
       const supabase = await createServerClient()
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .select('*')
         .eq('workspace_id', workspaceId)
         .is('deleted_at', null)
@@ -362,7 +362,7 @@ export class ThreadService {
       const threads = data || []
       let totalMessages = 0
 
-      threads.forEach((thread) => {
+      threads.forEach((thread: any) => {
         totalMessages += (thread.messages || []).length
       })
 
@@ -398,8 +398,8 @@ export class ThreadService {
       const cutoffDate = new Date()
       cutoffDate.setDate(cutoffDate.getDate() - daysOld)
 
-      const { data, error } = await supabase
-        .from('content_threads')
+      const { data, error } = await (supabase
+        .from('content_threads') as any)
         .update({
           deleted_at: new Date().toISOString(),
         })

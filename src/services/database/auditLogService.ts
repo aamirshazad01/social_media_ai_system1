@@ -48,7 +48,7 @@ export async function logAuditEvent({
 }: AuditEventParams): Promise<void> {
   try {
     const supabase = await getSupabase()
-    const { error } = await supabase.from('credential_audit_log').insert({
+    const { error } = await (supabase.from('credential_audit_log') as any).insert({
       workspace_id: workspaceId,
       user_id: userId,
       platform,
@@ -93,8 +93,8 @@ export async function getAuditLogs(
 ): Promise<any[]> {
   try {
     const supabase = await getSupabase()
-    let query = supabase
-      .from('credential_audit_log')
+    let query = (supabase
+      .from('credential_audit_log') as any)
       .select('*')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
@@ -147,8 +147,8 @@ export async function getUserAuditLogs(
 ): Promise<any[]> {
   try {
     const supabase = await getSupabase()
-    let query = supabase
-      .from('credential_audit_log')
+    let query = (supabase
+      .from('credential_audit_log') as any)
       .select('*')
       .eq('workspace_id', workspaceId)
       .eq('user_id', userId)
@@ -252,8 +252,8 @@ export async function cleanupOldAuditLogs(): Promise<number> {
     const ninetyDaysAgo = new Date()
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
 
-    const { data, error } = await supabase
-      .from('credential_audit_log')
+    const { data, error } = await (supabase
+      .from('credential_audit_log') as any)
       .delete()
       .lt('created_at', ninetyDaysAgo.toISOString())
       .select('id')
@@ -351,8 +351,8 @@ export async function getWorkspaceActivityLog(
   try {
     // Build the query
     const supabase = await getSupabase()
-    let query = supabase
-      .from('audit_logs')
+    let query = (supabase
+      .from('audit_logs') as any)
       .select(
         `
         id,

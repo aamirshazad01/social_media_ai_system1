@@ -128,7 +128,7 @@ export class WorkspaceService {
    */
   async getMembers(context: RequestContext): Promise<any[]> {
     try {
-      const users = await this.userRepository.findAll(context.workspaceId)
+      const users = await this.userRepository.findAllByWorkspace(context.workspaceId)
 
       // Return public profile only
       return users.map((user) => ({
@@ -226,7 +226,8 @@ export class WorkspaceService {
         throw new NotFoundError('Workspace')
       }
 
-      return workspace.settings || {}
+      // Settings are not stored in WorkspaceDTO, return empty object
+      return {}
     } catch (error) {
       throw error
     }
@@ -254,7 +255,7 @@ export class WorkspaceService {
         throw new NotFoundError('Workspace')
       }
 
-      return updated.settings || {}
+      return {}
     } catch (error) {
       throw error
     }

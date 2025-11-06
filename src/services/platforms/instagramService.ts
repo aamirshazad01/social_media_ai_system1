@@ -293,7 +293,8 @@ export class InstagramService extends BasePlatformService {
       // Return media URL - Instagram accepts direct URLs
       return media.url
     } catch (error) {
-      throw new ExternalAPIError('Instagram', `Media upload failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('Instagram', `Media upload failed: ${message}`)
     }
   }
 
@@ -407,12 +408,12 @@ export class InstagramService extends BasePlatformService {
         platform: 'instagram',
         impressions: metricsMap.impressions || 0,
         engagements: metricsMap.engagement || 0,
-        reach: metricsMap.reach || 0,
         saves: metricsMap.saved || 0,
         fetched_at: new Date()
       }
     } catch (error) {
-      throw new ExternalAPIError('Instagram', `Failed to fetch metrics: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('Instagram', `Failed to fetch metrics: ${message}`)
     }
   }
 

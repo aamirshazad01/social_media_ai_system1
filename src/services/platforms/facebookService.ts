@@ -273,7 +273,8 @@ export class FacebookService extends BasePlatformService {
       // Return media URL directly - Facebook can handle URLs
       return media.url
     } catch (error) {
-      throw new ExternalAPIError('Facebook', `Media upload failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('Facebook', `Media upload failed: ${message}`)
     }
   }
 
@@ -382,7 +383,8 @@ export class FacebookService extends BasePlatformService {
         fetched_at: new Date()
       }
     } catch (error) {
-      throw new ExternalAPIError('Facebook', `Failed to fetch metrics: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('Facebook', `Failed to fetch metrics: ${message}`)
     }
   }
 

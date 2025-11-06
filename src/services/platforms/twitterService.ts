@@ -315,7 +315,8 @@ export class TwitterService extends BasePlatformService {
       const finalData = await finalizeResponse.json()
       return finalData.media_id_string
     } catch (error) {
-      throw new ExternalAPIError('Twitter', `Media upload failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('Twitter', `Media upload failed: ${message}`)
     }
   }
 
@@ -394,7 +395,8 @@ export class TwitterService extends BasePlatformService {
         fetched_at: new Date()
       }
     } catch (error) {
-      throw new ExternalAPIError('Twitter', `Failed to fetch metrics: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('Twitter', `Failed to fetch metrics: ${message}`)
     }
   }
 

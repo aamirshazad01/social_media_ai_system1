@@ -18,6 +18,7 @@ import {
   PLATFORM_CONFIGS,
   OAUTH_SCOPES
 } from '@/core/types/PlatformTypes'
+import type { TikTokCredentials } from '@/types'
 import { ExternalAPIError } from '@/core/errors/AppError'
 
 /**
@@ -208,7 +209,8 @@ export class TikTokService extends BasePlatformService {
 
       return media.url
     } catch (error) {
-      throw new ExternalAPIError('TikTok', `Media upload failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('TikTok', `Media upload failed: ${message}`)
     }
   }
 
@@ -281,6 +283,7 @@ export class TikTokService extends BasePlatformService {
       return {
         postId,
         platform: 'tiktok',
+        impressions: video.view_count || 0,
         views: video.view_count || 0,
         likes: video.like_count || 0,
         comments: video.comment_count || 0,
@@ -290,7 +293,8 @@ export class TikTokService extends BasePlatformService {
         fetched_at: new Date()
       }
     } catch (error) {
-      throw new ExternalAPIError('TikTok', `Failed to fetch metrics: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('TikTok', `Failed to fetch metrics: ${message}`)
     }
   }
 

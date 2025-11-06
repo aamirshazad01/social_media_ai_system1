@@ -837,6 +837,153 @@ export interface Database {
           updated_at?: string
         }
       }
+
+      post_library: {
+        Row: {
+          id: string
+          workspace_id: string
+          original_post_id: string | null
+          title: string | null
+          topic: string
+          post_type: string
+          platforms: string[]
+          content: Json
+          published_at: string
+          platform_data: Json
+          metrics: Json | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          original_post_id?: string | null
+          title?: string | null
+          topic: string
+          post_type: string
+          platforms: string[]
+          content: Json
+          published_at: string
+          platform_data: Json
+          metrics?: Json | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          original_post_id?: string | null
+          title?: string | null
+          topic?: string
+          post_type?: string
+          platforms?: string[]
+          content?: Json
+          published_at?: string
+          platform_data?: Json
+          metrics?: Json | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+
+      content_threads: {
+        Row: {
+          id: string
+          workspace_id: string
+          title: string
+          messages: Json
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          title: string
+          messages: Json
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          title?: string
+          messages?: Json
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+
+      audit_logs: {
+        Row: {
+          id: string
+          workspace_id: string
+          user_id: string | null
+          action: string
+          resource_type: string
+          resource_id: string | null
+          changes: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          user_id?: string | null
+          action: string
+          resource_type: string
+          resource_id?: string | null
+          changes?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          user_id?: string | null
+          action?: string
+          resource_type?: string
+          resource_id?: string | null
+          changes?: Json | null
+          created_at?: string
+        }
+      }
+
+      credential_audit_log: {
+        Row: {
+          id: string
+          workspace_id: string
+          user_id: string | null
+          action: string
+          credential_type: string
+          status: string
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          user_id?: string | null
+          action: string
+          credential_type: string
+          status: string
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          user_id?: string | null
+          action?: string
+          credential_type?: string
+          status?: string
+          error_message?: string | null
+          created_at?: string
+        }
+      }
     }
 
     Views: {

@@ -161,7 +161,7 @@ export class Pagination {
   }
 
   static fromCursor(cursor?: string, limit: number = 20) {
-    const decodedCursor = cursor ? Buffer.from(cursor, 'base64').toString() : null
+    const decodedCursor = cursor ? Buffer.from(cursor, 'base64').toString() : undefined
     return new CursorPagination(decodedCursor, Math.min(Math.max(1, limit), 100))
   }
 
@@ -209,6 +209,6 @@ export class RepositoryResult<T> {
   }
 
   static err<T>(error: string): RepositoryResult<T> {
-    return new RepositoryResult(false, undefined, error)
+    return new RepositoryResult(false, undefined as any, error)
   }
 }

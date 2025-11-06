@@ -13,7 +13,6 @@ import { DatabaseError, NotFoundError } from '../../errors/AppError'
 
 export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUserDTO> {
   protected tableName = 'users'
-  private supabase: ReturnType<typeof createServerClient<Database>>
 
   constructor() {
     super()
@@ -45,9 +44,16 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
   }
 
   /**
+   * Find all users (base repository method - not typically used)
+   */
+  async findAll(options?: FindOptions): Promise<UserDTO[]> {
+    throw new Error('Use findAllByWorkspace instead for workspace-specific queries')
+  }
+
+  /**
    * Find all users in a workspace
    */
-  async findAll(workspaceId: string, options?: FindOptions): Promise<UserDTO[]> {
+  async findAllByWorkspace(workspaceId: string, options?: FindOptions): Promise<UserDTO[]> {
     try {
       const supabase = await this.getSupabase()
 
@@ -207,7 +213,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
     try {
       const supabase = await this.getSupabase()
 
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('users')
         .insert([
           {
@@ -244,7 +250,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
       if (data.phone !== undefined) updateData.phone = data.phone
       if (data.is_active !== undefined) updateData.is_active = data.is_active
 
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('users')
         .update(updateData)
         .eq('id', userId)
@@ -268,7 +274,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
     try {
       const supabase = await this.getSupabase()
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('users')
         .update({ is_active: false })
         .eq('id', userId)
@@ -287,7 +293,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
     try {
       const supabase = await this.getSupabase()
 
-      let query = supabase.from('users').update({ is_active: false })
+      let query = (supabase as any).from('users').update({ is_active: false })
 
       Object.entries(where).forEach(([key, value]) => {
         if (Array.isArray(value)) {
@@ -399,7 +405,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
 
       return {
         data: results as UserDTO[],
-        nextCursor: results.length > 0 ? results[results.length - 1].created_at : undefined,
+        nextCursor: results.length > 0 ? (results[results.length - 1] as any).created_at : undefined,
         hasMore
       }
     } catch (error) {
@@ -451,7 +457,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
     try {
       const supabase = await this.getSupabase()
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('users')
         .update({ role })
         .eq('id', userId)
@@ -475,7 +481,7 @@ export class UserRepository extends Repository<UserDTO, CreateUserDTO, UpdateUse
     try {
       const supabase = await this.getSupabase()
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('users')
         .update({ last_login_at: new Date().toISOString() })
         .eq('id', userId)

@@ -213,7 +213,8 @@ export class LinkedInService extends BasePlatformService {
       // Return placeholder for now - full implementation needs presigned URL handling
       return `urn:li:digitalmediaAsset:${credentials.userId}:${Date.now()}`
     } catch (error) {
-      throw new ExternalAPIError('LinkedIn', `Media upload failed: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('LinkedIn', `Media upload failed: ${message}`)
     }
   }
 
@@ -328,7 +329,8 @@ export class LinkedInService extends BasePlatformService {
         fetched_at: new Date()
       }
     } catch (error) {
-      throw new ExternalAPIError('LinkedIn', `Failed to fetch metrics: ${error.message}`)
+      const message = error instanceof Error ? error.message : String(error)
+      throw new ExternalAPIError('LinkedIn', `Failed to fetch metrics: ${message}`)
     }
   }
 

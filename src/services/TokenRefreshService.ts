@@ -92,7 +92,7 @@ export class TokenRefreshService {
         .select()
         .eq('id', accountId)
         .eq('workspace_id', workspaceId)
-        .single()
+        .single() as any
 
       if (fetchError || !account) {
         return {
@@ -101,7 +101,7 @@ export class TokenRefreshService {
         }
       }
 
-      const platform = account.platform as keyof typeof TOKEN_REFRESH_CONFIG
+      const platform = account?.platform as keyof typeof TOKEN_REFRESH_CONFIG
 
       // Check if refresh is needed
       const expiresAt = account.expires_at ? new Date(account.expires_at) : null
@@ -155,12 +155,12 @@ export class TokenRefreshService {
 
       await this.socialAccountRepository.updateAccessToken(
         accountId,
-        workspaceId,
-        updatedCredentials
+        updatedCredentials.accessToken,
+        newTokens.expiresIn
       )
 
       // Clear refresh error count on successful refresh
-      await this.supabase
+      await (this.supabase as any)
         .from('social_accounts')
         .update({ refresh_error_count: 0 })
         .eq('id', accountId)
@@ -173,16 +173,16 @@ export class TokenRefreshService {
       // Increment error count
       const { data: account } = await this.supabase
         .from('social_accounts')
-        .select('refresh_error_count')
+        .select('refresh_error_count, platform')
         .eq('id', accountId)
-        .single()
+        .single() as any
 
-      const newErrorCount = (account?.refresh_error_count || 0) + 1
-      const config = TOKEN_REFRESH_CONFIG[account?.platform as keyof typeof TOKEN_REFRESH_CONFIG]
+      const newErrorCount = ((account as any)?.refresh_error_count || 0) + 1
+      const config = TOKEN_REFRESH_CONFIG[(account as any)?.platform as keyof typeof TOKEN_REFRESH_CONFIG]
 
       // Mark as failed if max retries exceeded
       if (newErrorCount >= config.maxRetries) {
-        await this.supabase
+        await (this.supabase as any)
           .from('social_accounts')
           .update({
             is_active: false,
@@ -190,7 +190,7 @@ export class TokenRefreshService {
           })
           .eq('id', accountId)
       } else {
-        await this.supabase
+        await (this.supabase as any)
           .from('social_accounts')
           .update({ refresh_error_count: newErrorCount })
           .eq('id', accountId)
@@ -218,7 +218,7 @@ export class TokenRefreshService {
         .from('social_accounts')
         .select('id, workspace_id, platform, expires_at')
         .eq('is_active', true)
-        .not('expires_at', 'is', null)
+        .not('expires_at', 'is', null) as any
 
       if (error) {
         throw new Error(`Failed to fetch accounts: ${error.message}`)
@@ -229,11 +229,11 @@ export class TokenRefreshService {
 
       // Process each account
       for (const account of accounts || []) {
-        const platform = account.platform as keyof typeof TOKEN_REFRESH_CONFIG
-        const expiresAt = new Date(account.expires_at)
+        const platform = (account as any).platform as keyof typeof TOKEN_REFRESH_CONFIG
+        const expiresAt = new Date((account as any).expires_at)
 
         if (this.shouldRefreshToken(expiresAt, platform)) {
-          const result = await this.refreshCredentials(account.id, account.workspace_id)
+          const result = await this.refreshCredentials((account as any).id, (account as any).workspace_id)
 
           if (result.success) {
             successful++
@@ -268,24 +268,24 @@ export class TokenRefreshService {
   }> {
     const { data: account, error } = await this.supabase
       .from('social_accounts')
-      .select('expires_at, refresh_error_count, is_active, updated_at')
+      .select('expires_at, refresh_error_count, is_active, updated_at, platform')
       .eq('id', accountId)
       .eq('workspace_id', workspaceId)
-      .single()
+      .single() as any
 
     if (error || !account) {
       throw new Error(`Account not found: ${error?.message}`)
     }
 
-    const expiresAt = account.expires_at ? new Date(account.expires_at) : null
-    const platform = account.platform as keyof typeof TOKEN_REFRESH_CONFIG
+    const expiresAt = (account as any).expires_at ? new Date((account as any).expires_at) : null
+    const platform = (account as any).platform as keyof typeof TOKEN_REFRESH_CONFIG
 
     return {
       needsRefresh: expiresAt ? this.shouldRefreshToken(expiresAt, platform) : false,
       expiresAt,
-      lastRefreshed: new Date(account.updated_at),
-      errorCount: account.refresh_error_count || 0,
-      isActive: account.is_active
+      lastRefreshed: new Date((account as any).updated_at),
+      errorCount: (account as any).refresh_error_count || 0,
+      isActive: (account as any).is_active
     }
   }
 }

@@ -52,7 +52,7 @@ export function errorResponse(error: unknown, requestId?: string) {
 export function validationErrorResponse(error: ZodError, requestId?: string) {
   const details: Record<string, string[]> = {}
 
-  error.errors.forEach((err) => {
+  error.issues.forEach((err) => {
     const path = err.path.join('.')
     if (!details[path]) {
       details[path] = []

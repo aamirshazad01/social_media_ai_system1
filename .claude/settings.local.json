@@ -20,7 +20,9 @@
       "mcp__chrome-devtools__take_screenshot",
       "mcp__chrome-devtools__click",
       "Bash(printf:*)",
-      "Bash(\"C:\\Users\\aamir\\social_media_os\\src\\app\\api\\auth\\oauth\\youtube\\callback\\route.ts\")"
+      "Bash(\"C:\\Users\\aamir\\social_media_os\\src\\app\\api\\auth\\oauth\\youtube\\callback\\route.ts\")",
+      "Bash(git checkout:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

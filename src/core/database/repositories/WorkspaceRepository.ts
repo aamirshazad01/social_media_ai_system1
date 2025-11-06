@@ -198,8 +198,8 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
     try {
       const supabase = await this.getSupabase()
 
-      const { data: result, error } = await supabase
-        .from('workspaces')
+      const { data: result, error } = await ((supabase
+        .from('workspaces') as any)
         .insert([
           {
             name: data.name,
@@ -211,7 +211,7 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
           }
         ])
         .select()
-        .single()
+        .single())
 
       if (error) throw error
       if (!result) throw new Error('Failed to create workspace')
@@ -236,12 +236,12 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
       if (data.max_users !== undefined) updateData.max_users = data.max_users
       if (data.is_active !== undefined) updateData.is_active = data.is_active
 
-      const { data: result, error } = await supabase
-        .from('workspaces')
+      const { data: result, error } = await ((supabase
+        .from('workspaces') as any)
         .update(updateData)
         .eq('id', workspaceId)
         .select()
-        .single()
+        .single())
 
       if (error && error.code !== 'PGRST116') {
         throw error
@@ -260,10 +260,10 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
     try {
       const supabase = await this.getSupabase()
 
-      const { error } = await supabase
-        .from('workspaces')
+      const { error } = await ((supabase
+        .from('workspaces') as any)
         .update({ is_active: false })
-        .eq('id', workspaceId)
+        .eq('id', workspaceId))
 
       if (error) throw error
       return true
@@ -279,7 +279,7 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
     try {
       const supabase = await this.getSupabase()
 
-      let query = supabase.from('workspaces').update({ is_active: false })
+      let query = (supabase.from('workspaces') as any).update({ is_active: false })
 
       Object.entries(where).forEach(([key, value]) => {
         if (Array.isArray(value)) {
@@ -370,12 +370,12 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
 
       if (error) throw error
 
-      const items = data || []
+      const items = (data || []) as WorkspaceDTO[]
       const hasMore = items.length > options.limit
       const results = hasMore ? items.slice(0, -1) : items
 
       return {
-        data: results as WorkspaceDTO[],
+        data: results,
         nextCursor: results.length > 0 ? results[results.length - 1].created_at : undefined,
         hasMore
       }
@@ -421,12 +421,12 @@ export class WorkspaceRepository extends Repository<WorkspaceDTO, CreateWorkspac
     try {
       const supabase = await this.getSupabase()
 
-      const { data, error } = await supabase
-        .from('workspaces')
+      const { data, error } = await ((supabase
+        .from('workspaces') as any)
         .update({ settings })
         .eq('id', workspaceId)
         .select()
-        .single()
+        .single())
 
       if (error && error.code !== 'PGRST116') {
         throw error

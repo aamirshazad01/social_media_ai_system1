@@ -166,7 +166,7 @@ export class UserService {
   async searchUsers(context: RequestContext, query: string, limit: number = 10): Promise<UserPublicDTO[]> {
     try {
       // Get all users in workspace
-      const users = await this.userRepository.findAll(context.workspaceId, { limit: 100 })
+      const users = await this.userRepository.findAllByWorkspace(context.workspaceId, { limit: 100 })
 
       // Filter by query (email or full_name)
       const filtered = users.filter(
