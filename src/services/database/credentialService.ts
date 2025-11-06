@@ -328,10 +328,12 @@ export class CredentialService {
           (account as any).credentials_encrypted.length > 0;
 
         const platform = (account as any).platform;
+        const expiresAt = (account as any).expires_at;
+
         (status as any)[platform] = {
           isConnected: hasCredentials,
           username: (account as any).username || (account as any).page_name,
-          expiresAt: (account as any).expires_at,
+          expiresAt: expiresAt ? (typeof expiresAt === 'string' ? expiresAt : expiresAt.toISOString()) : null,
         };
       }
 
