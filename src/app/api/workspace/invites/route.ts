@@ -38,14 +38,16 @@ export async function GET(request: NextRequest) {
     try {
       workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
       
-      // Get user role after workspace is ensured
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      
-      userRole = (userData as any)?.role || 'admin'
+      // Get user role using RPC to avoid RLS recursion
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+      if (!rpcError && rpcData) {
+        const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        userRole = profileData?.role || 'admin'
+      } else {
+        // Fallback to admin if RPC fails
+        console.warn('Failed to get user role via RPC, defaulting to admin:', rpcError)
+        userRole = 'admin'
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
       console.error('Error ensuring user workspace:', errorMessage, error)
@@ -102,14 +104,16 @@ export async function POST(request: NextRequest) {
     try {
       workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
       
-      // Get user role after workspace is ensured
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      
-      userRole = (userData as any)?.role || 'admin'
+      // Get user role using RPC to avoid RLS recursion
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+      if (!rpcError && rpcData) {
+        const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        userRole = profileData?.role || 'admin'
+      } else {
+        // Fallback to admin if RPC fails
+        console.warn('Failed to get user role via RPC, defaulting to admin:', rpcError)
+        userRole = 'admin'
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
       console.error('Error ensuring user workspace:', errorMessage, error)
@@ -242,14 +246,16 @@ export async function DELETE(request: NextRequest) {
     try {
       workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
       
-      // Get user role after workspace is ensured
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      
-      userRole = (userData as any)?.role || 'admin'
+      // Get user role using RPC to avoid RLS recursion
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+      if (!rpcError && rpcData) {
+        const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        userRole = profileData?.role || 'admin'
+      } else {
+        // Fallback to admin if RPC fails
+        console.warn('Failed to get user role via RPC, defaulting to admin:', rpcError)
+        userRole = 'admin'
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
       console.error('Error ensuring user workspace:', errorMessage, error)

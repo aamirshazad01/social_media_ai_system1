@@ -64,14 +64,16 @@ export async function POST(
     try {
       workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
       
-      // Get user role after workspace is ensured
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      
-      userRole = (userRow as any)?.role || 'admin'
+      // Get user role using RPC to avoid RLS recursion
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+      if (!rpcError && rpcData) {
+        const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+        userRole = profileData?.role || 'admin'
+      } else {
+        // Fallback to admin if RPC fails
+        console.warn('Failed to get user role via RPC, defaulting to admin:', rpcError)
+        userRole = 'admin'
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
       console.error('Error ensuring user workspace:', errorMessage, error)
@@ -223,15 +225,13 @@ export async function POST(
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
-        const { data: userRow } = await supabase
-          .from('users')
-          .select('workspace_id')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        if (userRow) {
+        // Use RPC to get workspace_id to avoid RLS recursion
+        const { data: rpcData } = await supabase.rpc('get_my_profile')
+        const profileData: any = rpcData ? (Array.isArray(rpcData) ? rpcData[0] : rpcData) : null
+        
+        if (profileData?.workspace_id) {
           await logAuditEvent({
-            workspaceId: (userRow as any).workspace_id,
+            workspaceId: profileData.workspace_id,
             userId: user.id,
             platform,
             action: 'oauth_initiation_error',
