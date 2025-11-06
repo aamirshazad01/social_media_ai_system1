@@ -35,9 +35,10 @@ export async function GET(request: NextRequest) {
     try {
       workspaceId = await WorkspaceService.ensureUserWorkspace(user.id, user.email || undefined)
     } catch (error) {
-      console.error('Error ensuring user workspace:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
+      console.error('Error ensuring user workspace:', errorMessage, error)
       return NextResponse.json(
-        { error: 'Failed to initialize workspace' },
+        { error: errorMessage },
         { status: 500 }
       )
     }

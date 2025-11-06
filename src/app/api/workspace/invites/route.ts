@@ -47,9 +47,10 @@ export async function GET(request: NextRequest) {
       
       userRole = (userData as any)?.role || 'admin'
     } catch (error) {
-      console.error('Error ensuring user workspace:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
+      console.error('Error ensuring user workspace:', errorMessage, error)
       return NextResponse.json(
-        { error: 'Failed to initialize workspace' },
+        { error: errorMessage },
         { status: 500 }
       )
     }
@@ -110,9 +111,10 @@ export async function POST(request: NextRequest) {
       
       userRole = (userData as any)?.role || 'admin'
     } catch (error) {
-      console.error('Error ensuring user workspace:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
+      console.error('Error ensuring user workspace:', errorMessage, error)
       return NextResponse.json(
-        { error: 'Failed to initialize workspace' },
+        { error: errorMessage },
         { status: 500 }
       )
     }
@@ -249,9 +251,10 @@ export async function DELETE(request: NextRequest) {
       
       userRole = (userData as any)?.role || 'admin'
     } catch (error) {
-      console.error('Error ensuring user workspace:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
+      console.error('Error ensuring user workspace:', errorMessage, error)
       return NextResponse.json(
-        { error: 'Failed to initialize workspace' },
+        { error: errorMessage },
         { status: 500 }
       )
     }

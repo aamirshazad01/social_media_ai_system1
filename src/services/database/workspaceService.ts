@@ -26,6 +26,13 @@ export class WorkspaceService {
     try {
       const supabase = await createServerClient()
 
+      // Verify authentication
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser || authUser.id !== userId) {
+        console.error('Authentication check failed:', { authError, userId, authUserId: authUser?.id })
+        throw new Error('User not authenticated or user ID mismatch')
+      }
+
       // Check if user already has a workspace
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -33,15 +40,29 @@ export class WorkspaceService {
         .eq('id', userId)
         .maybeSingle()
 
-      if (userError && userError.code !== 'PGRST116') {
+      // Handle different error cases
+      if (userError) {
         // PGRST116 is "no rows returned" - expected if user doesn't exist
-        console.error('Error checking user workspace:', userError)
-        throw new Error('Failed to check user workspace')
+        if (userError.code === 'PGRST116') {
+          // User doesn't exist - will create below
+          console.log(`User ${userId} not found in users table, will create`)
+        } else {
+          // Other database errors
+          console.error('Error checking user workspace:', {
+            code: userError.code,
+            message: userError.message,
+            details: userError.details,
+            hint: userError.hint,
+          })
+          throw new Error(`Failed to check user workspace: ${userError.message}`)
+        }
       }
 
-      // If user exists and has workspace, return it
+      // If user exists and has workspace, return it immediately
       if (userData && (userData as any).workspace_id) {
-        return (userData as any).workspace_id
+        const workspaceId = (userData as any).workspace_id
+        console.log(`✅ User ${userId} already has workspace: ${workspaceId}`)
+        return workspaceId
       }
 
       // User doesn't exist or has no workspace - create one
@@ -60,8 +81,13 @@ export class WorkspaceService {
         .single()
 
       if (workspaceError) {
-        console.error('Failed to create workspace:', workspaceError)
-        throw new Error('Failed to create workspace')
+        console.error('Failed to create workspace:', {
+          code: workspaceError.code,
+          message: workspaceError.message,
+          details: workspaceError.details,
+          hint: workspaceError.hint,
+        })
+        throw new Error(`Failed to create workspace: ${workspaceError.message}`)
       }
 
       const workspaceId = (newWorkspace as any).id
@@ -80,8 +106,13 @@ export class WorkspaceService {
           })
 
         if (userCreateError) {
-          console.error('Failed to create user entry:', userCreateError)
-          throw new Error('Failed to create user entry')
+          console.error('Failed to create user entry:', {
+            code: userCreateError.code,
+            message: userCreateError.message,
+            details: userCreateError.details,
+            hint: userCreateError.hint,
+          })
+          throw new Error(`Failed to create user entry: ${userCreateError.message}`)
         }
       } else {
         // User exists but has no workspace - update it
@@ -94,8 +125,13 @@ export class WorkspaceService {
           .eq('id', userId)
 
         if (updateError) {
-          console.error('Failed to update user with workspace:', updateError)
-          throw new Error('Failed to assign workspace to user')
+          console.error('Failed to update user with workspace:', {
+            code: updateError.code,
+            message: updateError.message,
+            details: updateError.details,
+            hint: updateError.hint,
+          })
+          throw new Error(`Failed to assign workspace to user: ${updateError.message}`)
         }
       }
 

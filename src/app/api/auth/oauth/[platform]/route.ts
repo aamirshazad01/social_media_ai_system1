@@ -73,9 +73,10 @@ export async function POST(
       
       userRole = (userRow as any)?.role || 'admin'
     } catch (error) {
-      console.error('Error ensuring user workspace:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize workspace'
+      console.error('Error ensuring user workspace:', errorMessage, error)
       return NextResponse.json(
-        { error: 'Failed to initialize workspace', code: 'WORKSPACE_INIT_ERROR' },
+        { error: errorMessage, code: 'WORKSPACE_INIT_ERROR' },
         { status: 500 }
       )
     }
