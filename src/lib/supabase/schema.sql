@@ -851,9 +851,10 @@ CREATE POLICY "Users can view analytics in their workspace"
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
 -- OAuth States: Workspace-scoped
+-- Use RPC function to avoid RLS recursion on users table
 CREATE POLICY "Users can view oauth states in their workspace"
     ON oauth_states FOR ALL
-    USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
+    USING (workspace_id = get_user_workspace_id());
 
 -- Workspace Invites: Admin-only
 CREATE POLICY "Admins can manage workspace invites"

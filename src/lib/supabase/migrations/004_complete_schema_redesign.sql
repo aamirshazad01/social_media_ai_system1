@@ -661,9 +661,10 @@ CREATE POLICY activity_logs_workspace_access ON activity_logs
     workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid())
   );
 
+-- Use RPC function to avoid RLS recursion on users table
 CREATE POLICY oauth_states_workspace_access ON oauth_states
   FOR ALL USING (
-    workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid())
+    workspace_id = get_user_workspace_id()
   );
 
 CREATE POLICY workspace_invites_admin_only ON workspace_invites
