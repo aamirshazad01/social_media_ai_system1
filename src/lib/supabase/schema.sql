@@ -8,13 +8,44 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================
+-- DROP EXISTING TABLES (for fresh schema)
+-- ============================================
+
+DROP TABLE IF EXISTS content_threads CASCADE;
+DROP TABLE IF EXISTS post_library CASCADE;
+DROP TABLE IF EXISTS a_b_test_variants CASCADE;
+DROP TABLE IF EXISTS a_b_tests CASCADE;
+DROP TABLE IF EXISTS campaign_analytics CASCADE;
+DROP TABLE IF EXISTS workspace_invites CASCADE;
+DROP TABLE IF EXISTS oauth_states CASCADE;
+DROP TABLE IF EXISTS post_analytics CASCADE;
+DROP TABLE IF EXISTS activity_logs CASCADE;
+DROP TABLE IF EXISTS approvals CASCADE;
+DROP TABLE IF EXISTS post_media CASCADE;
+DROP TABLE IF EXISTS post_platforms CASCADE;
+DROP TABLE IF EXISTS post_content CASCADE;
+DROP TABLE IF EXISTS posts CASCADE;
+DROP TABLE IF EXISTS media_assets CASCADE;
+DROP TABLE IF EXISTS campaigns CASCADE;
+DROP TABLE IF EXISTS social_accounts CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS workspaces CASCADE;
+
+-- ============================================
 -- ENUMS
 -- ============================================
 
--- Drop and recreate platform enum to include tiktok, youtube
+-- Drop existing types (in correct order due to dependencies)
 DROP TYPE IF EXISTS platform CASCADE;
-CREATE TYPE platform_type AS ENUM ('twitter', 'linkedin', 'facebook', 'instagram', 'tiktok', 'youtube');
+DROP TYPE IF EXISTS platform_type CASCADE;
+DROP TYPE IF EXISTS user_role CASCADE;
+DROP TYPE IF EXISTS post_status CASCADE;
+DROP TYPE IF EXISTS approval_status CASCADE;
+DROP TYPE IF EXISTS media_type CASCADE;
+DROP TYPE IF EXISTS media_source CASCADE;
 
+-- Create enums
+CREATE TYPE platform_type AS ENUM ('twitter', 'linkedin', 'facebook', 'instagram', 'tiktok', 'youtube');
 CREATE TYPE user_role AS ENUM ('admin', 'editor', 'viewer');
 CREATE TYPE post_status AS ENUM ('draft', 'needs_approval', 'approved', 'scheduled', 'published', 'failed');
 CREATE TYPE media_type AS ENUM ('image', 'video');
@@ -26,7 +57,7 @@ CREATE TYPE approval_status AS ENUM ('pending', 'approved', 'rejected');
 -- ============================================
 
 -- Workspaces (Teams/Organizations)
-CREATE TABLE IF NOT EXISTS workspaces (
+CREATE TABLE workspaces (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     description TEXT,
@@ -39,7 +70,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
 );
 
 -- Users (linked to auth.users)
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id UUID PRIMARY KEY,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -55,7 +86,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Social Media Accounts (Enhanced with token refresh support)
-CREATE TABLE IF NOT EXISTS social_accounts (
+CREATE TABLE social_accounts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     platform platform_type NOT NULL,
@@ -81,7 +112,7 @@ CREATE TABLE IF NOT EXISTS social_accounts (
 );
 
 -- Campaigns (Enhanced)
-CREATE TABLE IF NOT EXISTS campaigns (
+CREATE TABLE campaigns (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -105,7 +136,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
 );
 
 -- Posts (Enhanced)
-CREATE TABLE IF NOT EXISTS posts (
+CREATE TABLE posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -127,7 +158,7 @@ CREATE TABLE IF NOT EXISTS posts (
 );
 
 -- Post Content (Versioning - NEW)
-CREATE TABLE IF NOT EXISTS post_content (
+CREATE TABLE post_content (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     text_content TEXT,
@@ -143,7 +174,7 @@ CREATE TABLE IF NOT EXISTS post_content (
 );
 
 -- Post Platforms (Junction - NEW)
-CREATE TABLE IF NOT EXISTS post_platforms (
+CREATE TABLE post_platforms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     platform platform_type NOT NULL,
@@ -161,7 +192,7 @@ CREATE TABLE IF NOT EXISTS post_platforms (
 );
 
 -- Media Assets (Enhanced)
-CREATE TABLE IF NOT EXISTS media_assets (
+CREATE TABLE media_assets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -187,7 +218,7 @@ CREATE TABLE IF NOT EXISTS media_assets (
 );
 
 -- Post Media (Junction - NEW)
-CREATE TABLE IF NOT EXISTS post_media (
+CREATE TABLE post_media (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     media_asset_id UUID NOT NULL REFERENCES media_assets(id) ON DELETE CASCADE,
@@ -198,7 +229,7 @@ CREATE TABLE IF NOT EXISTS post_media (
 );
 
 -- Approvals
-CREATE TABLE IF NOT EXISTS approvals (
+CREATE TABLE approvals (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -212,7 +243,7 @@ CREATE TABLE IF NOT EXISTS approvals (
 );
 
 -- Activity Logs (Audit Trail)
-CREATE TABLE IF NOT EXISTS activity_logs (
+CREATE TABLE activity_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -224,7 +255,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 );
 
 -- Post Analytics (Enhanced)
-CREATE TABLE IF NOT EXISTS post_analytics (
+CREATE TABLE post_analytics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -247,7 +278,7 @@ CREATE TABLE IF NOT EXISTS post_analytics (
 );
 
 -- OAuth States (Security - NEW)
-CREATE TABLE IF NOT EXISTS oauth_states (
+CREATE TABLE oauth_states (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     platform platform_type NOT NULL,
@@ -263,7 +294,7 @@ CREATE TABLE IF NOT EXISTS oauth_states (
 );
 
 -- Workspace Invites (NEW)
-CREATE TABLE IF NOT EXISTS workspace_invites (
+CREATE TABLE workspace_invites (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     email VARCHAR(255) NOT NULL,
@@ -279,7 +310,7 @@ CREATE TABLE IF NOT EXISTS workspace_invites (
 );
 
 -- A/B Tests (NEW)
-CREATE TABLE IF NOT EXISTS a_b_tests (
+CREATE TABLE a_b_tests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     campaign_id UUID REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -296,7 +327,7 @@ CREATE TABLE IF NOT EXISTS a_b_tests (
 );
 
 -- A/B Test Variants (NEW)
-CREATE TABLE IF NOT EXISTS a_b_test_variants (
+CREATE TABLE a_b_test_variants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     test_id UUID NOT NULL REFERENCES a_b_tests(id) ON DELETE CASCADE,
     post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
@@ -307,7 +338,7 @@ CREATE TABLE IF NOT EXISTS a_b_test_variants (
 );
 
 -- Campaign Analytics (NEW)
-CREATE TABLE IF NOT EXISTS campaign_analytics (
+CREATE TABLE campaign_analytics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     campaign_id UUID NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -325,7 +356,7 @@ CREATE TABLE IF NOT EXISTS campaign_analytics (
 );
 
 -- Post Library (Published Posts Archive - NEW)
-CREATE TABLE IF NOT EXISTS post_library (
+CREATE TABLE post_library (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     original_post_id UUID,
@@ -343,7 +374,7 @@ CREATE TABLE IF NOT EXISTS post_library (
 );
 
 -- Content Threads (AI Chat History - NEW)
-CREATE TABLE IF NOT EXISTS content_threads (
+CREATE TABLE content_threads (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     title VARCHAR(255),
@@ -359,121 +390,121 @@ CREATE TABLE IF NOT EXISTS content_threads (
 -- ============================================
 
 -- Workspaces
-CREATE INDEX IF NOT EXISTS idx_workspaces_created_at ON workspaces(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_workspaces_is_active ON workspaces(is_active);
+CREATE INDEX idx_workspaces_created_at ON workspaces(created_at DESC);
+CREATE INDEX idx_workspaces_is_active ON workspaces(is_active);
 
 -- Users
-CREATE INDEX IF NOT EXISTS idx_users_workspace ON users(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+CREATE INDEX idx_users_workspace ON users(workspace_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_is_active ON users(is_active);
 
 -- Posts
-CREATE INDEX IF NOT EXISTS idx_posts_workspace ON posts(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
-CREATE INDEX IF NOT EXISTS idx_posts_scheduled ON posts(scheduled_at) WHERE scheduled_at IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_posts_campaign ON posts(campaign_id) WHERE campaign_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_posts_created_by ON posts(created_by);
-CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_posts_deleted_at ON posts(deleted_at) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_posts_workspace_status ON posts(workspace_id, status);
-CREATE INDEX IF NOT EXISTS idx_posts_workspace_scheduled ON posts(workspace_id, scheduled_at) WHERE status = 'scheduled';
+CREATE INDEX idx_posts_workspace ON posts(workspace_id);
+CREATE INDEX idx_posts_status ON posts(status);
+CREATE INDEX idx_posts_scheduled ON posts(scheduled_at) WHERE scheduled_at IS NOT NULL;
+CREATE INDEX idx_posts_campaign ON posts(campaign_id) WHERE campaign_id IS NOT NULL;
+CREATE INDEX idx_posts_created_by ON posts(created_by);
+CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX idx_posts_deleted_at ON posts(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_posts_workspace_status ON posts(workspace_id, status);
+CREATE INDEX idx_posts_workspace_scheduled ON posts(workspace_id, scheduled_at) WHERE status = 'scheduled';
 
 -- Post Content
-CREATE INDEX IF NOT EXISTS idx_post_content_post_id ON post_content(post_id);
-CREATE INDEX IF NOT EXISTS idx_post_content_version ON post_content(post_id, version_number DESC);
-CREATE INDEX IF NOT EXISTS idx_post_content_is_current ON post_content(post_id) WHERE is_current = true;
+CREATE INDEX idx_post_content_post_id ON post_content(post_id);
+CREATE INDEX idx_post_content_version ON post_content(post_id, version_number DESC);
+CREATE INDEX idx_post_content_is_current ON post_content(post_id) WHERE is_current = true;
 
 -- Post Platforms
-CREATE INDEX IF NOT EXISTS idx_post_platforms_post_id ON post_platforms(post_id);
-CREATE INDEX IF NOT EXISTS idx_post_platforms_platform ON post_platforms(platform);
-CREATE INDEX IF NOT EXISTS idx_post_platforms_status ON post_platforms(platform_status);
+CREATE INDEX idx_post_platforms_post_id ON post_platforms(post_id);
+CREATE INDEX idx_post_platforms_platform ON post_platforms(platform);
+CREATE INDEX idx_post_platforms_status ON post_platforms(platform_status);
 
 -- Social Accounts
-CREATE INDEX IF NOT EXISTS idx_social_accounts_workspace ON social_accounts(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_platform ON social_accounts(platform);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_workspace_platform ON social_accounts(workspace_id, platform);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_is_connected ON social_accounts(is_connected);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_expires_at ON social_accounts(access_token_expires_at);
-CREATE INDEX IF NOT EXISTS idx_social_accounts_last_refreshed ON social_accounts(last_refreshed_at);
+CREATE INDEX idx_social_accounts_workspace ON social_accounts(workspace_id);
+CREATE INDEX idx_social_accounts_platform ON social_accounts(platform);
+CREATE INDEX idx_social_accounts_workspace_platform ON social_accounts(workspace_id, platform);
+CREATE INDEX idx_social_accounts_is_connected ON social_accounts(is_connected);
+CREATE INDEX idx_social_accounts_expires_at ON social_accounts(access_token_expires_at);
+CREATE INDEX idx_social_accounts_last_refreshed ON social_accounts(last_refreshed_at);
 
 -- Campaigns
-CREATE INDEX IF NOT EXISTS idx_campaigns_workspace ON campaigns(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
-CREATE INDEX IF NOT EXISTS idx_campaigns_created_at ON campaigns(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_campaigns_workspace_status ON campaigns(workspace_id, status);
+CREATE INDEX idx_campaigns_workspace ON campaigns(workspace_id);
+CREATE INDEX idx_campaigns_status ON campaigns(status);
+CREATE INDEX idx_campaigns_created_at ON campaigns(created_at DESC);
+CREATE INDEX idx_campaigns_workspace_status ON campaigns(workspace_id, status);
 
 -- Media
-CREATE INDEX IF NOT EXISTS idx_media_workspace ON media_assets(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_media_type ON media_assets(type);
-CREATE INDEX IF NOT EXISTS idx_media_tags ON media_assets USING GIN(tags);
-CREATE INDEX IF NOT EXISTS idx_media_created_at ON media_assets(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_media_active ON media_assets(workspace_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_media_workspace ON media_assets(workspace_id);
+CREATE INDEX idx_media_type ON media_assets(type);
+CREATE INDEX idx_media_tags ON media_assets USING GIN(tags);
+CREATE INDEX idx_media_created_at ON media_assets(created_at DESC);
+CREATE INDEX idx_media_active ON media_assets(workspace_id) WHERE deleted_at IS NULL;
 
 -- Post Media
-CREATE INDEX IF NOT EXISTS idx_post_media_post_id ON post_media(post_id);
-CREATE INDEX IF NOT EXISTS idx_post_media_media_asset_id ON post_media(media_asset_id);
-CREATE INDEX IF NOT EXISTS idx_post_media_position ON post_media(post_id, position_order);
+CREATE INDEX idx_post_media_post_id ON post_media(post_id);
+CREATE INDEX idx_post_media_media_asset_id ON post_media(media_asset_id);
+CREATE INDEX idx_post_media_position ON post_media(post_id, position_order);
 
 -- Approvals
-CREATE INDEX IF NOT EXISTS idx_approvals_post ON approvals(post_id);
-CREATE INDEX IF NOT EXISTS idx_approvals_workspace ON approvals(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status);
-CREATE INDEX IF NOT EXISTS idx_approvals_created_at ON approvals(created_at DESC);
+CREATE INDEX idx_approvals_post ON approvals(post_id);
+CREATE INDEX idx_approvals_workspace ON approvals(workspace_id);
+CREATE INDEX idx_approvals_status ON approvals(status);
+CREATE INDEX idx_approvals_created_at ON approvals(created_at DESC);
 
 -- Activity Logs
-CREATE INDEX IF NOT EXISTS idx_activity_logs_workspace ON activity_logs(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_created ON activity_logs(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_workspace_date ON activity_logs(workspace_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_resource_type ON activity_logs(resource_type);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action);
+CREATE INDEX idx_activity_logs_workspace ON activity_logs(workspace_id);
+CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
+CREATE INDEX idx_activity_logs_created ON activity_logs(created_at DESC);
+CREATE INDEX idx_activity_logs_workspace_date ON activity_logs(workspace_id, created_at DESC);
+CREATE INDEX idx_activity_logs_resource_type ON activity_logs(resource_type);
+CREATE INDEX idx_activity_logs_action ON activity_logs(action);
 
 -- Post Analytics
-CREATE INDEX IF NOT EXISTS idx_analytics_post ON post_analytics(post_id);
-CREATE INDEX IF NOT EXISTS idx_analytics_workspace ON post_analytics(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_analytics_platform ON post_analytics(platform);
-CREATE INDEX IF NOT EXISTS idx_analytics_fetched_at ON post_analytics(fetched_at DESC);
-CREATE INDEX IF NOT EXISTS idx_analytics_workspace_date ON post_analytics(workspace_id, fetched_at DESC);
+CREATE INDEX idx_analytics_post ON post_analytics(post_id);
+CREATE INDEX idx_analytics_workspace ON post_analytics(workspace_id);
+CREATE INDEX idx_analytics_platform ON post_analytics(platform);
+CREATE INDEX idx_analytics_fetched_at ON post_analytics(fetched_at DESC);
+CREATE INDEX idx_analytics_workspace_date ON post_analytics(workspace_id, fetched_at DESC);
 
 -- OAuth States
-CREATE INDEX IF NOT EXISTS idx_oauth_states_workspace_platform ON oauth_states(workspace_id, platform);
-CREATE INDEX IF NOT EXISTS idx_oauth_states_state ON oauth_states(state);
-CREATE INDEX IF NOT EXISTS idx_oauth_states_expires_at ON oauth_states(expires_at);
-CREATE INDEX IF NOT EXISTS idx_oauth_states_is_used ON oauth_states(is_used);
+CREATE INDEX idx_oauth_states_workspace_platform ON oauth_states(workspace_id, platform);
+CREATE INDEX idx_oauth_states_state ON oauth_states(state);
+CREATE INDEX idx_oauth_states_expires_at ON oauth_states(expires_at);
+CREATE INDEX idx_oauth_states_is_used ON oauth_states(is_used);
 
 -- Workspace Invites
-CREATE INDEX IF NOT EXISTS idx_workspace_invites_workspace ON workspace_invites(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_workspace_invites_token ON workspace_invites(token);
-CREATE INDEX IF NOT EXISTS idx_workspace_invites_expires_at ON workspace_invites(expires_at);
-CREATE INDEX IF NOT EXISTS idx_workspace_invites_is_accepted ON workspace_invites(is_accepted);
-CREATE INDEX IF NOT EXISTS idx_workspace_invites_email ON workspace_invites(email);
+CREATE INDEX idx_workspace_invites_workspace ON workspace_invites(workspace_id);
+CREATE INDEX idx_workspace_invites_token ON workspace_invites(token);
+CREATE INDEX idx_workspace_invites_expires_at ON workspace_invites(expires_at);
+CREATE INDEX idx_workspace_invites_is_accepted ON workspace_invites(is_accepted);
+CREATE INDEX idx_workspace_invites_email ON workspace_invites(email);
 
 -- A/B Tests
-CREATE INDEX IF NOT EXISTS idx_a_b_tests_workspace_id ON a_b_tests(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_a_b_tests_campaign_id ON a_b_tests(campaign_id);
-CREATE INDEX IF NOT EXISTS idx_a_b_tests_status ON a_b_tests(status);
+CREATE INDEX idx_a_b_tests_workspace_id ON a_b_tests(workspace_id);
+CREATE INDEX idx_a_b_tests_campaign_id ON a_b_tests(campaign_id);
+CREATE INDEX idx_a_b_tests_status ON a_b_tests(status);
 
 -- A/B Test Variants
-CREATE INDEX IF NOT EXISTS idx_a_b_test_variants_test_id ON a_b_test_variants(test_id);
-CREATE INDEX IF NOT EXISTS idx_a_b_test_variants_post_id ON a_b_test_variants(post_id);
+CREATE INDEX idx_a_b_test_variants_test_id ON a_b_test_variants(test_id);
+CREATE INDEX idx_a_b_test_variants_post_id ON a_b_test_variants(post_id);
 
 -- Campaign Analytics
-CREATE INDEX IF NOT EXISTS idx_campaign_analytics_campaign_id ON campaign_analytics(campaign_id);
-CREATE INDEX IF NOT EXISTS idx_campaign_analytics_metric_date ON campaign_analytics(metric_date DESC);
-CREATE INDEX IF NOT EXISTS idx_campaign_analytics_workspace_id ON campaign_analytics(workspace_id);
+CREATE INDEX idx_campaign_analytics_campaign_id ON campaign_analytics(campaign_id);
+CREATE INDEX idx_campaign_analytics_metric_date ON campaign_analytics(metric_date DESC);
+CREATE INDEX idx_campaign_analytics_workspace_id ON campaign_analytics(workspace_id);
 
 -- Post Library
-CREATE INDEX IF NOT EXISTS idx_post_library_workspace ON post_library(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_post_library_published_at ON post_library(published_at DESC);
-CREATE INDEX IF NOT EXISTS idx_post_library_topic ON post_library(topic);
-CREATE INDEX IF NOT EXISTS idx_post_library_created_by ON post_library(created_by);
+CREATE INDEX idx_post_library_workspace ON post_library(workspace_id);
+CREATE INDEX idx_post_library_published_at ON post_library(published_at DESC);
+CREATE INDEX idx_post_library_topic ON post_library(topic);
+CREATE INDEX idx_post_library_created_by ON post_library(created_by);
 
 -- Content Threads
-CREATE INDEX IF NOT EXISTS idx_content_threads_workspace ON content_threads(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_content_threads_created_at ON content_threads(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_content_threads_deleted ON content_threads(deleted_at) WHERE deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_content_threads_created_by ON content_threads(created_by);
+CREATE INDEX idx_content_threads_workspace ON content_threads(workspace_id);
+CREATE INDEX idx_content_threads_created_at ON content_threads(created_at DESC);
+CREATE INDEX idx_content_threads_deleted ON content_threads(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_content_threads_created_by ON content_threads(created_by);
 
 -- ============================================
 -- FUNCTIONS & TRIGGERS
@@ -489,43 +520,56 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply updated_at trigger to all tables
-CREATE TRIGGER IF NOT EXISTS update_workspaces_updated_at BEFORE UPDATE ON workspaces
+DROP TRIGGER IF EXISTS update_workspaces_updated_at ON workspaces;
+CREATE TRIGGER update_workspaces_updated_at BEFORE UPDATE ON workspaces
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_users_updated_at BEFORE UPDATE ON users
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_posts_updated_at BEFORE UPDATE ON posts
+DROP TRIGGER IF EXISTS update_posts_updated_at ON posts;
+CREATE TRIGGER update_posts_updated_at BEFORE UPDATE ON posts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_social_accounts_updated_at BEFORE UPDATE ON social_accounts
+DROP TRIGGER IF EXISTS update_social_accounts_updated_at ON social_accounts;
+CREATE TRIGGER update_social_accounts_updated_at BEFORE UPDATE ON social_accounts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_campaigns_updated_at BEFORE UPDATE ON campaigns
+DROP TRIGGER IF EXISTS update_campaigns_updated_at ON campaigns;
+CREATE TRIGGER update_campaigns_updated_at BEFORE UPDATE ON campaigns
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_media_assets_updated_at BEFORE UPDATE ON media_assets
+DROP TRIGGER IF EXISTS update_media_assets_updated_at ON media_assets;
+CREATE TRIGGER update_media_assets_updated_at BEFORE UPDATE ON media_assets
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_approvals_updated_at BEFORE UPDATE ON approvals
+DROP TRIGGER IF EXISTS update_approvals_updated_at ON approvals;
+CREATE TRIGGER update_approvals_updated_at BEFORE UPDATE ON approvals
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_post_platforms_updated_at BEFORE UPDATE ON post_platforms
+DROP TRIGGER IF EXISTS update_post_platforms_updated_at ON post_platforms;
+CREATE TRIGGER update_post_platforms_updated_at BEFORE UPDATE ON post_platforms
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_a_b_tests_updated_at BEFORE UPDATE ON a_b_tests
+DROP TRIGGER IF EXISTS update_a_b_tests_updated_at ON a_b_tests;
+CREATE TRIGGER update_a_b_tests_updated_at BEFORE UPDATE ON a_b_tests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_post_analytics_updated_at BEFORE UPDATE ON post_analytics
+DROP TRIGGER IF EXISTS update_post_analytics_updated_at ON post_analytics;
+CREATE TRIGGER update_post_analytics_updated_at BEFORE UPDATE ON post_analytics
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_campaign_analytics_updated_at BEFORE UPDATE ON campaign_analytics
+DROP TRIGGER IF EXISTS update_campaign_analytics_updated_at ON campaign_analytics;
+CREATE TRIGGER update_campaign_analytics_updated_at BEFORE UPDATE ON campaign_analytics
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_post_library_updated_at BEFORE UPDATE ON post_library
+DROP TRIGGER IF EXISTS update_post_library_updated_at ON post_library;
+CREATE TRIGGER update_post_library_updated_at BEFORE UPDATE ON post_library
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER IF NOT EXISTS update_content_threads_updated_at BEFORE UPDATE ON content_threads
+DROP TRIGGER IF EXISTS update_content_threads_updated_at ON content_threads;
+CREATE TRIGGER update_content_threads_updated_at BEFORE UPDATE ON content_threads
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to create user profile on signup
@@ -632,11 +676,11 @@ ALTER TABLE post_library ENABLE ROW LEVEL SECURITY;
 ALTER TABLE content_threads ENABLE ROW LEVEL SECURITY;
 
 -- Workspaces: Users can only see their own workspace
-CREATE POLICY IF NOT EXISTS "Users can view their workspace"
+CREATE POLICY "Users can view their workspace"
     ON workspaces FOR SELECT
     USING (id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Admins can update their workspace"
+CREATE POLICY "Admins can update their workspace"
     ON workspaces FOR UPDATE
     USING (
         id IN (
@@ -646,31 +690,31 @@ CREATE POLICY IF NOT EXISTS "Admins can update their workspace"
     );
 
 -- Users: Can view users in their workspace
-CREATE POLICY IF NOT EXISTS "Users can view workspace members"
+CREATE POLICY "Users can view workspace members"
     ON users FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can view their own profile"
+CREATE POLICY "Users can view their own profile"
     ON users FOR SELECT
     USING (id = auth.uid());
 
-CREATE POLICY IF NOT EXISTS "Users can update their own profile"
+CREATE POLICY "Users can update their own profile"
     ON users FOR UPDATE
     USING (id = auth.uid());
 
 -- Posts: Workspace-scoped access
-CREATE POLICY IF NOT EXISTS "Users can view posts in their workspace"
+CREATE POLICY "Users can view posts in their workspace"
     ON posts FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can create posts in their workspace"
+CREATE POLICY "Users can create posts in their workspace"
     ON posts FOR INSERT
     WITH CHECK (
         workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid())
         AND created_by = auth.uid()
     );
 
-CREATE POLICY IF NOT EXISTS "Users can update posts they created or admins can update any"
+CREATE POLICY "Users can update posts they created or admins can update any"
     ON posts FOR UPDATE
     USING (
         workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid())
@@ -683,7 +727,7 @@ CREATE POLICY IF NOT EXISTS "Users can update posts they created or admins can u
         )
     );
 
-CREATE POLICY IF NOT EXISTS "Admins can delete posts in their workspace"
+CREATE POLICY "Admins can delete posts in their workspace"
     ON posts FOR DELETE
     USING (
         workspace_id IN (
@@ -693,7 +737,7 @@ CREATE POLICY IF NOT EXISTS "Admins can delete posts in their workspace"
     );
 
 -- Post Content: Workspace-scoped access
-CREATE POLICY IF NOT EXISTS "Users can view post content in their workspace"
+CREATE POLICY "Users can view post content in their workspace"
     ON post_content FOR SELECT
     USING (
         post_id IN (
@@ -704,7 +748,7 @@ CREATE POLICY IF NOT EXISTS "Users can view post content in their workspace"
     );
 
 -- Post Platforms: Workspace-scoped access
-CREATE POLICY IF NOT EXISTS "Users can view post platforms in their workspace"
+CREATE POLICY "Users can view post platforms in their workspace"
     ON post_platforms FOR SELECT
     USING (
         post_id IN (
@@ -715,7 +759,7 @@ CREATE POLICY IF NOT EXISTS "Users can view post platforms in their workspace"
     );
 
 -- Post Media: Workspace-scoped access
-CREATE POLICY IF NOT EXISTS "Users can view post media in their workspace"
+CREATE POLICY "Users can view post media in their workspace"
     ON post_media FOR SELECT
     USING (
         post_id IN (
@@ -726,11 +770,11 @@ CREATE POLICY IF NOT EXISTS "Users can view post media in their workspace"
     );
 
 -- Social Accounts: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view social accounts in their workspace"
+CREATE POLICY "Users can view social accounts in their workspace"
     ON social_accounts FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Admins can manage social accounts"
+CREATE POLICY "Admins can manage social accounts"
     ON social_accounts FOR ALL
     USING (
         workspace_id IN (
@@ -740,11 +784,11 @@ CREATE POLICY IF NOT EXISTS "Admins can manage social accounts"
     );
 
 -- Campaigns: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view campaigns in their workspace"
+CREATE POLICY "Users can view campaigns in their workspace"
     ON campaigns FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Editors can manage campaigns"
+CREATE POLICY "Editors can manage campaigns"
     ON campaigns FOR ALL
     USING (
         workspace_id IN (
@@ -754,19 +798,19 @@ CREATE POLICY IF NOT EXISTS "Editors can manage campaigns"
     );
 
 -- Media Assets: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view media in their workspace"
+CREATE POLICY "Users can view media in their workspace"
     ON media_assets FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can upload media"
+CREATE POLICY "Users can upload media"
     ON media_assets FOR INSERT
     WITH CHECK (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can update their own media"
+CREATE POLICY "Users can update their own media"
     ON media_assets FOR UPDATE
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Admins can delete media"
+CREATE POLICY "Admins can delete media"
     ON media_assets FOR DELETE
     USING (
         workspace_id IN (
@@ -776,18 +820,18 @@ CREATE POLICY IF NOT EXISTS "Admins can delete media"
     );
 
 -- Approvals: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view approvals in their workspace"
+CREATE POLICY "Users can view approvals in their workspace"
     ON approvals FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Users can request approvals"
+CREATE POLICY "Users can request approvals"
     ON approvals FOR INSERT
     WITH CHECK (
         workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid())
         AND requested_by = auth.uid()
     );
 
-CREATE POLICY IF NOT EXISTS "Admins can update approvals"
+CREATE POLICY "Admins can update approvals"
     ON approvals FOR UPDATE
     USING (
         workspace_id IN (
@@ -797,22 +841,22 @@ CREATE POLICY IF NOT EXISTS "Admins can update approvals"
     );
 
 -- Activity Logs: Read-only for users, workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view activity logs in their workspace"
+CREATE POLICY "Users can view activity logs in their workspace"
     ON activity_logs FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
 -- Post Analytics: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view analytics in their workspace"
+CREATE POLICY "Users can view analytics in their workspace"
     ON post_analytics FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
 -- OAuth States: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view oauth states in their workspace"
+CREATE POLICY "Users can view oauth states in their workspace"
     ON oauth_states FOR ALL
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
 -- Workspace Invites: Admin-only
-CREATE POLICY IF NOT EXISTS "Admins can manage workspace invites"
+CREATE POLICY "Admins can manage workspace invites"
     ON workspace_invites FOR ALL
     USING (
         workspace_id IN (
@@ -822,11 +866,11 @@ CREATE POLICY IF NOT EXISTS "Admins can manage workspace invites"
     );
 
 -- A/B Tests: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view a_b tests in their workspace"
+CREATE POLICY "Users can view a_b tests in their workspace"
     ON a_b_tests FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
-CREATE POLICY IF NOT EXISTS "Editors can manage a_b tests"
+CREATE POLICY "Editors can manage a_b tests"
     ON a_b_tests FOR ALL
     USING (
         workspace_id IN (
@@ -836,7 +880,7 @@ CREATE POLICY IF NOT EXISTS "Editors can manage a_b tests"
     );
 
 -- A/B Test Variants: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view a_b test variants in their workspace"
+CREATE POLICY "Users can view a_b test variants in their workspace"
     ON a_b_test_variants FOR SELECT
     USING (
         test_id IN (
@@ -847,17 +891,17 @@ CREATE POLICY IF NOT EXISTS "Users can view a_b test variants in their workspace
     );
 
 -- Campaign Analytics: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view campaign analytics in their workspace"
+CREATE POLICY "Users can view campaign analytics in their workspace"
     ON campaign_analytics FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
 -- Post Library: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can view post library in their workspace"
+CREATE POLICY "Users can view post library in their workspace"
     ON post_library FOR SELECT
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
 -- Content Threads: Workspace-scoped
-CREATE POLICY IF NOT EXISTS "Users can manage content threads in their workspace"
+CREATE POLICY "Users can manage content threads in their workspace"
     ON content_threads FOR ALL
     USING (workspace_id IN (SELECT workspace_id FROM users WHERE id = auth.uid()));
 
@@ -871,22 +915,22 @@ VALUES ('media', 'media', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies
-CREATE POLICY IF NOT EXISTS "Users can upload media to their workspace"
+CREATE POLICY "Users can upload media to their workspace"
     ON storage.objects FOR INSERT
     WITH CHECK (
         bucket_id = 'media'
         AND auth.role() = 'authenticated'
     );
 
-CREATE POLICY IF NOT EXISTS "Anyone can view media"
+CREATE POLICY "Anyone can view media"
     ON storage.objects FOR SELECT
     USING (bucket_id = 'media');
 
-CREATE POLICY IF NOT EXISTS "Users can update their own media"
+CREATE POLICY "Users can update their own media"
     ON storage.objects FOR UPDATE
     USING (bucket_id = 'media' AND auth.role() = 'authenticated');
 
-CREATE POLICY IF NOT EXISTS "Users can delete their own media"
+CREATE POLICY "Users can delete their own media"
     ON storage.objects FOR DELETE
     USING (bucket_id = 'media' AND auth.role() = 'authenticated');
 
