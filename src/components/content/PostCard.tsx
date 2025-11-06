@@ -113,11 +113,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
         const config = STATUS_CONFIG[status];
         const statusColors = {
             'draft': 'bg-gray-100 text-gray-800 border-gray-200',
-            'needs approval': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'needs_approval': 'bg-yellow-100 text-yellow-800 border-yellow-200',
             'approved': 'bg-purple-100 text-purple-800 border-purple-200',
-            'ready to publish': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+            'ready_to_publish': 'bg-cyan-100 text-cyan-800 border-cyan-200',
             'scheduled': 'bg-blue-100 text-blue-800 border-blue-200',
-            'published': 'bg-green-100 text-green-800 border-green-200'
+            'published': 'bg-green-100 text-green-800 border-green-200',
+            'failed': 'bg-red-100 text-red-800 border-red-200'
         };
         const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
         return <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${colorClass}`}>{config.label}</span>;
@@ -365,10 +366,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdatePost, onDeletePost, i
                             <div className="flex gap-1.5 flex-wrap">
                                 <ActionButton onClick={() => setIsEditing(true)} icon={Edit} label="Edit" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md min-w-[80px]" />
                                 <ActionButton onClick={() => setIsPreviewOpen(true)} icon={Eye} label="Preview" className="bg-gray-100 border border-gray-300 hover:bg-gray-200 text-gray-700 shadow-sm min-w-[100px]" />
-                                {post.status === 'draft' && <ActionButton onClick={() => handleStatusChange('needs approval')} icon={Send} label="Request Approval" className="bg-orange-500 hover:bg-orange-600 text-white shadow-md min-w-[150px]" />}
-                                {post.status === 'needs approval' && <ActionButton onClick={() => handleStatusChange('approved')} icon={CheckCircle} label="Approve" className="bg-purple-600 hover:bg-purple-700 text-white shadow-md min-w-[110px]" />}
+                                {post.status === 'draft' && <ActionButton onClick={() => handleStatusChange('needs_approval')} icon={Send} label="Request Approval" className="bg-orange-500 hover:bg-orange-600 text-white shadow-md min-w-[150px]" />}
+                                {post.status === 'needs_approval' && <ActionButton onClick={() => handleStatusChange('approved')} icon={CheckCircle} label="Approve" className="bg-purple-600 hover:bg-purple-700 text-white shadow-md min-w-[110px]" />}
                                 {post.status === 'approved' && (
-                                    <ActionButton onClick={() => handleStatusChange('ready to publish')} icon={ArrowRightCircle} label="Finalize & Move" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md min-w-[150px]" />
+                                    <ActionButton onClick={() => handleStatusChange('ready_to_publish')} icon={ArrowRightCircle} label="Finalize & Move" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md min-w-[150px]" />
                                 )}
                             </div>
                             <ActionButton onClick={() => onDeletePost(post.id)} icon={Trash2} label="" className="bg-red-600 hover:bg-red-700 text-white w-10 h-10 shadow-md" />

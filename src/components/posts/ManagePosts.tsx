@@ -25,7 +25,7 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
     const [statusFilter, setStatusFilter] = useState<PostStatus | 'all'>('all');
     const [platformFilter, setPlatformFilter] = useState<Platform | 'all'>('all');
 
-    const nonFinalizedPosts = useMemo(() => posts.filter(post => !['ready to publish', 'scheduled', 'published'].includes(post.status)), [posts]);
+    const nonFinalizedPosts = useMemo(() => posts.filter(post => !['ready_to_publish', 'scheduled', 'published'].includes(post.status)), [posts]);
 
     const filteredPosts = useMemo(() => {
         return nonFinalizedPosts.filter(post => {
@@ -102,7 +102,7 @@ const ManagePosts: React.FC<ManagePostsProps> = ({ posts, onUpdatePost, onDelete
                 onSearchChange={setSearchTerm}
                 onStatusChange={setStatusFilter}
                 onPlatformChange={setPlatformFilter}
-                excludeStatuses={['published', 'scheduled', 'ready to publish']}
+                excludeStatuses={['published', 'scheduled', 'ready_to_publish']}
             />
 
             {viewMode === 'grid' ? renderGridContent() : <CalendarView posts={filteredPosts} />}

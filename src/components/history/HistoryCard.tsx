@@ -70,9 +70,9 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
     };
 
     const handleUnschedule = () => {
-        const updates: Partial<Post> = { 
-            status: 'ready to publish', 
-            scheduledAt: undefined 
+        const updates: Partial<Post> = {
+            status: 'ready_to_publish',
+            scheduledAt: undefined
         };
         onUpdatePost({ ...post, ...updates });
     };
@@ -84,11 +84,12 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
         const config = STATUS_CONFIG[status];
         const statusColors: Record<Post['status'], string> = {
             'draft': 'bg-gray-100 text-gray-800 border-gray-200',
-            'needs approval': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'needs_approval': 'bg-yellow-100 text-yellow-800 border-yellow-200',
             'approved': 'bg-purple-100 text-purple-800 border-purple-200',
-            'ready to publish': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+            'ready_to_publish': 'bg-cyan-100 text-cyan-800 border-cyan-200',
             'scheduled': 'bg-blue-100 text-blue-800 border-blue-200',
-            'published': 'bg-green-100 text-green-800 border-green-200'
+            'published': 'bg-green-100 text-green-800 border-green-200',
+            'failed': 'bg-red-100 text-red-800 border-red-200'
         };
         const colorClass = statusColors[status];
         return <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${colorClass}`}>{config.label}</span>;
@@ -180,7 +181,7 @@ const PublishedCard: React.FC<PublishedCardProps> = ({ post, onUpdatePost, onDel
 
     const renderActions = () => {
         switch (post.status) {
-            case 'ready to publish':
+            case 'ready_to_publish':
                 return (
                     <div className="flex flex-col w-full gap-2">
                         <div className="flex items-center justify-between w-full">

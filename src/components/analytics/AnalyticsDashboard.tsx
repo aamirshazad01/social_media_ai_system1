@@ -61,7 +61,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ posts }) => {
                 <StatCard title="Total Posts" value={stats.totalPosts} color="from-indigo-50 to-indigo-100 border-indigo-200 text-indigo-900" />
                 <StatCard title="Published" value={stats.statusCounts.published} color="from-green-50 to-green-100 border-green-200 text-green-900" />
                 <StatCard title="Scheduled" value={stats.statusCounts.scheduled} color="from-blue-50 to-blue-100 border-blue-200 text-blue-900" />
-                <StatCard title="Needs Approval" value={stats.statusCounts['needs approval']} color="from-yellow-50 to-yellow-100 border-yellow-200 text-yellow-900" />
+                <StatCard title="Needs Approval" value={stats.statusCounts['needs_approval']} color="from-yellow-50 to-yellow-100 border-yellow-200 text-yellow-900" />
                 <StatCard title="Drafts" value={stats.statusCounts.draft} color="from-gray-50 to-gray-100 border-gray-200 text-gray-900" />
             </div>
 

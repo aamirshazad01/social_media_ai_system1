@@ -126,36 +126,60 @@ export interface Database {
         Row: {
           id: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
           credentials_encrypted: string
           is_connected: boolean
           username: string | null
           connected_at: string | null
           last_verified_at: string | null
+          expires_at: string | null
+          last_refreshed_at: string | null
+          refresh_token_encrypted: string | null
+          page_id: string | null
+          page_name: string | null
+          is_auto_refreshed: boolean
+          refresh_error_count: number
+          last_error_message: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
           credentials_encrypted: string
           is_connected?: boolean
           username?: string | null
           connected_at?: string | null
           last_verified_at?: string | null
+          expires_at?: string | null
+          last_refreshed_at?: string | null
+          refresh_token_encrypted?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          is_auto_refreshed?: boolean
+          refresh_error_count?: number
+          last_error_message?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           workspace_id?: string
-          platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+          platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
           credentials_encrypted?: string
           is_connected?: boolean
           username?: string | null
           connected_at?: string | null
           last_verified_at?: string | null
+          expires_at?: string | null
+          last_refreshed_at?: string | null
+          refresh_token_encrypted?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          is_auto_refreshed?: boolean
+          refresh_error_count?: number
+          last_error_message?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -317,7 +341,7 @@ export interface Database {
           id: string
           post_id: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
           impressions: number
           engagement: number
           clicks: number
@@ -331,7 +355,7 @@ export interface Database {
           id?: string
           post_id: string
           workspace_id: string
-          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+          platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
           impressions?: number
           engagement?: number
           clicks?: number
@@ -345,7 +369,7 @@ export interface Database {
           id?: string
           post_id?: string
           workspace_id?: string
-          platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+          platform?: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
           impressions?: number
           engagement?: number
           clicks?: number
@@ -366,7 +390,7 @@ export interface Database {
     Enums: {
       user_role: 'admin' | 'editor' | 'viewer'
       post_status: 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed'
-      platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram'
+      platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube'
       media_type: 'image' | 'video'
       media_source: 'ai-generated' | 'uploaded'
       approval_status: 'pending' | 'approved' | 'rejected'

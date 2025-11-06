@@ -17,7 +17,7 @@ const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDe
     const [platformFilter, setPlatformFilter] = useState<Platform | 'all'>('all');
 
     const postsForPublishing = useMemo(() => {
-        const relevantPosts = posts.filter(post => ['ready to publish', 'scheduled', 'published'].includes(post.status));
+        const relevantPosts = posts.filter(post => ['ready_to_publish', 'scheduled', 'published'].includes(post.status));
         
         return relevantPosts
             .filter(post => {
@@ -27,7 +27,7 @@ const PublishedView: React.FC<PublishedViewProps> = ({ posts, onUpdatePost, onDe
             })
             .sort((a, b) => {
                 const statusOrder: Partial<Record<PostStatus, number>> = {
-                    'ready to publish': 1,
+                    'ready_to_publish': 1,
                     'scheduled': 2,
                     'published': 3,
                 };

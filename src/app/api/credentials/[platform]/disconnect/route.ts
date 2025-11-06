@@ -55,7 +55,7 @@ export async function DELETE(
     }
 
     // ✅ Validate platform
-    const validPlatforms = ['twitter', 'linkedin', 'facebook', 'instagram']
+    const validPlatforms = ['twitter', 'linkedin', 'facebook', 'instagram', 'tiktok', 'youtube']
     if (!validPlatforms.includes(platform)) {
       return NextResponse.json(
         { error: 'Invalid platform' },

@@ -167,7 +167,7 @@ const AccountSettingsTab: React.FC = () => {
         if (pathMatch) {
           // For generic errors without platform info, check session storage for which platform was being connected
           const attemptedPlatform = sessionStorage.getItem('attempted_oauth_platform')
-          if (attemptedPlatform && ['twitter', 'linkedin', 'facebook', 'instagram'].includes(attemptedPlatform)) {
+          if (attemptedPlatform && ['twitter', 'linkedin', 'facebook', 'instagram', 'tiktok', 'youtube'].includes(attemptedPlatform)) {
             platform = attemptedPlatform as Platform
           }
         }

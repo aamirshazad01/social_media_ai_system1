@@ -1,6 +1,6 @@
 export type Platform = 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube';
 
-export type PostStatus = 'draft' | 'needs approval' | 'approved' | 'ready to publish' | 'scheduled' | 'published';
+export type PostStatus = 'draft' | 'needs_approval' | 'approved' | 'ready_to_publish' | 'scheduled' | 'published' | 'failed';
 
 export const TONES = ['professional', 'casual', 'humorous', 'inspirational', 'urgent', 'friendly'] as const;
 export type Tone = typeof TONES[number];
