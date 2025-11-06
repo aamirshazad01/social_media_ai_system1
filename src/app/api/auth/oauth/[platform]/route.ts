@@ -142,13 +142,20 @@ export async function POST(
     }
 
     // ✅ Step 5: Create OAuth state (CSRF protection)
-    const oauthState = await createOAuthState(
-      workspaceId,
-      platform,
-      ipAddress || undefined,
-      userAgent || undefined,
-      true // Use PKCE for all platforms
-    )
+    let oauthState: Awaited<ReturnType<typeof createOAuthState>>
+    try {
+      oauthState = await createOAuthState(
+        workspaceId,
+        platform,
+        ipAddress || undefined,
+        userAgent || undefined,
+        true // Use PKCE for all platforms
+      )
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error(`Failed to create OAuth state for ${platform}:`, errorMessage, error)
+      throw new Error(`Failed to create OAuth state: ${errorMessage}`)
+    }
 
     // ✅ Step 6: Build OAuth authorization URL
     const params = new URLSearchParams({
@@ -205,14 +212,16 @@ export async function POST(
       )
     }
 
-    // ✅ Step 8: Log success
-    await logAuditEvent({
+    // ✅ Step 8: Log success (non-blocking)
+    logAuditEvent({
       workspaceId,
       userId: user.id,
       platform,
       action: 'oauth_initiation_successful',
       status: 'success',
       ipAddress: ipAddress || undefined,
+    }).catch(err => {
+      console.warn('Failed to log OAuth success event (non-blocking):', err)
     })
 
     return response
