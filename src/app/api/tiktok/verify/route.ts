@@ -117,8 +117,9 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     // Log error for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('TikTok verify error:', {
-      error: (error as Error).message,
+      error: errorMessage,
       ipAddress: ipAddress || 'unknown',
       timestamp: new Date().toISOString()
     })
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
         code: 'VERIFY_ERROR',
         message: 'An unexpected error occurred while verifying TikTok credentials. Please try again.',
         connected: false,
-        details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         status: 500
       },
       { status: 500 }

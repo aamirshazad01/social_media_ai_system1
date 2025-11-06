@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       {
         error: 'Failed to verify Instagram credentials',
         connected: false,
-        details: (error as Error).message
+        details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
     )

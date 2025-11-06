@@ -139,9 +139,10 @@ export async function GET(req: NextRequest) {
     return response
   } catch (error) {
     console.error('Instagram callback error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     const response = NextResponse.redirect(
       new URL(
-        `/?error=instagram_auth_failed&details=${encodeURIComponent((error as Error).message)}`,
+        `/?error=instagram_auth_failed&details=${encodeURIComponent(errorMessage)}`,
         req.url
       )
     )
