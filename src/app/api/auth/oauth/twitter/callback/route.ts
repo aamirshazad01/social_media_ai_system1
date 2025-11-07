@@ -28,6 +28,7 @@ function createErrorRedirect(baseUrl: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  console.log('🚀 Twitter OAuth Callback started')
   const supabase = await createServerClient()
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
@@ -35,21 +36,32 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get('error')
   const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip')
 
+  console.log('📥 Callback params:', {
+    code: code?.substring(0, 20) + '...',
+    state: state?.substring(0, 20) + '...',
+    error,
+  })
+
   try {
     // ✅ Step 1: Check authentication
+    console.log('✅ Step 1: Checking authentication')
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log('❌ No authenticated user found')
       const response = NextResponse.redirect(
         new URL('/login?error=oauth_unauthorized', req.nextUrl.origin)
       )
       return response
     }
+    console.log('✅ User authenticated:', user.id)
 
     // ✅ Step 2: Get workspace and verify admin role using RPC to avoid RLS recursion
+    console.log('✅ Step 2: Getting workspace and verifying admin role')
     const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
     
     if (rpcError || !rpcData) {
+      console.log('❌ No user profile found via RPC:', rpcError)
       const response = NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
       )
@@ -61,11 +73,14 @@ export async function GET(req: NextRequest) {
     const userRole = profileData?.role || 'admin'
 
     if (!workspaceId) {
+      console.log('❌ No workspace_id found')
       const response = NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
       )
       return response
     }
+    
+    console.log('✅ User workspace:', workspaceId, 'Role:', userRole)
 
     // Check if user is admin (required for OAuth connections)
     if (userRole !== 'admin') {
@@ -122,9 +137,20 @@ export async function GET(req: NextRequest) {
     }
 
     // ✅ Step 5: Verify CSRF state (prevents replay attacks)
+    console.log('🔐 Step 5: Verifying CSRF state')
+    console.log('🔐 Verifying state for workspace:', workspaceId, 'platform: twitter, state:', state?.substring(0, 20) + '...')
+    
     const stateVerification = await verifyOAuthState(workspaceId, 'twitter', state)
+    
+    console.log('🔐 State verification result:', {
+      valid: stateVerification.valid,
+      error: stateVerification.error,
+      hasCodeChallenge: !!stateVerification.codeChallenge,
+    })
 
     if (!stateVerification.valid) {
+      console.error('❌ CSRF check failed:', stateVerification.error)
+      
       await logAuditEvent({
         workspaceId,
         userId: user.id,
@@ -133,6 +159,10 @@ export async function GET(req: NextRequest) {
         status: 'failed',
         errorMessage: stateVerification.error,
         errorCode: 'CSRF_FAILED',
+        metadata: {
+          statePrefix: state?.substring(0, 20),
+          workspaceId,
+        },
         ipAddress: ipAddress || undefined,
       })
 
@@ -141,6 +171,8 @@ export async function GET(req: NextRequest) {
       )
       return response
     }
+    
+    console.log('✅ CSRF state verified successfully')
 
     // ✅ Step 6: Get PKCE verifier from secure cookie
     const codeVerifier = req.cookies.get('oauth_twitter_verifier')?.value

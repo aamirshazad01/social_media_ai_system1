@@ -30,6 +30,12 @@ export async function createOAuthState(
   usePKCE: boolean = true
 ): Promise<OAuthStateData> {
   try {
+    console.log('[createOAuthState] Creating state for:', {
+      workspaceId,
+      platform,
+      usePKCE,
+    })
+
     // Generate state
     const state = generateRandomState()
 
@@ -48,6 +54,12 @@ export async function createOAuthState(
     // Calculate expiration (5 minutes)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
 
+    console.log('[createOAuthState] Generated state:', {
+      statePrefix: state.substring(0, 20),
+      hasPKCE: !!codeChallenge,
+      expiresAt: expiresAt.toISOString(),
+    })
+
     // Get server-side Supabase client
     const supabase = await createServerClient()
 
@@ -64,7 +76,7 @@ export async function createOAuthState(
     })
 
     if (error) {
-      console.error('Error inserting OAuth state:', {
+      console.error('[createOAuthState] Error inserting OAuth state:', {
         code: error.code,
         message: error.message,
         details: error.details,
@@ -73,6 +85,8 @@ export async function createOAuthState(
       throw new Error(`Failed to create OAuth state: ${error.message}`)
     }
 
+    console.log('[createOAuthState] ✅ State created successfully')
+
     return {
       state,
       codeVerifier,
@@ -80,7 +94,7 @@ export async function createOAuthState(
       expiresAt,
     }
   } catch (error) {
-    console.error('Error creating OAuth state:', error)
+    console.error('[createOAuthState] Error creating OAuth state:', error)
     // Preserve the original error message if it's already an Error
     if (error instanceof Error) {
       throw error
@@ -104,6 +118,12 @@ export async function verifyOAuthState(
   error?: string
 }> {
   try {
+    console.log('[verifyOAuthState] Starting verification:', {
+      workspaceId,
+      platform,
+      statePrefix: state?.substring(0, 20),
+    })
+
     // Get server-side Supabase client
     const supabase = await createServerClient()
 
@@ -116,23 +136,42 @@ export async function verifyOAuthState(
       .eq('state', state)
       .maybeSingle()
 
-    if (error) throw error
+    if (error) {
+      console.error('[verifyOAuthState] Database query error:', error)
+      throw error
+    }
+
+    console.log('[verifyOAuthState] Query result:', {
+      found: !!data,
+      used: data ? (data as any).used : null,
+      expiresAt: data ? (data as any).expires_at : null,
+    })
 
     // Check if state exists
     if (!data) {
+      console.warn('[verifyOAuthState] State not found in database')
       return { valid: false, error: 'State not found' }
     }
 
     // Check if already used (replay attack prevention)
     if ((data as any).used) {
+      console.warn('[verifyOAuthState] State already used (replay attack)')
       return { valid: false, error: 'State already used (replay attack detected)' }
     }
 
     // Check if expired
     const expiresAt = new Date((data as any).expires_at).getTime()
-    if (Date.now() > expiresAt) {
+    const now = Date.now()
+    if (now > expiresAt) {
+      console.warn('[verifyOAuthState] State expired:', {
+        expiresAt: new Date(expiresAt).toISOString(),
+        now: new Date(now).toISOString(),
+        expiredBy: now - expiresAt,
+      })
       return { valid: false, error: 'State expired' }
     }
+
+    console.log('[verifyOAuthState] State is valid, marking as used')
 
     // Mark as used
     const { error: updateError } = await (supabase
@@ -143,7 +182,12 @@ export async function verifyOAuthState(
       })
       .eq('id', (data as any).id)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('[verifyOAuthState] Failed to mark state as used:', updateError)
+      throw updateError
+    }
+
+    console.log('[verifyOAuthState] ✅ State verified and marked as used')
 
     return {
       valid: true,
@@ -151,7 +195,7 @@ export async function verifyOAuthState(
       codeChallengeMethod: (data as any).code_challenge_method || undefined,
     }
   } catch (error) {
-    console.error('Error verifying OAuth state:', error)
+    console.error('[verifyOAuthState] Error verifying OAuth state:', error)
     return { valid: false, error: 'State verification failed' }
   }
 }

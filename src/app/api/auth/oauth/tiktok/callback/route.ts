@@ -10,6 +10,7 @@ import { CredentialService } from "@/services/database/credentialService"
 import { logAuditEvent } from "@/services/database/auditLogService"
 
 export async function GET(req: NextRequest) {
+  console.log('🚀 TikTok OAuth Callback started')
   const supabase = await createServerClient()
   const { searchParams } = new URL(req.url)
   const code = searchParams.get("code")
@@ -17,19 +18,30 @@ export async function GET(req: NextRequest) {
   const error = searchParams.get("error")
   const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip")
 
+  console.log('📥 Callback params:', {
+    code: code?.substring(0, 20) + '...',
+    state: state?.substring(0, 20) + '...',
+    error,
+  })
+
   try {
+    console.log('✅ Step 1: Checking authentication')
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log('❌ No authenticated user found')
       return NextResponse.redirect(
         new URL("/login?error=oauth_unauthorized", req.nextUrl.origin)
       )
     }
+    console.log('✅ User authenticated:', user.id)
 
     // Get workspace and role using RPC to avoid RLS recursion
+    console.log('✅ Step 2: Getting workspace and verifying admin role')
     const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
     
     if (rpcError || !rpcData) {
+      console.log('❌ No user profile found via RPC:', rpcError)
       return NextResponse.redirect(
         new URL("/settings?tab=accounts&oauth_error=no_workspace", req.nextUrl.origin)
       )
@@ -40,10 +52,13 @@ export async function GET(req: NextRequest) {
     const userRole = profileData?.role || 'admin'
 
     if (!workspaceId) {
+      console.log('❌ No workspace_id found')
       return NextResponse.redirect(
         new URL("/settings?tab=accounts&oauth_error=no_workspace", req.nextUrl.origin)
       )
     }
+    
+    console.log('✅ User workspace:', workspaceId, 'Role:', userRole)
 
     if (userRole !== "admin") {
       await logAuditEvent({
@@ -90,21 +105,40 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    console.log('🔐 Step 5: Verifying CSRF state')
+    console.log('🔐 Verifying state for workspace:', workspaceId, 'platform: tiktok, state:', state?.substring(0, 20) + '...')
+    
     const stateVerification = await verifyOAuthState(workspaceId, "tiktok", state)
+    
+    console.log('🔐 State verification result:', {
+      valid: stateVerification.valid,
+      error: stateVerification.error,
+      hasCodeChallenge: !!stateVerification.codeChallenge,
+    })
+    
     if (!stateVerification.valid) {
+      console.error('❌ CSRF check failed:', stateVerification.error)
+      
       await logAuditEvent({
         workspaceId,
         userId: user.id,
         platform: "tiktok",
         action: "oauth_csrf_check_failed",
         status: "failed",
+        errorMessage: stateVerification.error,
         errorCode: "CSRF_FAILED",
+        metadata: {
+          statePrefix: state?.substring(0, 20),
+          workspaceId,
+        },
         ipAddress: ipAddress || undefined,
       })
       return NextResponse.redirect(
         new URL("/settings?tab=accounts&oauth_error=csrf_check_failed", req.nextUrl.origin)
       )
     }
+    
+    console.log('✅ CSRF state verified successfully')
 
     const codeVerifier = req.cookies.get("oauth_tiktok_verifier")?.value
     if (!codeVerifier) {
