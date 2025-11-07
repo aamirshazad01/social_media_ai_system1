@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   CheckCircle,
   Link,
@@ -43,6 +43,7 @@ const AccountSettingsTab: React.FC = () => {
   })
   const [timeoutWarnings, setTimeoutWarnings] = useState<Set<Platform>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
+  const oauthCallbackHandled = useRef(false)
 
   // Adaptive timeouts per platform
   const TIMEOUTS = {
@@ -78,10 +79,24 @@ const AccountSettingsTab: React.FC = () => {
   }
 
   useEffect(() => {
+    // Prevent multiple executions
+    if (oauthCallbackHandled.current) {
+      return
+    }
+
     // Check for OAuth callbacks FIRST before loading status
     const urlParams = new URLSearchParams(window.location.search)
     const successPlatform = urlParams.get('oauth_success')
     const errorCode = urlParams.get('oauth_error')
+
+    // If no OAuth callback params, just load status normally
+    if (!successPlatform && !errorCode) {
+      loadConnectionStatus()
+      return
+    }
+
+    // Mark as handled to prevent re-execution
+    oauthCallbackHandled.current = true
 
     // If there's an error, handle it but still check if connection succeeded
     if (errorCode) {
@@ -284,8 +299,10 @@ const AccountSettingsTab: React.FC = () => {
       return
     }
 
-    // No error or success - just load status normally
-    loadConnectionStatus()
+    // This should not be reached if we have success/error, but just in case
+    if (!oauthCallbackHandled.current) {
+      loadConnectionStatus()
+    }
   }, [])
 
   const loadConnectionStatus = async () => {
