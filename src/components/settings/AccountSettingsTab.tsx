@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   CheckCircle,
   Link,
@@ -80,8 +80,9 @@ const AccountSettingsTab: React.FC = () => {
     )
   }
 
-  // Memoize loadConnectionStatus to prevent recreation on every render
-  const loadConnectionStatus = useCallback(async () => {
+  // Define loadConnectionStatus function - will be recreated but that's okay
+  // since it's only used in useEffect with empty deps
+  const loadConnectionStatus = async () => {
     try {
       setIsLoading(true)
       const response = await fetch('/api/credentials/status')
@@ -119,7 +120,7 @@ const AccountSettingsTab: React.FC = () => {
       // Always clear loading state
       setIsLoading(false)
     }
-  }, []) // Empty deps - function doesn't depend on any props/state
+  }
 
   useEffect(() => {
     // Track render count to detect infinite loops
