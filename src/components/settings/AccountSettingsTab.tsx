@@ -85,8 +85,9 @@ const AccountSettingsTab: React.FC = () => {
     const lastRunKey = 'account_settings_last_run'
     const lastRun = sessionStorage.getItem(lastRunKey)
     
-    // If ran within last 2 seconds, skip (prevents rapid re-executions)
-    if (lastRun && (now - parseInt(lastRun)) < 2000) {
+    // If ran within last 500ms, skip (prevents rapid re-executions)
+    // Very short window to prevent infinite loops but allow legitimate navigation
+    if (lastRun && (now - parseInt(lastRun)) < 500) {
       console.log('[AccountSettingsTab] Effect ran too recently, skipping')
       return
     }
@@ -223,11 +224,29 @@ const AccountSettingsTab: React.FC = () => {
       window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
       // Clear loading immediately so page can render
       setIsLoading(false)
-      // Load status to populate the UI
-      loadConnectionStatus().catch(err => {
-        console.error('Failed to load connection status:', err)
-        setIsLoading(false)
-      })
+      // Load status in background without showing loading state
+      // Use a separate function that doesn't set loading
+      const loadStatusSilently = async () => {
+        try {
+          const response = await fetch('/api/credentials/status')
+          if (response.ok) {
+            const data = await response.json()
+            setStatusInfo(data)
+            setConnectedAccounts(
+              Object.fromEntries(
+                Object.entries(data).map(([platform, info]: [string, any]) => [
+                  platform,
+                  info.isConnected,
+                ])
+              ) as Record<Platform, boolean>
+            )
+          }
+        } catch (err) {
+          console.error('Failed to load connection status silently:', err)
+        }
+      }
+      // Load in background without affecting loading state
+      loadStatusSilently()
       return
     }
 
