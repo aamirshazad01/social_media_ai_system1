@@ -27,7 +27,25 @@ export async function createClient() {
     throw new Error('Supabase environment variables are not configured')
   }
 
-  const cookieStore = await cookies()
+  let cookieStore
+  try {
+    cookieStore = await cookies()
+  } catch (error) {
+    // During build time, cookies() might not be available
+    // Return a client without cookie handling for build-time operations
+    console.warn('⚠️ Cookies not available (likely during build), creating client without cookie handling')
+    return createServerClient<Database>(
+      supabaseUrl,
+      supabaseKey,
+      {
+        cookies: {
+          get() { return undefined },
+          set() {},
+          remove() {},
+        },
+      }
+    )
+  }
 
   const client = createServerClient<Database>(
     supabaseUrl,
