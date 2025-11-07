@@ -44,6 +44,7 @@ const AccountSettingsTab: React.FC = () => {
   const [timeoutWarnings, setTimeoutWarnings] = useState<Set<Platform>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const oauthCallbackHandled = useRef(false)
+  const effectRan = useRef(false)
 
   // Adaptive timeouts per platform
   const TIMEOUTS = {
@@ -79,17 +80,20 @@ const AccountSettingsTab: React.FC = () => {
   }
 
   useEffect(() => {
+    // Strict guard - only run once per component mount
+    if (effectRan.current) {
+      return
+    }
+    effectRan.current = true
+
     // Check for OAuth callbacks FIRST before loading status
     const urlParams = new URLSearchParams(window.location.search)
     const successPlatform = urlParams.get('oauth_success')
     const errorCode = urlParams.get('oauth_error')
 
-    // If no OAuth callback params, just load status normally (only once)
+    // If no OAuth callback params, just load status normally
     if (!successPlatform && !errorCode) {
-      if (!oauthCallbackHandled.current) {
-        oauthCallbackHandled.current = true
-        loadConnectionStatus()
-      }
+      loadConnectionStatus()
       return
     }
 
@@ -98,15 +102,13 @@ const AccountSettingsTab: React.FC = () => {
     const callbackKey = `${successPlatform || ''}_${errorCode || ''}`
     const lastProcessedKey = sessionStorage.getItem('last_oauth_callback')
     
-    // If we've already processed this exact callback, skip it
-    if (lastProcessedKey === callbackKey && oauthCallbackHandled.current) {
-      // Still load status in case it changed
+    // If we've already processed this exact callback, just load status and return
+    if (lastProcessedKey === callbackKey) {
       loadConnectionStatus()
       return
     }
 
     // Mark this callback as processed
-    oauthCallbackHandled.current = true
     sessionStorage.setItem('last_oauth_callback', callbackKey)
 
     // If there's an error, handle it but still check if connection succeeded
