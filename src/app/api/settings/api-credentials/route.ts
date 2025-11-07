@@ -46,9 +46,9 @@ export async function GET(req: NextRequest) {
         configured: !!process.env.FACEBOOK_CLIENT_ID,
       },
       instagram: {
-        appId: process.env.FACEBOOK_CLIENT_ID ? '****' : '',
-        appSecret: process.env.FACEBOOK_CLIENT_SECRET ? '****' : '',
-        configured: !!process.env.FACEBOOK_CLIENT_ID,
+        appId: process.env.INSTAGRAM_CLIENT_ID ? '****' : '',
+        appSecret: process.env.INSTAGRAM_CLIENT_SECRET ? '****' : '',
+        configured: !!process.env.INSTAGRAM_CLIENT_ID,
       },
     }
 
