@@ -80,11 +80,27 @@ const AccountSettingsTab: React.FC = () => {
   }
 
   useEffect(() => {
-    // Strict guard - only run once per component mount
-    if (effectRan.current) {
+    // Strict guard - prevent rapid re-executions
+    const now = Date.now()
+    const lastRunKey = 'account_settings_last_run'
+    const lastRun = sessionStorage.getItem(lastRunKey)
+    
+    // If ran within last 2 seconds, skip (prevents rapid re-executions)
+    if (lastRun && (now - parseInt(lastRun)) < 2000) {
+      console.log('[AccountSettingsTab] Effect ran too recently, skipping')
       return
     }
+    
+    // Also check ref for current mount
+    if (effectRan.current) {
+      console.log('[AccountSettingsTab] Effect already ran this mount, skipping')
+      return
+    }
+    
+    // Mark as ran immediately, before any async operations
     effectRan.current = true
+    sessionStorage.setItem(lastRunKey, now.toString())
+    console.log('[AccountSettingsTab] Effect running')
 
     // Check for OAuth callbacks FIRST before loading status
     const urlParams = new URLSearchParams(window.location.search)
@@ -144,85 +160,45 @@ const AccountSettingsTab: React.FC = () => {
         // Clear loading immediately so page can render
         setIsLoading(false)
         
-        // Load initial status to populate the UI
-        loadConnectionStatus().catch(err => {
-          console.error('Failed to load connection status:', err)
-          // Ensure loading is cleared even on error
-          setIsLoading(false)
-        })
-        
-        // Load status to see if connection actually succeeded
-        // Use async function to properly handle the check
-        const checkConnectionStatus = async () => {
-          try {
-            // Check current status to see if platform is connected
-            const response = await fetch('/api/credentials/status')
-            if (response.ok) {
-              const status = await response.json()
-              setStatusInfo(status)
-              setConnectedAccounts(
-                Object.fromEntries(
-                  Object.entries(status).map(([p, info]: [string, any]) => [
-                    p,
-                    info.isConnected,
-                  ])
-                ) as Record<Platform, boolean>
-              )
-              
-              const platformConnected = status[platform]?.isConnected
-              if (!platformConnected) {
-                // Wait a bit and check again (connection might still be processing)
-                await new Promise(resolve => setTimeout(resolve, 2000))
-                const retryResponse = await fetch('/api/credentials/status')
-                if (retryResponse.ok) {
-                  const retryStatus = await retryResponse.json()
-                  const retryConnected = retryStatus[platform]?.isConnected
-                  if (!retryConnected) {
-                    // Platform is not connected after retry, show the error
-                    const errorMessage = mapErrorCode(errorCode)
-                    setErrors(prev => ({
-                      ...prev,
-                      [platform]: errorMessage,
-                    }))
-                  } else {
-                    // Platform is connected! Update status and clear errors
-                    console.log(`✅ ${platform} connection succeeded despite CSRF error`)
-                    setStatusInfo(retryStatus)
-                    setConnectedAccounts(
-                      Object.fromEntries(
-                        Object.entries(retryStatus).map(([p, info]: [string, any]) => [
-                          p,
-                          info.isConnected,
-                        ])
-                      ) as Record<Platform, boolean>
-                    )
-                    setErrors(prev => ({
-                      ...prev,
-                      [platform]: undefined,
-                    }))
-                  }
+        // Load status once - it will check if connection succeeded
+        loadConnectionStatus().then(() => {
+          // After loading, check if platform is connected in background
+          setTimeout(async () => {
+            try {
+              const response = await fetch('/api/credentials/status')
+              if (response.ok) {
+                const status = await response.json()
+                const platformConnected = status[platform]?.isConnected
+                if (platformConnected) {
+                  // Platform is connected! Clear any errors
+                  console.log(`✅ ${platform} connection succeeded despite CSRF error`)
+                  setErrors(prev => ({
+                    ...prev,
+                    [platform]: undefined,
+                  }))
+                } else {
+                  // Platform not connected, show error
+                  const errorMessage = mapErrorCode(errorCode)
+                  setErrors(prev => ({
+                    ...prev,
+                    [platform]: errorMessage,
+                  }))
                 }
-              } else {
-                // Platform is connected! Clear any errors
-                console.log(`✅ ${platform} connection succeeded despite CSRF error`)
-                setErrors(prev => ({
-                  ...prev,
-                  [platform]: undefined,
-                }))
               }
+            } catch (err) {
+              console.error('Error checking connection status:', err)
             }
-          } catch (err) {
-            console.error('Error checking connection status:', err)
-            // Show error if we can't check status
-            const errorMessage = mapErrorCode(errorCode)
-            setErrors(prev => ({
-              ...prev,
-              [platform]: errorMessage,
-            }))
-          }
-        }
-        // Don't await - let it run in background
-        checkConnectionStatus()
+          }, 2000)
+        }).catch(err => {
+          console.error('Failed to load connection status:', err)
+          setIsLoading(false)
+          // Show error
+          const errorMessage = mapErrorCode(errorCode)
+          setErrors(prev => ({
+            ...prev,
+            [platform]: errorMessage,
+          }))
+        })
         return
       }
 
@@ -327,7 +303,13 @@ const AccountSettingsTab: React.FC = () => {
     if (!oauthCallbackHandled.current) {
       loadConnectionStatus()
     }
-  }, [])
+
+    // Cleanup function - reset ref on unmount (though it shouldn't matter)
+    return () => {
+      // Don't reset effectRan - we want it to persist
+      // This cleanup is just for safety
+    }
+  }, []) // Empty deps - only run once on mount
 
   const loadConnectionStatus = async () => {
     try {
