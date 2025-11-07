@@ -78,12 +78,56 @@ const AccountSettingsTab: React.FC = () => {
   }
 
   useEffect(() => {
-    loadConnectionStatus()
-
-    // Check for OAuth callbacks
+    // Check for OAuth callbacks FIRST before loading status
     const urlParams = new URLSearchParams(window.location.search)
     const successPlatform = urlParams.get('oauth_success')
     const errorCode = urlParams.get('oauth_error')
+
+    // If there's an error, handle it immediately and skip loading
+    if (errorCode) {
+      // Error - show to user
+      console.error('OAuth error:', errorCode)
+
+      // Try to detect platform from URL or error code
+      let platform = detectPlatformFromError(errorCode)
+
+      // If we can't detect from error code, check if there's a platform in the URL path
+      if (!platform) {
+        // Check if this was a callback from a specific platform
+        const pathMatch = window.location.pathname.match(/\/settings/)
+        if (pathMatch) {
+          // For generic errors without platform info, check session storage for which platform was being connected
+          const attemptedPlatform = sessionStorage.getItem('attempted_oauth_platform')
+          if (attemptedPlatform && ['twitter', 'linkedin', 'facebook', 'instagram', 'tiktok', 'youtube'].includes(attemptedPlatform)) {
+            platform = attemptedPlatform as Platform
+          }
+        }
+      }
+
+      if (platform) {
+        const errorMessage = mapErrorCode(errorCode)
+        console.error(`Error for ${platform}:`, errorMessage)
+        setErrors(prev => ({
+          ...prev,
+          [platform]: errorMessage,
+        }))
+      } else {
+        console.warn('Could not detect platform from error:', errorCode)
+        // Set a generic error if we can't detect platform
+        setErrors(prev => ({
+          ...prev,
+          twitter: mapErrorCode(errorCode),
+        }))
+      }
+      setConnectingPlatform(null)
+      // Clean up URL and load status after showing error
+      window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
+      // Load status after a short delay to ensure error is displayed
+      setTimeout(() => {
+        loadConnectionStatus()
+      }, 100)
+      return
+    }
 
     if (successPlatform) {
       // Success - reload status with retry mechanism
@@ -153,40 +197,8 @@ const AccountSettingsTab: React.FC = () => {
       return
     }
 
-    if (errorCode) {
-      // Error - show to user
-      console.error('OAuth error:', errorCode)
-
-      // Try to detect platform from URL or error code
-      let platform = detectPlatformFromError(errorCode)
-
-      // If we can't detect from error code, check if there's a platform in the URL path
-      if (!platform) {
-        // Check if this was a callback from a specific platform
-        const pathMatch = window.location.pathname.match(/\/settings/)
-        if (pathMatch) {
-          // For generic errors without platform info, check session storage for which platform was being connected
-          const attemptedPlatform = sessionStorage.getItem('attempted_oauth_platform')
-          if (attemptedPlatform && ['twitter', 'linkedin', 'facebook', 'instagram', 'tiktok', 'youtube'].includes(attemptedPlatform)) {
-            platform = attemptedPlatform as Platform
-          }
-        }
-      }
-
-      if (platform) {
-        const errorMessage = mapErrorCode(errorCode)
-        console.error(`Error for ${platform}:`, errorMessage)
-        setErrors(prev => ({
-          ...prev,
-          [platform]: errorMessage,
-        }))
-      } else {
-        console.warn('Could not detect platform from error:', errorCode)
-      }
-      setConnectingPlatform(null)
-      window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
-      return
-    }
+    // No error or success - just load status normally
+    loadConnectionStatus()
   }, [])
 
   const loadConnectionStatus = async () => {
@@ -194,21 +206,23 @@ const AccountSettingsTab: React.FC = () => {
       setIsLoading(true)
       const response = await fetch('/api/credentials/status')
 
-      const data = await response.json()
-
+      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        // Handle API errors properly
-        const errorMessage = data?.error || 'Failed to load status'
-        console.error('Failed to load connection status:', errorMessage, data)
-
-        // Set error for Instagram as a placeholder (or could set for all platforms)
-        setErrors(prev => ({
-          ...prev,
-          instagram: errorMessage,
-        }))
+        let errorMessage = 'Failed to load status'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData?.error || errorMessage
+        } catch {
+          // If JSON parsing fails, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        console.error('Failed to load connection status:', errorMessage)
+        // Don't set errors here - let the component handle it
+        setIsLoading(false)
         return
       }
 
+      const data = await response.json()
       setStatusInfo(data)
       setConnectedAccounts(
         Object.fromEntries(
@@ -220,11 +234,9 @@ const AccountSettingsTab: React.FC = () => {
       )
     } catch (error) {
       console.error('Failed to load connection status:', error)
-      setErrors(prev => ({
-        ...prev,
-        instagram: 'Failed to load connection status',
-      }))
+      // Don't set errors here - let the component handle it
     } finally {
+      // Always clear loading state
       setIsLoading(false)
     }
   }
