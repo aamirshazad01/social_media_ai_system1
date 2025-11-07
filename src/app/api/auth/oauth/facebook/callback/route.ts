@@ -132,9 +132,16 @@ export async function GET(req: NextRequest) {
     }
 
     // ✅ Step 5: Verify CSRF state
+    console.log('✅ Step 5: Verifying CSRF state')
     const stateVerification = await verifyOAuthState(workspaceId, 'facebook', state)
 
     if (!stateVerification.valid) {
+      console.error('❌ CSRF verification failed:', {
+        error: stateVerification.error,
+        workspaceId,
+        statePrefix: state?.substring(0, 20),
+      })
+      
       await logAuditEvent({
         workspaceId,
         userId: user.id,
@@ -143,13 +150,29 @@ export async function GET(req: NextRequest) {
         status: 'failed',
         errorMessage: stateVerification.error,
         errorCode: 'CSRF_FAILED',
+        metadata: {
+          statePrefix: state?.substring(0, 20),
+          verificationError: stateVerification.error,
+        },
         ipAddress: ipAddress || undefined,
       })
+
+      // If this is a concurrent request (race condition), continue with the flow
+      // The first request will have already processed the OAuth successfully
+      if (stateVerification.error?.includes('concurrent request') || 
+          stateVerification.error?.includes('already used')) {
+        console.log('⚠️ Concurrent callback detected, redirecting without error')
+        return NextResponse.redirect(
+          new URL('/settings?tab=accounts', req.nextUrl.origin)
+        )
+      }
 
       return NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=csrf_check_failed', req.nextUrl.origin)
       )
     }
+    
+    console.log('✅ CSRF state verified successfully')
 
     // ✅ Step 6: Exchange code for token
     const appId = process.env.FACEBOOK_CLIENT_ID

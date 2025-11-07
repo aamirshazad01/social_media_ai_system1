@@ -195,45 +195,57 @@ const AccountSettingsTab: React.FC = () => {
         // Clear loading immediately so page can render
         setIsLoading(false)
         
-        // Load status once - it will check if connection succeeded
-        loadConnectionStatus().then(() => {
-          // After loading, check if platform is connected in background
-          setTimeout(async () => {
+        // Load status with multiple retries to check if connection succeeded
+        const checkConnectionWithRetries = async () => {
+          const maxRetries = 3
+          const retryDelays = [1000, 2000, 3000] // Total 6 seconds of checking
+          
+          for (let attempt = 0; attempt < maxRetries; attempt++) {
+            if (attempt > 0) {
+              await new Promise(resolve => setTimeout(resolve, retryDelays[attempt - 1]))
+            }
+            
             try {
               const response = await fetch('/api/credentials/status')
               if (response.ok) {
                 const status = await response.json()
                 const platformConnected = status[platform]?.isConnected
+                
                 if (platformConnected) {
-                  // Platform is connected! Clear any errors
-                  console.log(`✅ ${platform} connection succeeded despite CSRF error`)
+                  // Platform is connected! Clear any errors and update state
+                  console.log(`✅ ${platform} connection succeeded despite CSRF error (attempt ${attempt + 1})`)
+                  setStatusInfo(status)
+                  setConnectedAccounts(
+                    Object.fromEntries(
+                      Object.entries(status).map(([platform, info]: [string, any]) => [
+                        platform,
+                        info.isConnected,
+                      ])
+                    ) as Record<Platform, boolean>
+                  )
                   setErrors(prev => ({
                     ...prev,
                     [platform]: undefined,
                   }))
-                } else {
-                  // Platform not connected, show error
-                  const errorMessage = mapErrorCode(errorCode)
-                  setErrors(prev => ({
-                    ...prev,
-                    [platform]: errorMessage,
-                  }))
+                  return // Success, exit retry loop
                 }
               }
             } catch (err) {
-              console.error('Error checking connection status:', err)
+              console.error(`Error checking connection status (attempt ${attempt + 1}):`, err)
             }
-          }, 2000)
-        }).catch(err => {
-          console.error('Failed to load connection status:', err)
-          setIsLoading(false)
-          // Show error
+          }
+          
+          // After all retries, if still not connected, show error
+          console.warn(`❌ ${platform} connection failed after ${maxRetries} verification attempts`)
           const errorMessage = mapErrorCode(errorCode)
           setErrors(prev => ({
             ...prev,
             [platform]: errorMessage,
           }))
-        })
+        }
+        
+        // Run the check with retries
+        checkConnectionWithRetries()
         return
       }
 

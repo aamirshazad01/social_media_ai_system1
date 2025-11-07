@@ -173,18 +173,27 @@ export async function verifyOAuthState(
 
     console.log('[verifyOAuthState] State is valid, marking as used')
 
-    // Mark as used
-    const { error: updateError } = await (supabase
+    // Mark as used atomically to prevent race conditions
+    // This ensures only one callback can successfully mark the state as used
+    const { data: updateData, error: updateError } = await (supabase
       .from('oauth_states') as any)
       .update({
         used: true,
         used_at: new Date().toISOString(),
       })
       .eq('id', (data as any).id)
+      .eq('used', false) // Only update if not already used (atomic check)
+      .select()
 
     if (updateError) {
       console.error('[verifyOAuthState] Failed to mark state as used:', updateError)
       throw updateError
+    }
+
+    // If no rows were updated, it means another request already marked it as used
+    if (!updateData || updateData.length === 0) {
+      console.warn('[verifyOAuthState] State was already marked as used by another request (race condition)')
+      return { valid: false, error: 'State already used (concurrent request detected)' }
     }
 
     console.log('[verifyOAuthState] ✅ State verified and marked as used')
