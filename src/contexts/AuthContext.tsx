@@ -145,29 +145,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Add a timeout to prevent indefinite loading
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth initialization timeout')), 5000)
+        // Add a timeout to prevent indefinite loading (increased to 10 seconds)
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 10000)
         )
 
         // Get initial session with timeout
         const sessionPromise = supabase.auth.getSession()
-        const { data: { session: initialSession } } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any
+        
+        try {
+          const result = await Promise.race([
+            sessionPromise,
+            timeoutPromise
+          ]) as any
 
-        setSession(initialSession)
-        setUser(initialSession?.user ?? null)
+          const initialSession = result?.data?.session
+          setSession(initialSession)
+          setUser(initialSession?.user ?? null)
 
-        if (initialSession?.user) {
-          await fetchUserProfile(initialSession.user.id)
+          if (initialSession?.user) {
+            await fetchUserProfile(initialSession.user.id)
+          }
+        } catch (timeoutError) {
+          // If timeout occurs, don't fail completely - onAuthStateChange will handle it
+          console.warn('Auth initialization timeout, will rely on onAuthStateChange:', timeoutError)
+          // Try to get session without timeout as fallback
+          try {
+            const { data: { session: fallbackSession } } = await supabase.auth.getSession()
+            if (fallbackSession) {
+              setSession(fallbackSession)
+              setUser(fallbackSession?.user ?? null)
+              if (fallbackSession?.user) {
+                await fetchUserProfile(fallbackSession.user.id)
+              }
+            }
+          } catch (fallbackError) {
+            console.warn('Fallback session fetch also failed:', fallbackError)
+            // onAuthStateChange will handle the session eventually
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
-        // Set loading to false even on error to prevent stuck loading state
-        setLoading(false)
+        // Don't fail completely - onAuthStateChange will handle session updates
       } finally {
+        // Set loading to false - onAuthStateChange will update state when ready
         setLoading(false)
       }
     }

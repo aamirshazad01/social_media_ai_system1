@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Post, Platform } from '@/types';
 import ContentStrategistView from '@/components/content/ContentStrategistView';
@@ -72,6 +72,7 @@ const AppContent: React.FC = () => {
                 setConnectedAccounts(accountsSummary);
             } catch (error) {
                 console.error('Error loading data from database:', error);
+                // Use addNotification from closure - it's stable via useCallback
                 addNotification('error', 'Load Error', 'Failed to load posts from database');
             } finally {
                 setLoading(false);
@@ -79,7 +80,8 @@ const AppContent: React.FC = () => {
         };
 
         loadData();
-    }, [user, workspaceId, addNotification]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, workspaceId]); // Removed addNotification - it's stable via useCallback
 
     const [isApiKeyReady, setIsApiKeyReady] = useState(false);
 
@@ -122,11 +124,19 @@ const AppContent: React.FC = () => {
                 }
             }
         },
-        [user, workspaceId, addNotification]
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [user, workspaceId] // Removed addNotification - it's stable via useCallback
     );
 
+    // Use ref to access latest posts without causing re-renders
+    const postsRef = useRef(posts);
+    useEffect(() => {
+        postsRef.current = posts;
+    }, [posts]);
+
     const pollVideoStatuses = useCallback(() => {
-        posts.forEach(post => {
+        // Use ref to get latest posts without dependency
+        postsRef.current.forEach(post => {
             if (post.isGeneratingVideo && post.videoOperation && !post.videoOperation.done) {
                 checkVideoOperationStatus(post.videoOperation)
                     .then(async (updatedOp) => {
@@ -155,12 +165,14 @@ const AppContent: React.FC = () => {
                     });
             }
         });
-    }, [posts, updatePost, addNotification]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [updatePost]); // Removed posts and addNotification - using ref and closure
 
     // UPDATED: Check for scheduled posts and auto-publish them
     const checkScheduledPosts = useCallback(async () => {
         const now = new Date();
-        const readyToPublish = posts.filter(
+        // Use ref to get latest posts without dependency
+        const readyToPublish = postsRef.current.filter(
             (post) => post.status === 'scheduled' && post.scheduledAt && new Date(post.scheduledAt) <= now
         );
 
@@ -173,7 +185,8 @@ const AppContent: React.FC = () => {
                 addNotification('error', 'Publishing Error', `Failed to publish "${post.topic}"`);
             }
         }
-    }, [posts, addNotification]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Removed posts and addNotification - using ref and closure
 
     // UPDATED: Add post to database
     const addPost = useCallback(
@@ -296,7 +309,8 @@ const AppContent: React.FC = () => {
             clearInterval(scheduleInterval);
             clearInterval(videoPollInterval);
         };
-    }, [checkScheduledPosts, pollVideoStatuses]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty deps - callbacks are stable and use refs for latest data
     
     const SidebarItem: React.FC<{ viewName: View; icon: React.ElementType; label: string }> = ({ viewName, icon: Icon, label }) => (
         <button
