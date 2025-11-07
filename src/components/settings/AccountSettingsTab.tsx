@@ -243,12 +243,15 @@ const AccountSettingsTab: React.FC = () => {
         }))
       }
       setConnectingPlatform(null)
-      // Clean up URL and load status after showing error
+      // Clean up URL immediately
       window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
-      // Load status after a short delay to ensure error is displayed
-      setTimeout(() => {
-        loadConnectionStatus()
-      }, 100)
+      // Clear loading immediately so page can render
+      setIsLoading(false)
+      // Load status to populate the UI
+      loadConnectionStatus().catch(err => {
+        console.error('Failed to load connection status:', err)
+        setIsLoading(false)
+      })
       return
     }
 
