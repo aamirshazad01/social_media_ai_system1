@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   CheckCircle,
   Link,
@@ -45,6 +45,7 @@ const AccountSettingsTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const oauthCallbackHandled = useRef(false)
   const effectRan = useRef(false)
+  const renderCount = useRef(0)
 
   // Adaptive timeouts per platform
   const TIMEOUTS = {
@@ -79,7 +80,55 @@ const AccountSettingsTab: React.FC = () => {
     )
   }
 
+  // Memoize loadConnectionStatus to prevent recreation on every render
+  const loadConnectionStatus = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/credentials/status')
+
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        let errorMessage = 'Failed to load status'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData?.error || errorMessage
+        } catch {
+          // If JSON parsing fails, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        console.error('Failed to load connection status:', errorMessage)
+        // Don't set errors here - let the component handle it
+        setIsLoading(false)
+        return
+      }
+
+      const data = await response.json()
+      setStatusInfo(data)
+      setConnectedAccounts(
+        Object.fromEntries(
+          Object.entries(data).map(([platform, info]: [string, any]) => [
+            platform,
+            info.isConnected,
+          ])
+        ) as Record<Platform, boolean>
+      )
+    } catch (error) {
+      console.error('Failed to load connection status:', error)
+      // Don't set errors here - let the component handle it
+    } finally {
+      // Always clear loading state
+      setIsLoading(false)
+    }
+  }, []) // Empty deps - function doesn't depend on any props/state
+
   useEffect(() => {
+    // Track render count to detect infinite loops
+    renderCount.current += 1
+    if (renderCount.current > 10) {
+      console.error('[AccountSettingsTab] Render count exceeded 10, possible infinite loop detected!')
+      return
+    }
+
     // Strict guard - prevent rapid re-executions
     const now = Date.now()
     const lastRunKey = 'account_settings_last_run'
@@ -101,7 +150,7 @@ const AccountSettingsTab: React.FC = () => {
     // Mark as ran immediately, before any async operations
     effectRan.current = true
     sessionStorage.setItem(lastRunKey, now.toString())
-    console.log('[AccountSettingsTab] Effect running')
+    console.log('[AccountSettingsTab] Effect running (render count:', renderCount.current, ')')
 
     // Check for OAuth callbacks FIRST before loading status
     const urlParams = new URLSearchParams(window.location.search)
@@ -328,47 +377,8 @@ const AccountSettingsTab: React.FC = () => {
       // Don't reset effectRan - we want it to persist
       // This cleanup is just for safety
     }
-  }, []) // Empty deps - only run once on mount
-
-  const loadConnectionStatus = async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch('/api/credentials/status')
-
-      // Check if response is ok before trying to parse JSON
-      if (!response.ok) {
-        let errorMessage = 'Failed to load status'
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData?.error || errorMessage
-        } catch {
-          // If JSON parsing fails, use status text
-          errorMessage = response.statusText || errorMessage
-        }
-        console.error('Failed to load connection status:', errorMessage)
-        // Don't set errors here - let the component handle it
-        setIsLoading(false)
-        return
-      }
-
-      const data = await response.json()
-      setStatusInfo(data)
-      setConnectedAccounts(
-        Object.fromEntries(
-          Object.entries(data).map(([platform, info]: [string, any]) => [
-            platform,
-            info.isConnected,
-          ])
-        ) as Record<Platform, boolean>
-      )
-    } catch (error) {
-      console.error('Failed to load connection status:', error)
-      // Don't set errors here - let the component handle it
-    } finally {
-      // Always clear loading state
-      setIsLoading(false)
-    }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty deps - loadConnectionStatus is memoized and stable
 
   const handleConnect = async (platform: Platform) => {
     setErrors(prev => ({ ...prev, [platform]: undefined }))
