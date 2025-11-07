@@ -23,13 +23,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL("/login?error=oauth_unauthorized", req.nextUrl.origin))
     }
 
-    const { data: userRow } = await supabase.from("users").select("workspace_id, role").eq("id", user.id).maybeSingle()
-    if (!userRow) {
+    // Get workspace and role using RPC to avoid RLS recursion
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+    
+    if (rpcError || !rpcData) {
       return NextResponse.redirect(new URL("/settings?tab=accounts&oauth_error=no_workspace", req.nextUrl.origin))
     }
 
-    const workspaceId = (userRow as any).workspace_id
-    const userRole = (userRow as any).role
+    const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+    const workspaceId = profileData?.workspace_id
+    const userRole = profileData?.role || 'admin'
+
+    if (!workspaceId) {
+      return NextResponse.redirect(new URL("/settings?tab=accounts&oauth_error=no_workspace", req.nextUrl.origin))
+    }
 
     if (userRole !== "admin") {
       await logAuditEvent({

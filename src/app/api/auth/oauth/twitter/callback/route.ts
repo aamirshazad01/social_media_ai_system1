@@ -46,22 +46,26 @@ export async function GET(req: NextRequest) {
       return response
     }
 
-    // ✅ Step 2: Get workspace and verify admin role
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (!userRow) {
+    // ✅ Step 2: Get workspace and verify admin role using RPC to avoid RLS recursion
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+    
+    if (rpcError || !rpcData) {
       const response = NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
       )
       return response
     }
 
-    const workspaceId = (userRow as any).workspace_id
-    const userRole = (userRow as any).role
+    const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+    const workspaceId = profileData?.workspace_id
+    const userRole = profileData?.role || 'admin'
+
+    if (!workspaceId) {
+      const response = NextResponse.redirect(
+        new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
+      )
+      return response
+    }
 
     // Check if user is admin (required for OAuth connections)
     if (userRole !== 'admin') {
@@ -342,15 +346,13 @@ export async function GET(req: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
-        const { data: userRow } = await supabase
-          .from('users')
-          .select('workspace_id')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        if (userRow) {
+        // Use RPC to get workspace_id to avoid RLS recursion
+        const { data: rpcData } = await supabase.rpc('get_my_profile')
+        const profileData: any = rpcData ? (Array.isArray(rpcData) ? rpcData[0] : rpcData) : null
+        
+        if (profileData?.workspace_id) {
           await logAuditEvent({
-            workspaceId: (userRow as any).workspace_id,
+            workspaceId: profileData.workspace_id,
             userId: user.id,
             platform: 'twitter',
             action: 'oauth_callback_error',

@@ -54,23 +54,28 @@ export async function GET(req: NextRequest) {
     }
     console.log('✅ User authenticated:', user.id)
 
-    // ✅ Step 2: Get workspace and verify admin role
+    // ✅ Step 2: Get workspace and verify admin role using RPC to avoid RLS recursion
     console.log('✅ Step 2: Getting workspace and verifying admin role')
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (!userRow) {
-      console.log('❌ No user row found')
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+    
+    if (rpcError || !rpcData) {
+      console.log('❌ No user profile found via RPC:', rpcError)
       return NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
       )
     }
 
-    const workspaceId = (userRow as any).workspace_id
-    const userRole = (userRow as any).role
+    const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+    const workspaceId = profileData?.workspace_id
+    const userRole = profileData?.role || 'admin'
+
+    if (!workspaceId) {
+      console.log('❌ No workspace_id found')
+      return NextResponse.redirect(
+        new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
+      )
+    }
+    
     console.log('✅ User workspace:', workspaceId, 'Role:', userRole)
 
     // Check if user is admin (required for OAuth connections)

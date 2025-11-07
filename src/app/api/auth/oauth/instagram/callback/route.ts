@@ -45,21 +45,24 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // ✅ Step 2: Get workspace and verify admin role
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('workspace_id, role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (!userRow) {
+    // ✅ Step 2: Get workspace and verify admin role using RPC to avoid RLS recursion
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_profile')
+    
+    if (rpcError || !rpcData) {
       return NextResponse.redirect(
         new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
       )
     }
 
-    const workspaceId = (userRow as any).workspace_id
-    const userRole = (userRow as any).role
+    const profileData: any = Array.isArray(rpcData) ? rpcData[0] : rpcData
+    const workspaceId = profileData?.workspace_id
+    const userRole = profileData?.role || 'admin'
+
+    if (!workspaceId) {
+      return NextResponse.redirect(
+        new URL('/settings?tab=accounts&oauth_error=no_workspace', req.nextUrl.origin)
+      )
+    }
 
     // Check if user is admin (required for OAuth connections)
     if (userRole !== 'admin') {
