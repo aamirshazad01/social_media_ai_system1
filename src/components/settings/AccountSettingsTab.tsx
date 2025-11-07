@@ -112,38 +112,80 @@ const AccountSettingsTab: React.FC = () => {
         setConnectingPlatform(null)
         // Clean up URL immediately
         window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
+        // Ensure loading is cleared immediately so page can render
+        setIsLoading(false)
+        
         // Load status to see if connection actually succeeded
         // Use async function to properly handle the check
         const checkConnectionStatus = async () => {
-          await loadConnectionStatus()
-          // Wait a bit for status to update
-          await new Promise(resolve => setTimeout(resolve, 1500))
-          // Re-check status to see if platform is now connected
-          await loadConnectionStatus()
-          // Wait a bit more, then check if we should show error
-          await new Promise(resolve => setTimeout(resolve, 500))
-          // Check current status to see if platform is connected
-          const response = await fetch('/api/credentials/status')
-          if (response.ok) {
-            const status = await response.json()
-            const platformConnected = status[platform]?.isConnected
-            if (!platformConnected) {
-              // Platform is not connected, show the error
-              const errorMessage = mapErrorCode(errorCode)
-              setErrors(prev => ({
-                ...prev,
-                [platform]: errorMessage,
-              }))
-            } else {
-              // Platform is connected! Clear any errors
-              console.log(`✅ ${platform} connection succeeded despite CSRF error`)
-              setErrors(prev => ({
-                ...prev,
-                [platform]: undefined,
-              }))
+          try {
+            // Check current status to see if platform is connected
+            const response = await fetch('/api/credentials/status')
+            if (response.ok) {
+              const status = await response.json()
+              setStatusInfo(status)
+              setConnectedAccounts(
+                Object.fromEntries(
+                  Object.entries(status).map(([p, info]: [string, any]) => [
+                    p,
+                    info.isConnected,
+                  ])
+                ) as Record<Platform, boolean>
+              )
+              
+              const platformConnected = status[platform]?.isConnected
+              if (!platformConnected) {
+                // Wait a bit and check again (connection might still be processing)
+                await new Promise(resolve => setTimeout(resolve, 2000))
+                const retryResponse = await fetch('/api/credentials/status')
+                if (retryResponse.ok) {
+                  const retryStatus = await retryResponse.json()
+                  const retryConnected = retryStatus[platform]?.isConnected
+                  if (!retryConnected) {
+                    // Platform is not connected after retry, show the error
+                    const errorMessage = mapErrorCode(errorCode)
+                    setErrors(prev => ({
+                      ...prev,
+                      [platform]: errorMessage,
+                    }))
+                  } else {
+                    // Platform is connected! Update status and clear errors
+                    console.log(`✅ ${platform} connection succeeded despite CSRF error`)
+                    setStatusInfo(retryStatus)
+                    setConnectedAccounts(
+                      Object.fromEntries(
+                        Object.entries(retryStatus).map(([p, info]: [string, any]) => [
+                          p,
+                          info.isConnected,
+                        ])
+                      ) as Record<Platform, boolean>
+                    )
+                    setErrors(prev => ({
+                      ...prev,
+                      [platform]: undefined,
+                    }))
+                  }
+                }
+              } else {
+                // Platform is connected! Clear any errors
+                console.log(`✅ ${platform} connection succeeded despite CSRF error`)
+                setErrors(prev => ({
+                  ...prev,
+                  [platform]: undefined,
+                }))
+              }
             }
+          } catch (err) {
+            console.error('Error checking connection status:', err)
+            // Show error if we can't check status
+            const errorMessage = mapErrorCode(errorCode)
+            setErrors(prev => ({
+              ...prev,
+              [platform]: errorMessage,
+            }))
           }
         }
+        // Don't await - let it run in background
         checkConnectionStatus()
         return
       }
