@@ -144,60 +144,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 // Initialize session
   useEffect(() => {
     let mounted = true
-    let timeoutId: NodeJS.Timeout | null = null
 
     const initializeAuth = async () => {
       try {
-        // Get initial session - don't use timeout, let onAuthStateChange handle it
-        // This prevents race conditions and ensures onAuthStateChange always works
-        const sessionPromise = supabase.auth.getSession()
-        
-        // Set a timeout to clear loading state if session takes too long
-        // But don't block the session fetch
-        timeoutId = setTimeout(() => {
-          if (mounted) {
-            console.debug('[AuthContext] Session fetch taking longer than expected, clearing loading state')
+        // Get initial session
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession()
+
+        if (mounted) {
+          if (error) {
+            console.error('[AuthContext] Error getting session:', error)
             setLoading(false)
-          }
-        }, 15000)
-
-        try {
-          const { data: { session: initialSession } } = await sessionPromise
-
-          // Clear timeout if session loaded successfully
-          if (timeoutId) {
-            clearTimeout(timeoutId)
-            timeoutId = null
+            return
           }
 
-          if (mounted) {
-            setSession(initialSession)
-            setUser(initialSession?.user ?? null)
+          setSession(initialSession)
+          setUser(initialSession?.user ?? null)
 
-            if (initialSession?.user) {
-              await fetchUserProfile(initialSession.user.id)
-            }
-          }
-        } catch (sessionError) {
-          // Session fetch error - onAuthStateChange will handle it
-          // This is expected in some cases, so we don't log it as an error
-          if (mounted && timeoutId) {
-            clearTimeout(timeoutId)
-            timeoutId = null
+          if (initialSession?.user) {
+            await fetchUserProfile(initialSession.user.id)
           }
         }
       } catch (error) {
-        // Only log unexpected errors
-        if (error instanceof Error && !error.message.includes('timeout')) {
-          console.error('[AuthContext] Error initializing auth:', error)
-        }
+        console.error('[AuthContext] Error initializing auth:', error)
       } finally {
-        // Set loading to false - onAuthStateChange will update state when ready
+        // Set loading to false after initial check
+        // onAuthStateChange will handle subsequent updates
         if (mounted) {
-          if (timeoutId) {
-            clearTimeout(timeoutId)
-            timeoutId = null
-          }
           setLoading(false)
         }
       }
@@ -205,34 +177,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    // Cleanup
-    return () => {
-      mounted = false
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-    }
-
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log('[AuthContext] Auth state changed:', event, 'User ID:', currentSession?.user?.id)
 
-      setSession(currentSession)
-      setUser(currentSession?.user ?? null)
+      if (mounted) {
+        setSession(currentSession)
+        setUser(currentSession?.user ?? null)
 
-      if (currentSession?.user) {
-        console.log('[AuthContext] User session active, fetching profile...')
-        await fetchUserProfile(currentSession.user.id)
-      } else {
-        console.log('[AuthContext] No user session, clearing workspace and role')
-        setWorkspaceId(null)
-        setUserRole(null)
+        if (currentSession?.user) {
+          console.log('[AuthContext] User session active, fetching profile...')
+          await fetchUserProfile(currentSession.user.id)
+        } else {
+          console.log('[AuthContext] No user session, clearing workspace and role')
+          setWorkspaceId(null)
+          setUserRole(null)
+        }
+
+        setLoading(false)
       }
-
-      setLoading(false)
     })
 
     return () => {
+      mounted = false
       subscription.unsubscribe()
     }
   }, [])
