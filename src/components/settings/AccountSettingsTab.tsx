@@ -83,7 +83,7 @@ const AccountSettingsTab: React.FC = () => {
     const successPlatform = urlParams.get('oauth_success')
     const errorCode = urlParams.get('oauth_error')
 
-    // If there's an error, handle it immediately and skip loading
+    // If there's an error, handle it but still check if connection succeeded
     if (errorCode) {
       // Error - show to user
       console.error('OAuth error:', errorCode)
@@ -104,6 +104,51 @@ const AccountSettingsTab: React.FC = () => {
         }
       }
 
+      // For CSRF errors, still check if connection was successful
+      // Sometimes the connection succeeds but CSRF check fails due to timing/state issues
+      if (errorCode === 'csrf_check_failed' && platform) {
+        console.warn(`CSRF check failed for ${platform}, but checking if connection was successful...`)
+        // Don't set error yet - check status first
+        setConnectingPlatform(null)
+        // Clean up URL immediately
+        window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
+        // Load status to see if connection actually succeeded
+        // Use async function to properly handle the check
+        const checkConnectionStatus = async () => {
+          await loadConnectionStatus()
+          // Wait a bit for status to update
+          await new Promise(resolve => setTimeout(resolve, 1500))
+          // Re-check status to see if platform is now connected
+          await loadConnectionStatus()
+          // Wait a bit more, then check if we should show error
+          await new Promise(resolve => setTimeout(resolve, 500))
+          // Check current status to see if platform is connected
+          const response = await fetch('/api/credentials/status')
+          if (response.ok) {
+            const status = await response.json()
+            const platformConnected = status[platform]?.isConnected
+            if (!platformConnected) {
+              // Platform is not connected, show the error
+              const errorMessage = mapErrorCode(errorCode)
+              setErrors(prev => ({
+                ...prev,
+                [platform]: errorMessage,
+              }))
+            } else {
+              // Platform is connected! Clear any errors
+              console.log(`✅ ${platform} connection succeeded despite CSRF error`)
+              setErrors(prev => ({
+                ...prev,
+                [platform]: undefined,
+              }))
+            }
+          }
+        }
+        checkConnectionStatus()
+        return
+      }
+
+      // For other errors, show immediately
       if (platform) {
         const errorMessage = mapErrorCode(errorCode)
         console.error(`Error for ${platform}:`, errorMessage)
