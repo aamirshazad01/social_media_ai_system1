@@ -57,29 +57,6 @@ const AccountSettingsTab: React.FC = () => {
     youtube: 60000, // 60 seconds
   }
 
-  // Show loading state while auth is initializing
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-slate mr-2" />
-        <span className="text-slate">Loading settings...</span>
-      </div>
-    )
-  }
-
-  // Check role - only admins can manage account settings
-  if (userRole !== 'admin') {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-3">
-        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-yellow-800">
-          <p className="font-semibold">Access Denied</p>
-          <p>Only workspace admins can manage account connections.</p>
-        </div>
-      </div>
-    )
-  }
-
   // Define loadConnectionStatus function - will be recreated but that's okay
   // since it's only used in useEffect with empty deps
   const loadConnectionStatus = async () => {
@@ -122,7 +99,14 @@ const AccountSettingsTab: React.FC = () => {
     }
   }
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
+    // Only run the effect if we're not in a loading/unauthorized state
+    // This prevents the effect from running when the component will return early
+    if (authLoading || userRole !== 'admin') {
+      return
+    }
+
     // Track render count to detect infinite loops
     renderCount.current += 1
     if (renderCount.current > 10) {
@@ -379,7 +363,31 @@ const AccountSettingsTab: React.FC = () => {
       // This cleanup is just for safety
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty deps - loadConnectionStatus is memoized and stable
+  }, [authLoading, userRole]) // Include dependencies to re-run when auth state changes
+
+  // CONDITIONAL RETURNS AFTER ALL HOOKS
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-slate mr-2" />
+        <span className="text-slate">Loading settings...</span>
+      </div>
+    )
+  }
+
+  // Check role - only admins can manage account settings
+  if (userRole !== 'admin') {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 flex gap-3">
+        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-yellow-800">
+          <p className="font-semibold">Access Denied</p>
+          <p>Only workspace admins can manage account connections.</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleConnect = async (platform: Platform) => {
     setErrors(prev => ({ ...prev, [platform]: undefined }))
