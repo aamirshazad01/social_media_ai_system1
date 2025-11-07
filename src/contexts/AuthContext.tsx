@@ -143,57 +143,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 // Initialize session
   useEffect(() => {
+    let mounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
     const initializeAuth = async () => {
       try {
-        // Add a timeout to prevent indefinite loading (increased to 10 seconds)
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Auth initialization timeout')), 10000)
-        )
-
-        // Get initial session with timeout
+        // Get initial session - don't use timeout, let onAuthStateChange handle it
+        // This prevents race conditions and ensures onAuthStateChange always works
         const sessionPromise = supabase.auth.getSession()
         
-        try {
-          const result = await Promise.race([
-            sessionPromise,
-            timeoutPromise
-          ]) as any
-
-          const initialSession = result?.data?.session
-          setSession(initialSession)
-          setUser(initialSession?.user ?? null)
-
-          if (initialSession?.user) {
-            await fetchUserProfile(initialSession.user.id)
+        // Set a timeout to clear loading state if session takes too long
+        // But don't block the session fetch
+        timeoutId = setTimeout(() => {
+          if (mounted) {
+            console.debug('[AuthContext] Session fetch taking longer than expected, clearing loading state')
+            setLoading(false)
           }
-        } catch (timeoutError) {
-          // If timeout occurs, don't fail completely - onAuthStateChange will handle it
-          console.warn('Auth initialization timeout, will rely on onAuthStateChange:', timeoutError)
-          // Try to get session without timeout as fallback
-          try {
-            const { data: { session: fallbackSession } } = await supabase.auth.getSession()
-            if (fallbackSession) {
-              setSession(fallbackSession)
-              setUser(fallbackSession?.user ?? null)
-              if (fallbackSession?.user) {
-                await fetchUserProfile(fallbackSession.user.id)
-              }
+        }, 15000)
+
+        try {
+          const { data: { session: initialSession } } = await sessionPromise
+
+          // Clear timeout if session loaded successfully
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+            timeoutId = null
+          }
+
+          if (mounted) {
+            setSession(initialSession)
+            setUser(initialSession?.user ?? null)
+
+            if (initialSession?.user) {
+              await fetchUserProfile(initialSession.user.id)
             }
-          } catch (fallbackError) {
-            console.warn('Fallback session fetch also failed:', fallbackError)
-            // onAuthStateChange will handle the session eventually
+          }
+        } catch (sessionError) {
+          // Session fetch error - onAuthStateChange will handle it
+          // This is expected in some cases, so we don't log it as an error
+          if (mounted && timeoutId) {
+            clearTimeout(timeoutId)
+            timeoutId = null
           }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error)
-        // Don't fail completely - onAuthStateChange will handle session updates
+        // Only log unexpected errors
+        if (error instanceof Error && !error.message.includes('timeout')) {
+          console.error('[AuthContext] Error initializing auth:', error)
+        }
       } finally {
         // Set loading to false - onAuthStateChange will update state when ready
-        setLoading(false)
+        if (mounted) {
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+            timeoutId = null
+          }
+          setLoading(false)
+        }
       }
     }
 
     initializeAuth()
+
+    // Cleanup
+    return () => {
+      mounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
