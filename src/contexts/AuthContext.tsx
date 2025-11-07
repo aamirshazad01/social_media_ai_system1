@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [userRole, setUserRole] = useState<'admin' | 'editor' | 'viewer' | null>(null)
   const fetchInProgressRef = React.useRef(false)
+  const initialLoadComplete = React.useRef(false)
 
   // Log role changes for debugging
   React.useEffect(() => {
@@ -163,6 +164,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (initialSession?.user) {
             await fetchUserProfile(initialSession.user.id)
           }
+          // Mark initial load as complete to prevent duplicate fetches
+          initialLoadComplete.current = true
         }
       } catch (error) {
         console.error('[AuthContext] Error initializing auth:', error)
@@ -186,8 +189,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession?.user ?? null)
 
         if (currentSession?.user) {
-          console.log('[AuthContext] User session active, fetching profile...')
-          await fetchUserProfile(currentSession.user.id)
+          // Only fetch profile if initial load is complete
+          // This prevents duplicate fetches during the initial session setup
+          if (initialLoadComplete.current) {
+            console.log('[AuthContext] User session active, fetching profile...')
+            await fetchUserProfile(currentSession.user.id)
+          } else {
+            console.log('[AuthContext] Initial load in progress, skipping duplicate profile fetch')
+          }
         } else {
           console.log('[AuthContext] No user session, clearing workspace and role')
           setWorkspaceId(null)
