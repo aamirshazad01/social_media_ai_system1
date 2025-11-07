@@ -79,24 +79,35 @@ const AccountSettingsTab: React.FC = () => {
   }
 
   useEffect(() => {
-    // Prevent multiple executions
-    if (oauthCallbackHandled.current) {
-      return
-    }
-
     // Check for OAuth callbacks FIRST before loading status
     const urlParams = new URLSearchParams(window.location.search)
     const successPlatform = urlParams.get('oauth_success')
     const errorCode = urlParams.get('oauth_error')
 
-    // If no OAuth callback params, just load status normally
+    // If no OAuth callback params, just load status normally (only once)
     if (!successPlatform && !errorCode) {
+      if (!oauthCallbackHandled.current) {
+        oauthCallbackHandled.current = true
+        loadConnectionStatus()
+      }
+      return
+    }
+
+    // For OAuth callbacks, check if we've already processed this specific callback
+    // Use a combination of the URL params as a unique key
+    const callbackKey = `${successPlatform || ''}_${errorCode || ''}`
+    const lastProcessedKey = sessionStorage.getItem('last_oauth_callback')
+    
+    // If we've already processed this exact callback, skip it
+    if (lastProcessedKey === callbackKey && oauthCallbackHandled.current) {
+      // Still load status in case it changed
       loadConnectionStatus()
       return
     }
 
-    // Mark as handled to prevent re-execution
+    // Mark this callback as processed
     oauthCallbackHandled.current = true
+    sessionStorage.setItem('last_oauth_callback', callbackKey)
 
     // If there's an error, handle it but still check if connection succeeded
     if (errorCode) {
@@ -129,6 +140,9 @@ const AccountSettingsTab: React.FC = () => {
         window.history.replaceState({}, document.title, window.location.pathname + '?tab=accounts')
         // Ensure loading is cleared immediately so page can render
         setIsLoading(false)
+        
+        // Load initial status first to populate the UI
+        loadConnectionStatus()
         
         // Load status to see if connection actually succeeded
         // Use async function to properly handle the check
